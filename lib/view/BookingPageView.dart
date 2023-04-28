@@ -232,7 +232,48 @@ class BookingPage extends StatelessWidget {
                                     value: null,
                                     hint: const Text("---"),
                                     decoration: const InputDecoration(
+                                      errorMaxLines: 2,
                                       labelText: "Tình trạng thiến",
+                                      labelStyle:
+                                          TextStyle(color: Colors.black87),
+                                      floatingLabelStyle:
+                                          TextStyle(color: Colors.blue),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 16),
+                                  child: DropdownButtonFormField<int>(
+                                    isExpanded: true,
+                                    validator: (value) {
+                                      if (value == null)
+                                        return "Không để trống hạng cân";
+                                      return null;
+                                    },
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 3,
+                                        child: Text("Dưới 3 kg"),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 6,
+                                        child: Text("3-6 kg"),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 9,
+                                        child: Text("Trên 6 kg"),
+                                      ),
+                                    ],
+                                    onChanged: (int? value) {
+                                      controller.weightLevel = value!;
+                                    },
+                                    value: null,
+                                    hint: const Text("---"),
+                                    decoration: const InputDecoration(
+                                      errorMaxLines: 2,
+                                      labelText: "Hạng cân",
                                       labelStyle:
                                           TextStyle(color: Colors.black87),
                                       floatingLabelStyle:
@@ -306,6 +347,7 @@ class BookingPage extends StatelessWidget {
                                     value: null,
                                     hint: const Text("---"),
                                     decoration: const InputDecoration(
+                                      errorMaxLines: 2,
                                       labelText: "Tình trạng tiêm phòng",
                                       labelStyle:
                                           TextStyle(color: Colors.black87),
@@ -315,6 +357,22 @@ class BookingPage extends StatelessWidget {
                                     ),
                                   ),
                                 ),
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 16),
+                                    child: TextFormField(
+                                      controller:
+                                          controller.catWeightController,
+                                      decoration: const InputDecoration(
+                                        suffix: Text("kg"),
+                                        labelText: "Cân nặng",
+                                        labelStyle:
+                                            TextStyle(color: Colors.black87),
+                                        floatingLabelStyle:
+                                            TextStyle(color: Colors.blue),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    )),
                               ],
                             ),
                           ),
@@ -534,6 +592,7 @@ class BookingPage extends StatelessWidget {
                                 value: null,
                                 hint: const Text("---"),
                                 decoration: const InputDecoration(
+                                  errorMaxLines: 2,
                                   labelText: "Mã phòng",
                                   labelStyle: TextStyle(color: Colors.black87),
                                   floatingLabelStyle:
@@ -576,6 +635,7 @@ class BookingPage extends StatelessWidget {
                                     : controller.subRoomIndex,
                                 hint: const Text("---"),
                                 decoration: const InputDecoration(
+                                  errorMaxLines: 2,
                                   labelText: "Mã phòng con",
                                   labelStyle: TextStyle(color: Colors.black87),
                                   floatingLabelStyle:
@@ -599,7 +659,7 @@ class BookingPage extends StatelessWidget {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text("Hạng ${index + 1}"),
+                                        Text("${index + 1}"),
                                         const SizedBox(width: 10),
                                         const Tooltip(
                                             message:
@@ -621,6 +681,7 @@ class BookingPage extends StatelessWidget {
                                 value: null,
                                 hint: const Text("---"),
                                 decoration: const InputDecoration(
+                                  errorMaxLines: 2,
                                   labelText: "Hạng ăn",
                                   labelStyle: TextStyle(color: Colors.black87),
                                   floatingLabelStyle:
@@ -639,13 +700,14 @@ class BookingPage extends StatelessWidget {
                                 controller: controller.checkInController,
                                 titleOfTextField: "Thời gian check-in",
                                 validator: (value) {
-                                  if (value == null)
+                                  if (controller.checkInController.text.isEmpty)
                                     return "Không để trống thời gian check-in";
                                   if (controller
                                       .checkOutController.text.isNotEmpty) {
-                                    if (!DateTime.parse(
+                                    if (!DateTimePicker.textToDate(
                                             controller.checkOutController.text)
-                                        .isAfter(DateTime.parse(value)))
+                                        .isAfter(DateTimePicker.textToDate(
+                                            controller.checkInController.text)))
                                       return "Thời gian check-in phải trước thời gian check-out";
                                   }
                                   return null;
@@ -662,13 +724,16 @@ class BookingPage extends StatelessWidget {
                                 controller: controller.checkOutController,
                                 titleOfTextField: "Thời gian check-out",
                                 validator: (value) {
-                                  if (value == null)
+                                  if (controller
+                                      .checkOutController.text.isEmpty)
                                     return "Không để trống thời gian check-out";
                                   if (controller
                                       .checkInController.text.isNotEmpty) {
-                                    if (!DateTime.parse(
+                                    if (!DateTimePicker.textToDate(
                                             controller.checkInController.text)
-                                        .isBefore(DateTime.parse(value)))
+                                        .isBefore(DateTimePicker.textToDate(
+                                            controller
+                                                .checkOutController.text)))
                                       return "Thời gian check-out phải sau thời gian check-in";
                                   }
                                   return null;
@@ -914,6 +979,11 @@ class DateTimePicker extends StatelessWidget {
       required this.titleOfTextField,
       this.validator});
 
+  static DateTime textToDate(String text) {
+    return DateTime.parse(
+        "${text.substring(6, 10)}-${text.substring(3, 5)}-${text.substring(0, 2)} ${text.substring(11)}");
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -949,6 +1019,7 @@ class DateTimePicker extends StatelessWidget {
           controller: controller,
           validator: validator,
           decoration: InputDecoration(
+            errorMaxLines: 2,
             labelText: titleOfTextField,
             labelStyle: const TextStyle(color: Colors.black87),
             floatingLabelStyle: const TextStyle(color: Colors.blue),

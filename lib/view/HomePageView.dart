@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:project_ii/binding/AuthBinding.dart';
 import 'package:project_ii/controller/HomePageController.dart';
 import '../controller/AuthController.dart';
+import '../controller/CalendarPageController.dart';
 import 'BookingPageView.dart';
 import 'CalenderPageView.dart';
 import 'LoginPageView.dart';
@@ -21,13 +22,8 @@ class HomePage extends StatelessWidget {
             NavigationRail(
               elevation: 8,
               onDestinationSelected: (index) {
-                if (index == 4) {
-                  GetConnect().post(
-                    "http://localhost/php-crash/logout.php",
-                    FormData(
-                        {"sessionID": Get.find<AuthController>().sessionID}),
-                  );
-                  Get.off(LoginPage());
+                if (index != 0) {
+                  Get.find<CalendarPageController>().index = 0;
                 }
                 Get.find<HomePageController>().homePageIndex = index;
               },

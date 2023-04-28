@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart' hide DateUtils;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/view/InformationPageView.dart';
 import '../controller/CalendarPageController.dart';
 import '../utils/DateUtils.dart';
 import '../utils/PairUtils.dart';
@@ -132,114 +131,104 @@ class BookingInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(Get.find<CalendarPageController>().roomBookingData);
-    return GetBuilder<CalendarPageController>(
-      builder: (controller) {
-        var splashScreen = Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-            Text('Đang tải...'),
-          ],
-        );
-        Future.delayed(const Duration(seconds: 2), () {
-          controller.index = 1;
-          controller.update();
-        });
-        return IndexedStack(
-          alignment: Alignment.center,
-          index: controller.index,
-          children: [
-            splashScreen,
-            SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Column(
+    return GetBuilder<CalendarPageController>(builder: (controller) {
+      return FutureBuilder(
+          future: displayTable(controller, context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                  Text('Đang tải...'),
+                ],
+              );
+            }
+            return snapshot.requireData;
+          });
+    });
+  }
+
+  Future<Widget> displayTable(
+      CalendarPageController controller, BuildContext context) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(
+          controller.roomBookingData.length,
+          (index1) {
+            return Container(
+              decoration: BoxDecoration(border: Border.all(width: 0.45)),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  controller.roomBookingData.length,
-                  (index1) {
-                    return Container(
-                      decoration:
-                          BoxDecoration(border: Border.all(width: 0.45)),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 32,
-                            child: Text(controller
-                                .roomBookingData[index1].roomData.roomID),
-                          ),
-                          Flexible(
-                            child: GridView.count(
-                              primary: false,
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              crossAxisCount: DateUtils.daysInMonth(
-                                  controller.currentMonth),
-                              children: List.generate(
-                                  (DateUtils.daysInMonth(
-                                          controller.currentMonth) *
-                                      (controller.roomBookingData[index1]
-                                          .roomData.subQuantity)), (index2) {
-                                return (getDisplayValue(
-                                                controller, index1, index2)
-                                            .first ==
-                                        getDisplayValue(
-                                                controller, index1, index2)
-                                            .second)
-                                    ? HalfCell(
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width / 32,
+                    child: Text(
+                        controller.roomBookingData[index1].roomData.roomID),
+                  ),
+                  Flexible(
+                    child: GridView.count(
+                      primary: false,
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      crossAxisCount:
+                          DateUtils.daysInMonth(controller.currentMonth),
+                      children: List.generate(
+                          (DateUtils.daysInMonth(controller.currentMonth) *
+                              (controller.roomBookingData[index1].roomData
+                                  .subQuantity)), (index2) {
+                        return (getDisplayValue(controller, index1, index2)
+                                    .first ==
+                                getDisplayValue(controller, index1, index2)
+                                    .second)
+                            ? HalfCell(
+                                controller: controller,
+                                index1: index1,
+                                index2: index2,
+                                value:
+                                    getDisplayValue(controller, index1, index2)
+                                        .first)
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    flex: 1,
+                                    child: HalfCell(
                                         controller: controller,
                                         index1: index1,
                                         index2: index2,
                                         value: getDisplayValue(
                                                 controller, index1, index2)
-                                            .first)
-                                    : Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            child: HalfCell(
-                                                controller: controller,
-                                                index1: index1,
-                                                index2: index2,
-                                                value: getDisplayValue(
-                                                        controller,
-                                                        index1,
-                                                        index2)
-                                                    .first),
-                                          ),
-                                          Flexible(
-                                            flex: 1,
-                                            child: HalfCell(
-                                                controller: controller,
-                                                index1: index1,
-                                                index2: index2,
-                                                value: getDisplayValue(
-                                                        controller,
-                                                        index1,
-                                                        index2)
-                                                    .second),
-                                          ),
-                                        ],
-                                      );
-                              }),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                                            .first),
+                                  ),
+                                  Flexible(
+                                    flex: 1,
+                                    child: HalfCell(
+                                        controller: controller,
+                                        index1: index1,
+                                        index2: index2,
+                                        value: getDisplayValue(
+                                                controller, index1, index2)
+                                            .second),
+                                  ),
+                                ],
+                              );
+                      }),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 

@@ -6,7 +6,7 @@ class Booking {
   final DateTime bookingDate, dateIn, dateOut;
   final Cat catData;
   final String byRep;
-  final String note, attention;
+  final String? note, attention;
   final int subNumber, bookingID;
   final List<BookingService>? bookingServiceList;
 

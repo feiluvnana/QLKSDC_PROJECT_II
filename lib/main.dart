@@ -41,14 +41,13 @@ class ProjectII extends StatelessWidget {
       ),
       getPages: [
         GetPage(
-          name: "/login",
-          page: () => Title(
-              color: const Color(0xff89b4f7),
-              title: "Đăng nhập",
-              child: LoginPage()),
-          title: "Đăng nhập",
-          middlewares: [AvoidReturningMiddleware()]
-        ),
+            name: "/login",
+            page: () => Title(
+                color: const Color(0xff89b4f7),
+                title: "Đăng nhập",
+                child: LoginPage()),
+            title: "Đăng nhập",
+            middlewares: [AvoidReturningMiddleware()]),
         GetPage(
             name: "/home",
             page: () => Title(

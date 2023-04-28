@@ -49,10 +49,10 @@ $stmt->bind_param("sii", $roomID, $month, $month);
 $stmt->execute();
 $result = $stmt->get_result();
 $return = $result->fetch_all(MYSQLI_ASSOC);
-for($i = 0; $i < count($return); $i++) {
+/*for($i = 0; $i < count($return); $i++) {
     $return[$i]["catImage"] = 
-    base64_encode($return[$i]["catImage"]);
-}
+    base64_encode(file_get_contents($return[$i]["catImage"]));
+}*/
 echo json_encode($return);
 
 ?>

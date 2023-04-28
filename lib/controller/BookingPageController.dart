@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:html';
 import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,8 @@ class BookingPageController extends GetxController {
   final TextEditingController telController = TextEditingController();
 
   final TextEditingController catNameController = TextEditingController();
+  final TextEditingController catWeightController = TextEditingController();
+  int _weightLevel = 0;
   String _catGender = "";
   Uint8List? _catImage;
   final TextEditingController catAgeController = TextEditingController();
@@ -58,6 +61,12 @@ class BookingPageController extends GetxController {
   String get catGender => _catGender;
   set catGender(String value) {
     _catGender = value;
+    update();
+  }
+
+  int get weightLevel => _weightLevel;
+  set weightLevel(int value) {
+    _weightLevel = value;
     update();
   }
 
@@ -136,10 +145,40 @@ class BookingPageController extends GetxController {
   }
 
   Future<void> sendDataToDatabase() async {
-    await GetConnect().post(
-        "http://localhost/php-crash/getServiceForDisplay.php",
-        FormData({
-          "sessionID": Get.find<AuthController>().sessionID,
-        }));
+    print(jsonDecode((await GetConnect().post(
+            "http://localhost/php-crash/setOwnerInfo.php",
+            FormData({
+              "sessionID": Get.find<AuthController>().sessionID,
+              "name": ownerNameController.text,
+              "tel": telController.text,
+              "gender": ownerGender
+            })))
+        .body));
+    int ownerID = jsonDecode((await GetConnect().post(
+            "http://localhost/php-crash/setOwnerInfo.php",
+            FormData({
+              "sessionID": Get.find<AuthController>().sessionID,
+              "name": ownerNameController.text,
+              "tel": telController.text,
+              "gender": ownerGender
+            })))
+        .body)["ownerID"];
+    print("ownerID $ownerID");
+    print((await GetConnect().post(
+            "http://localhost/php-crash/setCatInfo.php",
+            FormData({
+              "sessionID": Get.find<AuthController>().sessionID,
+              "ownerID": ownerID,
+              "name": catNameController.text,
+              "age": catAgeController.text,
+              "image": (catImage == null) ? null : base64Encode(catImage!),
+              "vaccination": vaccination,
+              "species": speciesController.text,
+              "appearance": appearanceController.text,
+              "sterilization": sterilization,
+              "physicalCondition": physicalConditionController.text,
+              "gender": catGender
+            })))
+        .body);
   }
 }

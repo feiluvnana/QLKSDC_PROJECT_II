@@ -10,8 +10,11 @@ class AuthController extends GetxController {
   final TextEditingController _usernameController;
   final TextEditingController _passwordController;
   bool _isClick;
+  bool _isLogged;
 
   String? get sessionID => _sessionID;
+
+  bool get isLogged => _isLogged;
 
   TextEditingController get usernameController => _usernameController;
   TextEditingController get passwordController => _passwordController;
@@ -19,7 +22,8 @@ class AuthController extends GetxController {
   AuthController()
       : _isClick = false,
         _usernameController = TextEditingController(),
-        _passwordController = TextEditingController();
+        _passwordController = TextEditingController(),
+        _isLogged = false;
 
   void authenticate() async {
     if (_isClick) return;
@@ -40,27 +44,8 @@ class AuthController extends GetxController {
     if (jsonDecode(res.body)["success"] && !jsonDecode(res.body)["error"]) {
       _sessionID = jsonDecode(res.body)["sessionID"];
       _isClick = false;
-      Get.to(
-          () => Title(
-                color: const Color(0xff89b4f7),
-                title: "Đang đăng nhập...",
-                child: Scaffold(
-                  body: Center(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                        Text('Đang tải...'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          routeName: "/loading",);
+      _isLogged = true;
+      update();
       initHomePage();
     } else {
       Get.defaultDialog(
@@ -72,7 +57,7 @@ class AuthController extends GetxController {
   Future<void> initHomePage() async {
     await Get.find<CalendarPageController>().getRoomBookingData();
     await Get.find<BookingPageController>().getServiceInfo();
-    await Future.delayed(const Duration(seconds: 2));
+    //await Future.delayed(const Duration(seconds: 2));
     Get.toNamed("/home");
   }
 }

@@ -6,8 +6,7 @@ class AvoidReturningMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final AuthController authController = Get.find<AuthController>();
-    return (authController.sessionID == null)
-        ? null
-        : const RouteSettings(name: "/home");
+    if (authController.sessionID != null && route == "/login")
+      return const RouteSettings(name: "/home");
   }
 }
