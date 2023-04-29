@@ -35,7 +35,7 @@ class ProjectII extends StatelessWidget {
       unknownRoute: GetPage(
         name: '/notfound',
         page: () => Title(
-            color: const Color(0xff89b4f7),
+            color: const Color(0xff68b6ef),
             title: "Trang không tồn tại",
             child: const Text("Trang không tồn tại")),
       ),
@@ -43,7 +43,7 @@ class ProjectII extends StatelessWidget {
         GetPage(
             name: "/login",
             page: () => Title(
-                color: const Color(0xff89b4f7),
+                color: const Color(0xff68b6ef),
                 title: "Đăng nhập",
                 child: LoginPage()),
             title: "Đăng nhập",
@@ -51,7 +51,7 @@ class ProjectII extends StatelessWidget {
         GetPage(
             name: "/home",
             page: () => Title(
-                color: const Color(0xff89b4f7),
+                color: const Color(0xff68b6ef),
                 title: "Trang chủ",
                 child: const HomePage()),
             title: "Trang chủ",
@@ -62,7 +62,7 @@ class ProjectII extends StatelessWidget {
               GetPage(
                   name: "/info",
                   page: () => Title(
-                      color: const Color(0xff89b4f7),
+                      color: const Color(0xff68b6ef),
                       title: "Thông tin",
                       child: const InformationPage()))
             ]),
@@ -77,17 +77,17 @@ class ProjectII extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
           fontFamily: "Arial",
-          primarySwatch: const MaterialColor(0xff89b4f7, {
-            50: Color(0xff89b4f7),
-            100: Color(0xff89b4f7),
-            200: Color(0xff89b4f7),
-            300: Color(0xff89b4f7),
-            400: Color(0xff89b4f7),
-            500: Color(0xff89b4f7),
-            600: Color(0xff89b4f7),
-            700: Color(0xff89b4f7),
-            800: Color(0xff89b4f7),
-            900: Color(0xff89b4f7),
+          primarySwatch: const MaterialColor(0xff68b6ef, {
+            50: Color(0xff68b6ef),
+            100: Color(0xff68b6ef),
+            200: Color(0xff68b6ef),
+            300: Color(0xff68b6ef),
+            400: Color(0xff68b6ef),
+            500: Color(0xff68b6ef),
+            600: Color(0xff68b6ef),
+            700: Color(0xff68b6ef),
+            800: Color(0xff68b6ef),
+            900: Color(0xff68b6ef),
           })),
       initialRoute: "/login",
     );

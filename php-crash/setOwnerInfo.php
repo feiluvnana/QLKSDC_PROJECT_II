@@ -16,7 +16,7 @@ if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
 require_once "config.php";
 
 //QUIT IF NOT RECEIVED DATA
-if(!isset($_POST["sessionID"]) || !isset($_POST["name"]) || !isset($_POST["tel"]) || !isset($_POST["gender"])){
+if(!isset($_POST["sessionID"])){
     echo json_encode([]);
     $conn->close();
     exit();
@@ -40,7 +40,7 @@ $return["ownerID"] = -1;
 //EXECUTE QUERY
 $sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND tel = ? AND ownerGender = ?;";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["name"], $_POST["tel"], $_POST["gender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows != 0) {
@@ -53,13 +53,13 @@ if($result->num_rows != 0) {
 //EXECUTE QUERY
 $sql = "INSERT INTO owner(ownerName, tel, ownerGender) VALUES (?, ?, ?);";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["name"], $_POST["tel"], $_POST["gender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
 $stmt->execute();
 
 //EXECUTE QUERY
 $sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND tel = ? AND ownerGender = ?;";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["name"], $_POST["tel"], $_POST["gender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
 $stmt->execute();
 $result = $stmt->get_result();
 $return["ownerID"] = $result->fetch_array(MYSQLI_ASSOC)["ownerID"];

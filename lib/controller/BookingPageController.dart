@@ -1,10 +1,9 @@
 import 'dart:convert';
-import 'dart:html';
 import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_web/image_picker_web.dart';
-import 'package:project_ii/controller/AuthController.dart';
+import 'AuthController.dart';
 import '../model/ServiceModel.dart';
 
 class BookingPageController extends GetxController {
@@ -19,8 +18,8 @@ class BookingPageController extends GetxController {
 
   final TextEditingController catNameController = TextEditingController();
   final TextEditingController catWeightController = TextEditingController();
-  int _weightLevel = 0;
-  String _catGender = "";
+  int _catWeightLevel = 0;
+  String? _catGender = "";
   Uint8List? _catImage;
   final TextEditingController catAgeController = TextEditingController();
   int _sterilization = -1;
@@ -30,19 +29,20 @@ class BookingPageController extends GetxController {
   final TextEditingController appearanceController = TextEditingController();
   final TextEditingController speciesController = TextEditingController();
 
-  final TextEditingController checkInController = TextEditingController();
-  final TextEditingController checkOutController = TextEditingController();
+  DateTime _checkIn = DateTime.now();
+  DateTime _checkOut = DateTime.now();
+  final checkInController = TextEditingController();
+  final checkOutController = TextEditingController();
   final TextEditingController attentionController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
-  int _roomIndex = -1;
-  int _subRoomIndex = -1;
+  int _roomId = -1;
+  int _subNumber = -1;
   int _numberOfServices = 0;
   int _rank = 0;
   List<int> service = [];
   List<TextEditingController?> quantity = [];
   List<TextEditingController> time = [];
   List<TextEditingController?> distance = [];
-  List<TextEditingController?> weight = [];
 
   List<Service> serviceList = [];
 
@@ -58,15 +58,15 @@ class BookingPageController extends GetxController {
     update();
   }
 
-  String get catGender => _catGender;
-  set catGender(String value) {
+  String? get catGender => _catGender;
+  set catGender(String? value) {
     _catGender = value;
     update();
   }
 
-  int get weightLevel => _weightLevel;
-  set weightLevel(int value) {
-    _weightLevel = value;
+  int get catWeightLevel => _catWeightLevel;
+  set catWeightLevel(int value) {
+    _catWeightLevel = value;
     update();
   }
 
@@ -88,15 +88,25 @@ class BookingPageController extends GetxController {
     update();
   }
 
-  int get roomIndex => _roomIndex;
-  set roomIndex(int value) {
-    _roomIndex = value;
+  DateTime get checkIn => _checkIn;
+  set checkIn(DateTime value) {
+    _checkIn = value;
+  }
+
+  DateTime get checkOut => _checkOut;
+  set checkOut(DateTime value) {
+    _checkOut = value;
+  }
+
+  int get roomId => _roomId;
+  set roomId(int value) {
+    _roomId = value;
     update();
   }
 
-  int get subRoomIndex => _subRoomIndex;
-  set subRoomIndex(int value) {
-    _subRoomIndex = value;
+  int get subNumber => _subNumber;
+  set subNumber(int value) {
+    _subNumber = value;
     update();
   }
 
@@ -139,37 +149,25 @@ class BookingPageController extends GetxController {
         (serviceList[value].requiredQuantity) ? TextEditingController() : null;
     distance[index] =
         (serviceList[value].requiredDistance) ? TextEditingController() : null;
-    weight[index] =
-        (serviceList[value].requiredWeight) ? TextEditingController() : null;
     update();
   }
 
   Future<void> sendDataToDatabase() async {
-    print(jsonDecode((await GetConnect().post(
-            "http://localhost/php-crash/setOwnerInfo.php",
-            FormData({
-              "sessionID": Get.find<AuthController>().sessionID,
-              "name": ownerNameController.text,
-              "tel": telController.text,
-              "gender": ownerGender
-            })))
-        .body));
     int ownerID = jsonDecode((await GetConnect().post(
             "http://localhost/php-crash/setOwnerInfo.php",
             FormData({
               "sessionID": Get.find<AuthController>().sessionID,
-              "name": ownerNameController.text,
+              "ownerName": ownerNameController.text,
               "tel": telController.text,
-              "gender": ownerGender
+              "ownerGender": ownerGender
             })))
         .body)["ownerID"];
-    print("ownerID $ownerID");
-    print((await GetConnect().post(
+    int catID = jsonDecode((await GetConnect().post(
             "http://localhost/php-crash/setCatInfo.php",
             FormData({
               "sessionID": Get.find<AuthController>().sessionID,
               "ownerID": ownerID,
-              "name": catNameController.text,
+              "catName": catNameController.text,
               "age": catAgeController.text,
               "image": (catImage == null) ? null : base64Encode(catImage!),
               "vaccination": vaccination,
@@ -177,8 +175,36 @@ class BookingPageController extends GetxController {
               "appearance": appearanceController.text,
               "sterilization": sterilization,
               "physicalCondition": physicalConditionController.text,
-              "gender": catGender
+              "catGender": catGender,
+              "catWeight": catWeightController.text,
+              "catWeightLevel": catWeightLevel
             })))
-        .body);
+        .body)["catID"];
+    String message = jsonDecode((await GetConnect().post(
+            "http://localhost/php-crash/setBookingInfo.php",
+            FormData({
+              "sessionID": Get.find<AuthController>().sessionID,
+              "catID": catID,
+              "roomID": roomId,
+              "subNumber": subNumber,
+              "dateIn": checkIn.toString(),
+              "dateOut": checkOut.toString(),
+              "attention": attentionController.text,
+              "note": noteController.text,
+              "rank": rank,
+              "services": List.generate(
+                  numberOfServices,
+                  (index) => {
+                        "serviceID": serviceList[index].serviceID,
+                        "time": null,
+                        "quantity": (quantity[index] == null)
+                            ? null
+                            : quantity[index]?.text,
+                        "distance": (distance[index] == null)
+                            ? null
+                            : distance[index]?.text,
+                      })
+            })))
+        .body)["message"];
   }
 }

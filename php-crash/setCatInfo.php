@@ -16,7 +16,7 @@ if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
 require_once "config.php";
 
 //QUIT IF NOT RECEIVED DATA
-if(!isset($_POST["sessionID"]) || !isset($_POST["ownerID"]) || !isset($_POST["name"]) || !isset($_POST["age"]) || !isset($_POST["vaccination"]) || !isset($_POST["sterilization"]) || !isset($_POST["physicalCondition"])){
+if(!isset($_POST["sessionID"])){
     echo json_encode([]);
     $conn->close();
     exit();
@@ -42,10 +42,10 @@ $sql = "SELECT catID
         FROM cat
         WHERE ownerID = ? AND catName = ? AND catGender = ? 
         AND age = ? AND vaccination = ? AND species = ? AND appearance = ?
-        AND sterilization = ? AND physicalCondition = ?";
+        AND sterilization = ? AND physicalCondition = ? AND catWeight = ? AND catWeightLevel = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("issiissis", $_POST["ownerID"],$_POST["name"], $_POST["gender"], $_POST["age"], $_POST["vaccination"]
-, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"]);
+$stmt->bind_param("issiissisdi", $_POST["ownerID"],$_POST["catName"], $_POST["catGender"], $_POST["age"], $_POST["vaccination"]
+, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"], $_POST["catWeight"], $_POST["catWeightLevel"]);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows != 0) {
@@ -58,10 +58,10 @@ if($result->num_rows != 0) {
 
 //EXECUTE QUERY
 $sql = "INSERT INTO cat(ownerID, catName, catGender, age, vaccination,
-species, appearance, sterilization, physicalCondition) VALUES (?,?,?,?,?,?,?,?,?);";
+species, appearance, sterilization, physicalCondition, catWeight, catWeightLevel) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("issiissis", $_POST["ownerID"],$_POST["name"], $_POST["gender"], $_POST["age"], $_POST["vaccination"]
-, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"]);
+$stmt->bind_param("issiissisdi", $_POST["ownerID"],$_POST["catName"], $_POST["catGender"], $_POST["age"], $_POST["vaccination"]
+, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"], $_POST["catWeight"], $_POST["catWeightLevel"]);
 $stmt->execute();
 
 //EXECUTE QUERY
@@ -69,10 +69,10 @@ $sql = "SELECT catID
         FROM cat
         WHERE ownerID = ? AND catName = ? AND catGender = ? 
         AND age = ? AND vaccination = ? AND species = ? AND appearance = ?
-        AND sterilization = ? AND physicalCondition = ?";
+        AND sterilization = ? AND physicalCondition = ? AND catWeight = ? AND catWeightLevel = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("issiissis", $_POST["ownerID"],$_POST["name"], $_POST["gender"], $_POST["age"], $_POST["vaccination"]
-, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"]);
+$stmt->bind_param("issiissisdi", $_POST["ownerID"],$_POST["catName"], $_POST["catGender"], $_POST["age"], $_POST["vaccination"]
+, $_POST["species"], $_POST["appearance"], $_POST["sterilization"], $_POST["physicalCondition"], $_POST["catWeight"], $_POST["catWeightLevel"]);
 $stmt->execute();
 $result = $stmt->get_result();
 $return["catID"] = $result->fetch_array(MYSQLI_ASSOC)["catID"];
@@ -83,6 +83,7 @@ exit();
 
 
 function uploadImage($catID, $conn) {
+    if(!isset($_POST["image"])) return;
     $bin = base64_decode($_POST["image"]);
     $image = imagecreatefromstring($bin);
     $path = "image/cat/" . $catID . ".png";
