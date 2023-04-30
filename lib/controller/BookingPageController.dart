@@ -9,6 +9,7 @@ import '../model/ServiceModel.dart';
 import 'CalendarPageController.dart';
 
 class BookingPageController extends GetxController {
+  bool _isSubmitClicked = false;
   int _currentStep = 0;
   final GlobalKey<FormState> formKey1 = GlobalKey();
   final GlobalKey<FormState> formKey2 = GlobalKey();
@@ -42,8 +43,8 @@ class BookingPageController extends GetxController {
   int _numberOfServices = 0;
   int _eatingRank = 0;
   List<int> serviceList = [];
-  List<DateTime> serviceTime = [];
-  List<TextEditingController> time = [];
+  List<DateTime?> serviceTimeValue = [];
+  List<TextEditingController?> serviceTime = [];
   List<TextEditingController?> serviceQuantity = [];
   List<TextEditingController?> serviceDistance = [];
   List<Service> allServiceList = [];
@@ -146,10 +147,14 @@ class BookingPageController extends GetxController {
     serviceDistance[index] = (allServiceList[value].requiredDistance)
         ? TextEditingController()
         : null;
+    serviceTime[index] =
+        (allServiceList[value].requiredTime) ? TextEditingController() : null;
     update();
   }
 
   Future<void> sendDataToDatabase() async {
+    if (_isSubmitClicked) return;
+    _isSubmitClicked = true;
     int ownerID = jsonDecode((await GetConnect().post(
             "http://localhost/php-crash/setOwnerInfo.php",
             FormData({
@@ -194,25 +199,30 @@ class BookingPageController extends GetxController {
               "attention": attentionController.text,
               "note": noteController.text,
               "eatingRank": eatingRank,
-              "bookingServicesList": List.generate(
+              "bookingServicesList": jsonEncode(List.generate(
                   numberOfServices,
                   (index) => {
                         "serviceID": allServiceList[index].serviceID,
-                        "serviceTime": serviceTime[index].toString(),
+                        "serviceTime": serviceTimeValue[index].toString(),
                         "serviceQuantity": (serviceQuantity[index] == null)
                             ? null
                             : serviceQuantity[index]?.text,
                         "serviceDistance": (serviceDistance[index] == null)
                             ? null
                             : serviceDistance[index]?.text,
-                      })
+                      }))
             })))
         .body)["message"];
-    await Get.defaultDialog(title: "Thông báo", content: Text(message));
-    await Get.find<CalendarPageController>().getBookingDataForAllRooms();
-    Get.find<HomePageController>()
-      ..homePageIndex = 0
-      ..update();
-    dispose();
+    await Get.defaultDialog(
+      barrierDismissible: true,
+      title: "Thông báo",
+      content: Text(message),
+    ).then((value) => _isSubmitClicked = false);
+    if (message == "Đã đặt phòng thành công.") {
+      await Get.find<CalendarPageController>().getBookingDataForAllRooms();
+      Get.find<HomePageController>()
+        ..homePageIndex = 0
+        ..update();
+    }
   }
 }

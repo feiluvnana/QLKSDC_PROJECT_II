@@ -6,7 +6,7 @@ class Booking {
   final Cat catData;
   final String byRep;
   final String? note, attention;
-  final int subNumber, bookingID;
+  final int subNumber, bookingID, eatingRank;
   final List<BookingService>? bookingServiceList;
 
   Booking.fromJson(Map<String, dynamic> json)
@@ -18,6 +18,7 @@ class Booking {
         note = json["note"],
         byRep = json["byRep"],
         subNumber = json["subNumber"],
+        eatingRank = json["eatingRank"],
         catData = Cat.fromJson({
           "catID": json["catID"],
           "catName": json["catName"],
@@ -29,6 +30,8 @@ class Booking {
           "catGender": json["catGender"],
           "catSpecies": json["catSpecies"],
           "catAppearance": json["catAppearance"],
+          "catWeightLevel": json["catWeightLevel"],
+          "catWeight": json["catWeight"],
           "owner": {
             "ownerName": json["ownerName"],
             "ownerGender": json["ownerGender"],

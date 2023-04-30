@@ -1,13 +1,13 @@
 <?php
 //CORS SETUP
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: http://localhost');
 // Specify which request methods are allowed
 header('Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS');
 // Additional headers which may be sent along with the CORS request
-header('Access-Control-Allow-Headers: *');
+//header('Access-Control-Allow-Headers: *');
 // Set the age to 1 day to improve speed/caching.
-header('Access-Control-Max-Age: 86400');
-header("Access-Control-Allow-Credentials: true");
+//header('Access-Control-Max-Age: 86400');
+//header("Access-Control-Allow-Credentials: true");
 // Exit early so the page isn't fully loaded for options requests
 if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
     exit();
@@ -74,7 +74,25 @@ $stmt->bind_param("sisisssssi", $_POST["roomID"], $_POST["catID"], $bookingDate,
 $stmt->execute();
 
 //EXECUTE QUERY
+$sql = "SELECT bookingID 
+        FROM booking 
+        WHERE roomID = ? AND catID = ? AND bookingDate = ? AND subNumber = ? AND checkInDate = ?
+        AND checkOutDate = ? AND attention = ? AND note = ? AND byRep = ? AND eatingRank = ?;";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sisisssssi", $_POST["roomID"], $_POST["catID"], $bookingDate, $_POST["subNumber"], $_POST["checkInDate"], $_POST["checkOutDate"], $_POST["attention"], $_POST["note"], $repName, $_POST["eatingRank"]);
+$stmt->execute();
+$result = $stmt->get_result();
+$bookingID = $result->fetch_array(MYSQLI_ASSOC)["bookingID"];
 
+//EXECUTE QUERY
+$list = json_decode($_POST["bookingServicesList"]);
+for($i = 0; $i < count($list) && isset($list); $i++) {
+    $sql = "INSERT INTO bookingservice(bookingID, serviceID, serviceTime, serviceQuantity, serviceDistance) 
+            VALUES (?, ?, ?, ?, ?);";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iisid", $bookingID, $list[$i]->serviceID, $list[$i]->serviceTime, $list[$i]->serviceQuantity, $list[$i]->serviceDistance);
+    $stmt->execute();
+}
 
 $return["message"] = "Đã đặt phòng thành công.";
 echo json_encode($return);

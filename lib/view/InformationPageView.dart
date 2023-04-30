@@ -41,8 +41,8 @@ class CatInfo extends StatelessWidget {
         ? Container()
         : Image.memory(
             base64.decode(bookingData.catData.catImage!),
-            width: 500,
-            height: 500,
+            width: 400,
+            height: 400,
             fit: BoxFit.scaleDown,
           );
     return Column(
@@ -63,8 +63,8 @@ class CatInfo extends StatelessWidget {
         ),
         Table(
           columnWidths: const {
-            0: FixedColumnWidth(100),
-            1: FixedColumnWidth(1000)
+            0: FixedColumnWidth(80),
+            1: FixedColumnWidth(600)
           },
           border: TableBorder.all(width: 0.5),
           children: [
@@ -185,8 +185,8 @@ class OwnerInfo extends StatelessWidget {
         ),
         Table(
           columnWidths: const {
-            0: FixedColumnWidth(100),
-            1: FixedColumnWidth(1000)
+            0: FixedColumnWidth(70),
+            1: FixedColumnWidth(700)
           },
           border: TableBorder.all(width: 0.5),
           children: [
@@ -250,8 +250,8 @@ class BookingInfo extends StatelessWidget {
         ),
         Table(
           columnWidths: const {
-            0: FixedColumnWidth(100),
-            1: FixedColumnWidth(1000)
+            0: FixedColumnWidth(70),
+            1: FixedColumnWidth(700)
           },
           border: TableBorder.all(width: 0.5),
           children: [

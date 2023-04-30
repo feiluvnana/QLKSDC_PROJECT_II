@@ -7,7 +7,7 @@ header('Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: *');
 // Set the age to 1 day to improve speed/caching.
 header('Access-Control-Max-Age: 86400');
-header("Access-Control-Allow-Credentials: true");
+//header("Access-Control-Allow-Credentials: true");
 // Exit early so the page isn't fully loaded for options requests
 if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
     exit();
@@ -48,11 +48,12 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("sii", $roomID, $month, $month);
 $stmt->execute();
 $result = $stmt->get_result();
-$return = $result->fetch_all(MYSQLI_ASSOC);
-for($i = 0; $i < count($return); $i++) {
-    if(!isset($return[$i]["catImage"])) return;
-    $return[$i]["catImage"] = 
-    base64_encode(file_get_contents($return[$i]["catImage"]));
+$return = array();
+while($row = $result->fetch_array(MYSQLI_ASSOC)) {
+    if(!isset($row["catImage"])) { array_push($return, $row); continue;}
+    $row["catImage"] = 
+    base64_encode(file_get_contents($row["catImage"]));
+    array_push($return, $row);
 }
 echo json_encode($return);
 $conn->close();

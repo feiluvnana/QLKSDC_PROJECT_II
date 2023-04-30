@@ -723,10 +723,8 @@ class BookingPage extends StatelessWidget {
                                 ElevatedButton(
                                     onPressed: () {
                                       controller.serviceList.add(-1);
-                                      controller.time
-                                          .add(TextEditingController());
-                                      controller.serviceTime
-                                          .add(DateTime.now());
+                                      controller.serviceTime.add(null);
+                                      controller.serviceTimeValue.add(null);
                                       controller.serviceQuantity.add(null);
                                       controller.serviceDistance.add(null);
                                       controller.numberOfServices =
@@ -794,14 +792,20 @@ class ServiceInput extends StatelessWidget {
             ),
           ),
         ),
-        Flexible(
-          child: DateTimePicker(
-              controller: controller.time[index1],
-              titleOfTextField: "Thời gian",
-              validator: (value) => null,
-              isIn: 0,
-              index1: index1),
-        ),
+        (controller.serviceTime[index1] == null)
+            ? Flexible(flex: 0, child: Container())
+            : Flexible(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: DateTimePicker(
+                      controller: controller.serviceTime[index1]!,
+                      titleOfTextField: "Thời gian",
+                      validator: (value) => null,
+                      isIn: 0,
+                      index1: index1),
+                ),
+              ),
         (controller.serviceQuantity[index1] == null)
             ? Flexible(flex: 0, child: Container())
             : ServiceValue(
@@ -827,15 +831,16 @@ class ServiceInput extends StatelessWidget {
                     return "Khoảng cách phải lớn hơn 0";
                   return null;
                 },
-                label: "Khoảng cách"),
+                label: "Khoảng cách",
+                suffix: "km"),
         Flexible(
             child: ElevatedButton(
                 onPressed: () {
                   controller.serviceList.removeAt(index1);
-                  controller.time.removeAt(index1);
+                  controller.serviceTime.removeAt(index1);
                   controller.serviceQuantity.removeAt(index1);
                   controller.serviceDistance.removeAt(index1);
-                  controller.serviceTime.removeAt(index1);
+                  controller.serviceTimeValue.removeAt(index1);
                   controller.numberOfServices = controller.numberOfServices - 1;
                 },
                 child: const Text("Xóa dịch vụ"))),
@@ -848,12 +853,14 @@ class ServiceValue extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?) validator;
   final String label;
+  final String? suffix;
 
   const ServiceValue(
       {super.key,
       required this.controller,
       required this.validator,
-      required this.label});
+      required this.label,
+      this.suffix});
 
   @override
   Widget build(BuildContext context) {
@@ -864,6 +871,7 @@ class ServiceValue extends StatelessWidget {
           controller: controller,
           validator: validator,
           decoration: InputDecoration(
+            suffix: (suffix == null) ? null : Text(suffix!),
             labelText: label,
             border: const OutlineInputBorder(),
           ),
@@ -919,7 +927,7 @@ class DateTimePicker extends StatelessWidget {
         } else if (isIn < 0) {
           Get.find<BookingPageController>().checkOutDate = date;
         } else {
-          Get.find<BookingPageController>().serviceTime[index1!] = date;
+          Get.find<BookingPageController>().serviceTimeValue[index1!] = date;
         }
         if (context.mounted) {
           controller.text = DateFormat('dd/MM/yyyy HH:mm').format(date);

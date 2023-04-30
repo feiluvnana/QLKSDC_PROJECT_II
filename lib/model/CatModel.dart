@@ -1,7 +1,8 @@
 import 'OwnerModel.dart';
 
 class Cat {
-  final int catID, catAge, catSterilization, catVaccination;
+  final int catID, catAge, catSterilization, catVaccination, catWeightLevel;
+  final double? catWeight;
   final String catName, catPhysicalCondition;
   final String? catGender, catSpecies, catAppearance, catImage;
   final Owner ownerData;
@@ -17,5 +18,7 @@ class Cat {
         catGender = json["catGender"],
         catSpecies = json["caySpecies"],
         catAppearance = json["catAppearance"],
+        catWeightLevel = json["catWeightLevel"],
+        catWeight = json["catWeight"],
         ownerData = Owner.fromJson(json["owner"]);
 }

@@ -22,19 +22,15 @@ class LoginPageController extends GetxController {
   void authenticate() async {
     if (_isClick) return;
     _isClick = true;
-    Response res = const Response();
-    try {
-      String authString =
-          "${_usernameController.text}:${md5.convert(utf8.encode(_passwordController.text))}";
-      print(authString);
-      res = await GetConnect().post(
-        "http://localhost/php-crash/login.php",
-        FormData({"authString": authString}),
-      );
-      print(res.body);
-    } catch (event) {
-      Get.defaultDialog(middleText: "Có lỗi khi kết nối với máy chủ.");
-    }
+    Response res;
+    String authString =
+        "${_usernameController.text}:${md5.convert(utf8.encode(_passwordController.text))}";
+    print(authString);
+    res = await GetConnect().post(
+      "http://localhost/php-crash/login.php",
+      FormData({"authString": authString}),
+    );
+
     if (jsonDecode(res.body)["success"] && !jsonDecode(res.body)["error"]) {
       await GetStorage().write("sessionID", jsonDecode(res.body)["sessionID"]);
       await GetStorage().write("fullname", jsonDecode(res.body)["fullname"]);
