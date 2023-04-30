@@ -37,12 +37,14 @@ class CatInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Booking bookingData = Get.arguments["bookingData"];
-    Image catImage = Image.memory(
-      base64.decode(bookingData.catData.catImage ?? ""),
-      width: 500,
-      height: 500,
-      fit: BoxFit.scaleDown,
-    );
+    Widget catImage = (bookingData.catData.catImage == null)
+        ? Container()
+        : Image.memory(
+            base64.decode(bookingData.catData.catImage!),
+            width: 500,
+            height: 500,
+            fit: BoxFit.scaleDown,
+          );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -111,7 +113,7 @@ class CatInfo extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(bookingData.catData.age.toString()),
+                  child: Text(bookingData.catData.catAge.toString()),
                 )
               ],
             ),
@@ -123,7 +125,7 @@ class CatInfo extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(bookingData.catData.physicalCondition),
+                  child: Text(bookingData.catData.catPhysicalCondition),
                 )
               ],
             ),
@@ -136,7 +138,7 @@ class CatInfo extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(bookingData.catData.species ?? ""),
+                  child: Text(bookingData.catData.catSpecies ?? ""),
                 )
               ],
             ),
@@ -148,7 +150,7 @@ class CatInfo extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(bookingData.catData.appearance ?? ""),
+                  child: Text(bookingData.catData.catAppearance ?? ""),
                 )
               ],
             )
@@ -212,7 +214,7 @@ class OwnerInfo extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(bookingData.catData.ownerData.tel),
+                  child: Text(bookingData.catData.ownerData.ownerTel),
                 )
               ],
             ),
@@ -310,9 +312,9 @@ class BookingInfo extends StatelessWidget {
                                 const TextSpan(text: "Check-in:\n"),
                                 TextSpan(
                                   text: DateFormat("yyyy-MM-dd HH:mm:ss")
-                                      .format(bookingData.dateIn),
+                                      .format(bookingData.checkInDate),
                                   style: TextStyle(
-                                      color: (bookingData.dateIn.hour < 14)
+                                      color: (bookingData.checkInDate.hour < 14)
                                           ? Colors.red
                                           : null),
                                 )
@@ -327,11 +329,14 @@ class BookingInfo extends StatelessWidget {
                                 const TextSpan(text: "Check-out:\n"),
                                 TextSpan(
                                   text: DateFormat("yyyy-MM-dd HH:mm:ss")
-                                      .format(bookingData.dateOut),
+                                      .format(bookingData.checkOutDate),
                                   style: TextStyle(
-                                      color: (bookingData.dateOut.hour > 14 ||
-                                              (bookingData.dateOut.hour == 14 &&
-                                                  bookingData.dateOut.minute >
+                                      color: (bookingData.checkOutDate.hour >
+                                                  14 ||
+                                              (bookingData.checkOutDate.hour ==
+                                                      14 &&
+                                                  bookingData
+                                                          .checkOutDate.minute >
                                                       0))
                                           ? Colors.red
                                           : null),

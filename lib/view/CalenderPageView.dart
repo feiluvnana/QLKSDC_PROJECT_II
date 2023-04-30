@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart' hide DateUtils;
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import '../controller/CalendarPageController.dart';
-import '../utils/DateUtils.dart';
 import '../utils/PairUtils.dart';
 import 'GuestListView.dart';
 
@@ -27,20 +27,22 @@ class CalenderPage extends StatelessWidget {
                   GestureDetector(
                     child: const FaIcon(FontAwesomeIcons.arrowLeft),
                     onTap: () =>
-                        Get.find<CalendarPageController>().addMonths(month: -1),
+                        Get.find<CalendarPageController>().addMonths(value: -1),
                   ),
                   GetBuilder<CalendarPageController>(
-                    builder: (controller) =>
-                        Text(" ${controller.printCurrentMonth()}"),
+                    id: "monthText",
+                    builder: (controller) => Text(
+                        DateFormat("MM/yyyy").format(controller.currentMonth)),
                   ),
                   GestureDetector(
                     child: const FaIcon(FontAwesomeIcons.arrowRight),
                     onTap: () =>
-                        Get.find<CalendarPageController>().addMonths(month: 1),
+                        Get.find<CalendarPageController>().addMonths(value: 1),
                   ),
                 ],
               ),
               GetBuilder<CalendarPageController>(
+                  id: "guestList",
                   builder: (controller) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -55,15 +57,16 @@ class CalenderPage extends StatelessWidget {
                           ),
                           DropdownButton<int>(
                             items: List.generate(
-                                DateUtils.daysInMonth(controller.currentMonth),
+                                controller.daysInCurrentMonth,
                                 (index) => DropdownMenuItem(
                                       value: index + 1,
                                       child: Text("${index + 1}"),
                                     )),
                             onChanged: (int? value) {
-                              controller.dayForList = value!;
+                              controller.dayForGuestList = value!;
+                              controller.update(["guestList"]);
                             },
-                            value: controller.dayForList,
+                            value: controller.dayForGuestList,
                           )
                         ],
                       ))
@@ -77,20 +80,20 @@ class CalenderPage extends StatelessWidget {
               ),
               Flexible(
                 child: GetBuilder<CalendarPageController>(
+                  id: "dayLabel",
                   builder: (controller) => GridView.count(
                     shrinkWrap: true,
                     childAspectRatio: 2,
-                    crossAxisCount:
-                        DateUtils.daysInMonth(controller.currentMonth),
+                    crossAxisCount: controller.daysInCurrentMonth,
                     children: List.generate(
-                      DateUtils.daysInMonth(controller.currentMonth),
+                      controller.daysInCurrentMonth,
                       (index) => Container(
                         margin: const EdgeInsets.all(1),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                             color: (DateTime(
-                                            controller.currentMonth["year"]!,
-                                            controller.currentMonth["month"]!,
+                                            controller.currentMonth.year,
+                                            controller.currentMonth.month,
                                             index + 1)
                                         .weekday >
                                     5)
@@ -99,12 +102,14 @@ class CalenderPage extends StatelessWidget {
                             border:
                                 Border.all(color: Colors.black, width: 0.25)),
                         child: Text(
-                          DateUtils.daysInWeek(DateTime(
-                                      controller.currentMonth["year"]!,
-                                      controller.currentMonth["month"]!,
-                                      index + 1)
-                                  .weekday %
-                              7),
+                          DateTime(
+                                          controller.currentMonth.year,
+                                          controller.currentMonth.month,
+                                          index + 1)
+                                      .weekday ==
+                                  7
+                              ? "CN"
+                              : "T${DateTime(controller.currentMonth.year, controller.currentMonth.month, index + 1).weekday + 1}",
                           style: const TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
@@ -131,26 +136,28 @@ class BookingInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<CalendarPageController>(builder: (controller) {
-      return FutureBuilder(
-          future: displayTable(controller, context),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                  Text('Đang tải...'),
-                ],
-              );
-            }
-            return snapshot.requireData;
-          });
-    });
+    return GetBuilder<CalendarPageController>(
+        id: "table",
+        builder: (controller) {
+          return FutureBuilder(
+              future: displayTable(controller, context),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                      Text('Đang tải...'),
+                    ],
+                  );
+                }
+                return snapshot.requireData;
+              });
+        });
   }
 
   Future<Widget> displayTable(
@@ -161,7 +168,7 @@ class BookingInfo extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
-          controller.roomBookingData.length,
+          controller.bookingDataForAllRooms.length,
           (index1) {
             return Container(
               decoration: BoxDecoration(border: Border.all(width: 0.45)),
@@ -170,20 +177,19 @@ class BookingInfo extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: MediaQuery.of(context).size.width / 32,
-                    child: Text(
-                        controller.roomBookingData[index1].roomData.roomID),
+                    child: Text(controller
+                        .bookingDataForAllRooms[index1].roomData.roomID),
                   ),
                   Flexible(
                     child: GridView.count(
                       primary: false,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
-                      crossAxisCount:
-                          DateUtils.daysInMonth(controller.currentMonth),
+                      crossAxisCount: controller.daysInCurrentMonth,
                       children: List.generate(
-                          (DateUtils.daysInMonth(controller.currentMonth) *
-                              (controller.roomBookingData[index1].roomData
-                                  .subQuantity)), (index2) {
+                          (controller.daysInCurrentMonth *
+                              (controller.bookingDataForAllRooms[index1]
+                                  .roomData.subQuantity)), (index2) {
                         return (getDisplayValue(controller, index1, index2)
                                     .first ==
                                 getDisplayValue(controller, index1, index2)
@@ -234,9 +240,9 @@ class BookingInfo extends StatelessWidget {
 
   Pair getDisplayValue(
       CalendarPageController controller, int index1, int index2) {
-    return controller.roomBookingData[index1].displayArray[
-            index2 ~/ DateUtils.daysInMonth(controller.currentMonth)]
-        [index2 % DateUtils.daysInMonth(controller.currentMonth)];
+    return controller.bookingDataForAllRooms[index1]
+            .displayArray[index2 ~/ controller.daysInCurrentMonth]
+        [index2 % controller.daysInCurrentMonth];
   }
 }
 
@@ -258,14 +264,13 @@ class HalfCell extends StatelessWidget {
         ? Container(
             margin: const EdgeInsets.all(1),
             decoration: BoxDecoration(
-                color: (controller.isBeforeToday(index2 %
-                            DateUtils.daysInMonth(controller.currentMonth) +
-                        1))
+                color: (controller.isBeforeToday(
+                        index2 % controller.daysInCurrentMonth + 1))
                     ? Colors.grey[400]
                     : Colors.grey[200]),
             alignment: Alignment.bottomRight,
             child: Text(
-              "${index2 % DateUtils.daysInMonth(controller.currentMonth) + 1}",
+              "${index2 % controller.daysInCurrentMonth + 1}",
               style: const TextStyle(fontSize: 10),
             ),
           )
@@ -273,13 +278,13 @@ class HalfCell extends StatelessWidget {
             mouseCursor: MaterialStateMouseCursor.clickable,
             onTap: () => Get.toNamed("/home/info", arguments: {
               "bookingData":
-                  controller.roomBookingData[index1].bookingData[value],
-              "roomData": controller.roomBookingData[index1].roomData
+                  controller.bookingDataForAllRooms[index1].bookingData[value],
+              "roomData": controller.bookingDataForAllRooms[index1].roomData
             }),
             child: Tooltip(
               waitDuration: const Duration(seconds: 1),
               message:
-                  "${controller.roomBookingData[index1].roomData.getRoomDataToString()}\n${controller.roomBookingData[index1].bookingData[value].getBookingInfoToString()}",
+                  "${controller.bookingDataForAllRooms[index1].roomData.getRoomDataToString()}\n${controller.bookingDataForAllRooms[index1].bookingData[value].getBookingInfoToString()}",
               child: Container(
                 margin: (isTheBeginningOfABooking(
                         controller, index1, index2, value))
@@ -293,11 +298,11 @@ class HalfCell extends StatelessWidget {
                     ? RichText(
                         text: TextSpan(children: [
                           TextSpan(
-                              text: controller.roomBookingData[index1]
+                              text: controller.bookingDataForAllRooms[index1]
                                   .bookingData[value].catData.catName,
                               style: TextStyle(
                                   fontSize: (controller
-                                              .roomBookingData[index1]
+                                              .bookingDataForAllRooms[index1]
                                               .bookingData[value]
                                               .catData
                                               .catName
@@ -321,17 +326,17 @@ class HalfCell extends StatelessWidget {
 
   Pair getDisplayValue(
       CalendarPageController controller, int index1, int index2) {
-    return controller.roomBookingData[index1].displayArray[
-            index2 ~/ DateUtils.daysInMonth(controller.currentMonth)]
-        [index2 % DateUtils.daysInMonth(controller.currentMonth)];
+    return controller.bookingDataForAllRooms[index1]
+            .displayArray[index2 ~/ controller.daysInCurrentMonth]
+        [index2 % controller.daysInCurrentMonth];
   }
 
   bool isTheEndOfABooking(
       CalendarPageController controller, int index1, int index2, int value) {
     if (getDisplayValue(controller, index1, index2).first ==
         getDisplayValue(controller, index1, index2).second) {
-      if (index2 % DateUtils.daysInMonth(controller.currentMonth) ==
-          DateUtils.daysInMonth(controller.currentMonth) - 1) return true;
+      if (index2 % controller.daysInCurrentMonth ==
+          controller.daysInCurrentMonth - 1) return true;
       if (getDisplayValue(controller, index1, index2).second !=
           getDisplayValue(controller, index1, index2 + 1).first) return true;
       return false;
@@ -347,7 +352,7 @@ class HalfCell extends StatelessWidget {
       CalendarPageController controller, int index1, int index2, int value) {
     if (getDisplayValue(controller, index1, index2).first ==
         getDisplayValue(controller, index1, index2).second) {
-      if (index2 % DateUtils.daysInMonth(controller.currentMonth) == 0) {
+      if (index2 % controller.daysInCurrentMonth == 0) {
         return true;
       }
       if (getDisplayValue(controller, index1, index2).first !=
@@ -368,7 +373,7 @@ class HalfCell extends StatelessWidget {
   ) {
     if (getDisplayValue(controller, index1, index2).first ==
         getDisplayValue(controller, index1, index2).second) {
-      if (index2 % DateUtils.daysInMonth(controller.currentMonth) == 0) {
+      if (index2 % controller.daysInCurrentMonth == 0) {
         return true;
       }
       if (getDisplayValue(controller, index1, index2).first !=
@@ -385,13 +390,19 @@ class HalfCell extends StatelessWidget {
   int getNumberOfNights(
       CalendarPageController controller, int index1, int index2, int value) {
     return DateTime(
-            controller.roomBookingData[index1].bookingData[value].dateOut.year,
-            controller.roomBookingData[index1].bookingData[value].dateOut.month,
-            controller.roomBookingData[index1].bookingData[value].dateOut.day)
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkOutDate.year,
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkOutDate.month,
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkOutDate.day)
         .difference(DateTime(
-            controller.roomBookingData[index1].bookingData[value].dateIn.year,
-            controller.roomBookingData[index1].bookingData[value].dateIn.month,
-            controller.roomBookingData[index1].bookingData[value].dateIn.day))
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkInDate.year,
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkInDate.month,
+            controller.bookingDataForAllRooms[index1].bookingData[value]
+                .checkInDate.day))
         .inDays;
   }
 }

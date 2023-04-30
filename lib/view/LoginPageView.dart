@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/controller/AuthController.dart';
+import 'package:project_ii/controller/LoginPageController.dart';
 
 class LoginPage extends StatelessWidget {
   final GlobalKey<FormState> _formKey = GlobalKey();
@@ -10,7 +10,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GetBuilder<AuthController>(builder: (controller) {
+      body: GetBuilder<LoginPageController>(builder: (controller) {
         return (!controller.isLogged)
             ? Container(
                 decoration: const BoxDecoration(

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/binding/AuthBinding.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:project_ii/controller/HomePageController.dart';
-import '../controller/AuthController.dart';
-import '../controller/CalendarPageController.dart';
 import 'BookingPageView.dart';
 import 'CalenderPageView.dart';
-import 'LoginPageView.dart';
 import 'RoomPageView.dart';
 
 class HomePage extends StatelessWidget {
@@ -22,9 +19,6 @@ class HomePage extends StatelessWidget {
             NavigationRail(
               elevation: 8,
               onDestinationSelected: (index) {
-                if (index != 0) {
-                  Get.find<CalendarPageController>().index = 0;
-                }
                 Get.find<HomePageController>().homePageIndex = index;
               },
               destinations: const [
@@ -52,14 +46,12 @@ class HomePage extends StatelessWidget {
               selectedIndex: Get.find<HomePageController>().homePageIndex,
               extended: true,
               trailing: ElevatedButton(
-                  onPressed: () {
-                    GetConnect().post(
+                  onPressed: () async {
+                    await GetConnect().post(
                       "http://localhost/php-crash/logout.php",
-                      FormData(
-                          {"sessionID": Get.find<AuthController>().sessionID}),
+                      FormData({"sessionID": GetStorage().read("sessionID")}),
                     );
-                    AuthBinding().delete();
-                    AuthBinding().dependencies();
+                    await GetStorage().remove("sessionID");
                     Get.offAllNamed("/login");
                   },
                   child: Row(

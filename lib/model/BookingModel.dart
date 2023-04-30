@@ -1,9 +1,8 @@
-import '../utils/DateUtils.dart';
 import 'CatModel.dart';
 import 'BookingServiceModel.dart';
 
 class Booking {
-  final DateTime bookingDate, dateIn, dateOut;
+  final DateTime bookingDate, checkInDate, checkOutDate;
   final Cat catData;
   final String byRep;
   final String? note, attention;
@@ -13,8 +12,8 @@ class Booking {
   Booking.fromJson(Map<String, dynamic> json)
       : bookingID = json["bookingID"],
         bookingDate = DateTime.parse(json["bookingDate"]),
-        dateIn = DateTime.parse(json["dateIn"]),
-        dateOut = DateTime.parse(json["dateOut"]),
+        checkInDate = DateTime.parse(json["checkInDate"]),
+        checkOutDate = DateTime.parse(json["checkOutDate"]),
         attention = json["attention"],
         note = json["note"],
         byRep = json["byRep"],
@@ -23,23 +22,23 @@ class Booking {
           "catID": json["catID"],
           "catName": json["catName"],
           "catImage": json["catImage"],
-          "age": json["age"],
-          "sterilization": json["sterilization"],
-          "vaccination": json["vaccination"],
-          "physicalCondition": json["physicalCondition"],
+          "catAge": json["catAge"],
+          "catSterilization": json["catSterilization"],
+          "catVaccination": json["catVaccination"],
+          "catPhysicalCondition": json["catPhysicalCondition"],
           "catGender": json["catGender"],
-          "species": json["species"],
-          "appearance": json["appearance"],
+          "catSpecies": json["catSpecies"],
+          "catAppearance": json["catAppearance"],
           "owner": {
             "ownerName": json["ownerName"],
             "ownerGender": json["ownerGender"],
-            "tel": json["tel"],
+            "ownerTel": json["ownerTel"],
             "ownerID": json["ownerID"],
           }
         }),
         bookingServiceList = json["bookingServiceList"];
 
   String getBookingInfoToString() {
-    return "Mèo: ${catData.catName}\nCheck-in: ${DateUtils.dateTimeToString(dateIn)}\nCheck-out: ${DateUtils.dateTimeToString(dateOut)}\nGhi chú: $note\nLễ tân tiếp nhận: $byRep\nNgày đặt phòng: ${DateUtils.dateTimeToString(bookingDate)}";
+    return "Mèo: ${catData.catName}\nCheck-in: \nCheck-out: \nGhi chú: $note\nLễ tân tiếp nhận: $byRep\nNgày đặt phòng: ";
   }
 }

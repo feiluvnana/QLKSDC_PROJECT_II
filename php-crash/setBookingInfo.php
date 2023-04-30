@@ -41,32 +41,42 @@ $return["message"] = "";
 $sql = "SELECT *
         FROM booking
         WHERE roomID = ? AND subNumber = ? AND
-        ((dateIn BETWEEN ? AND ?) OR
-        (dateOut BETWEEN ? AND ?))";
+        ((checkInDate BETWEEN ? AND ?) OR
+        (checkOutDate BETWEEN ? AND ?))";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
+$stmt->bind_param("iissss", $_POST["roomID"], $_POST["subNumber"], $_POST["checkInDate"], $_POST["checkOutDate"],
+$_POST["checkInDate"], $_POST["checkOutDate"]);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows != 0) {
-    $return["ownerID"] = $result->fetch_array(MYSQLI_ASSOC)["ownerID"];
+    $return["message"] = "Không thể đặt phòng do đã có khách đặt trước.";
     echo json_encode($return);
     $conn->close();
     exit();
 }
 
 //EXECUTE QUERY
-$sql = "INSERT INTO owner(ownerName, tel, ownerGender) VALUES (?, ?, ?);";
+$sql = "SELECT * FROM login WHERE session = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
+$stmt->bind_param("s", $_POST["sessionID"]);
+$stmt->execute();
+$result = $stmt->get_result();
+$repName = $result->fetch_array(MYSQLI_ASSOC)["fullname"];
+
+date_default_timezone_set("Asia/Ho_Chi_Minh");
+$bookingDate = date("Y-m-d h:i:s");
+
+//EXECUTE QUERY
+$sql = "INSERT INTO booking(roomID, catID, bookingDate, subNumber, checkInDate, checkOutDate, attention, note, byRep, eatingRank) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sisisssssi", $_POST["roomID"], $_POST["catID"], $bookingDate, $_POST["subNumber"], $_POST["checkInDate"], $_POST["checkOutDate"], $_POST["attention"], $_POST["note"], $repName, $_POST["eatingRank"]);
 $stmt->execute();
 
 //EXECUTE QUERY
-$sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND tel = ? AND ownerGender = ?;";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
-$stmt->execute();
-$result = $stmt->get_result();
-$return["ownerID"] = $result->fetch_array(MYSQLI_ASSOC)["ownerID"];
+
+
+$return["message"] = "Đã đặt phòng thành công.";
 echo json_encode($return);
 $conn->close();
 exit();

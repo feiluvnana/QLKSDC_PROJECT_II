@@ -38,9 +38,9 @@ $return = array();
 $return["ownerID"] = -1;
 
 //EXECUTE QUERY
-$sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND tel = ? AND ownerGender = ?;";
+$sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND ownerTel = ? AND ownerGender = ?;";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["ownerTel"], $_POST["ownerGender"]);
 $stmt->execute();
 $result = $stmt->get_result();
 if($result->num_rows != 0) {
@@ -51,15 +51,15 @@ if($result->num_rows != 0) {
 }
 
 //EXECUTE QUERY
-$sql = "INSERT INTO owner(ownerName, tel, ownerGender) VALUES (?, ?, ?);";
+$sql = "INSERT INTO owner(ownerName, ownerTel, ownerGender) VALUES (?, ?, ?);";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["ownerTel"], $_POST["ownerGender"]);
 $stmt->execute();
 
 //EXECUTE QUERY
-$sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND tel = ? AND ownerGender = ?;";
+$sql = "SELECT ownerID FROM owner WHERE ownerName = ? AND ownerTel = ? AND ownerGender = ?;";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $_POST["ownerName"], $_POST["tel"], $_POST["ownerGender"]);
+$stmt->bind_param("sss", $_POST["ownerName"], $_POST["ownerTel"], $_POST["ownerGender"]);
 $stmt->execute();
 $result = $stmt->get_result();
 $return["ownerID"] = $result->fetch_array(MYSQLI_ASSOC)["ownerID"];

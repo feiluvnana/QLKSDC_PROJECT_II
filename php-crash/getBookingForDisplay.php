@@ -43,16 +43,18 @@ $sql = "SELECT *
         ON booking.catID = cat.catID
         LEFT JOIN owner
         ON cat.ownerID = owner.ownerID
-        WHERE booking.roomID = ? AND (MONTH(dateIn) = ? OR MONTH(dateOut) = ?);";
+        WHERE booking.roomID = ? AND (MONTH(checkInDate) = ? OR MONTH(checkOutDate) = ?);";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("sii", $roomID, $month, $month);
 $stmt->execute();
 $result = $stmt->get_result();
 $return = $result->fetch_all(MYSQLI_ASSOC);
-/*for($i = 0; $i < count($return); $i++) {
+for($i = 0; $i < count($return); $i++) {
+    if(!isset($return[$i]["catImage"])) return;
     $return[$i]["catImage"] = 
     base64_encode(file_get_contents($return[$i]["catImage"]));
-}*/
+}
 echo json_encode($return);
-
+$conn->close();
+exit();
 ?>

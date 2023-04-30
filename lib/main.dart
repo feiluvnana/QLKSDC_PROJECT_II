@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/controller/AuthController.dart';
-import 'package:project_ii/view/HomePageView.dart';
-import 'package:project_ii/view/LoginPageView.dart';
-import 'binding/AuthBinding.dart';
-import 'dart:html' as html;
-
+import 'package:get_storage/get_storage.dart';
 import 'generated/l10n.dart';
-import 'middleware/AuthMiddleware.dart';
-import 'middleware/AvoidReturningMiddleware.dart';
+import 'view/HomePageView.dart';
+import 'view/LoginPageView.dart';
 import 'view/InformationPageView.dart';
+import 'binding/MyBinding.dart';
+import 'middleware/HomePageMiddleware.dart';
+import 'middleware/LoginPageMiddleware.dart';
 
 void main() async {
-  AuthBinding().dependencies();
-  html.window.onBeforeUnload.listen((event) async {
-    print("out");
-    await GetConnect().post(
-      "http://localhost/php-crash/logout.php",
-      FormData({"sessionID": Get.find<AuthController>().sessionID}),
-    );
-  });
+  MyBinding().dependencies();
+  await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProjectII());
 }
@@ -56,7 +48,7 @@ class ProjectII extends StatelessWidget {
                 child: const HomePage()),
             title: "Trang chủ",
             middlewares: [
-              AuthMiddleware()
+              HomePageMiddleware()
             ],
             children: [
               GetPage(

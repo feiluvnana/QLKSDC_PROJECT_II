@@ -47,6 +47,7 @@ if($result->num_rows == 0) {
   $conn->close();
   exit();
 }
+$fullname = $result->fetch_array(MYSQLI_ASSOC)["fullname"];
 
 //PREPARE SESSIONID
 $sessionID = generateRandomString();
@@ -58,6 +59,7 @@ $stmt->bind_param("sss", $sessionID, $username, $password);
 $stmt->execute();
 $return["success"] = true;
 $return["sessionID"] = $sessionID;
+$return["fullname"] = $fullname;
 
 //CREATE HISTORY RECORD
 date_default_timezone_set("Asia/Ho_Chi_Minh");

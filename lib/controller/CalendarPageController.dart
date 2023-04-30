@@ -1,103 +1,103 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/controller/AuthController.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:intl/intl.dart';
 import '../model/BookingModel.dart';
 import '../model/BookingServiceModel.dart';
 import '../model/RoomBookingModel.dart';
 import '../model/RoomModel.dart';
-import '../utils/DateUtils.dart';
 import '../utils/PairUtils.dart';
 
 class CalendarPageController extends GetxController {
-  late Map<String, int> _currentMonth;
-  late DateTime _today;
-  late List<RoomBooking> _roomBookingData;
-  late int dayForList;
-  late int index;
-  late bool _isClicked;
+  late DateTime _currentMonth, _today;
+  late List<RoomBooking> _bookingDataForAllRooms;
+  late bool _isAddMonthClicked;
+  late int _dayForGuestList;
+  late int _daysInCurrentMonth;
 
   @override
   void onInit() {
     super.onInit();
-    _currentMonth = {"year": 2023, "month": 4};
     _today =
         DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    _roomBookingData = [];
-    dayForList = _today.day;
-    index = 0;
-    _isClicked = false;
+    _currentMonth = DateTime(_today.year, _today.month);
+    _bookingDataForAllRooms = [];
+    _isAddMonthClicked = false;
+    _dayForGuestList = _today.day;
+    _daysInCurrentMonth =
+        DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
+    Future.delayed(const Duration(seconds: 0),
+            () async => await getBookingDataForAllRooms())
+        .then(
+            (value) => update(["guestList", "table", "dayLabel", "monthText"]));
   }
 
+  DateTime get currentMonth => _currentMonth;
+  set currentMonth(DateTime value) => _currentMonth = value;
+  int get dayForGuestList => _dayForGuestList;
+  set dayForGuestList(int value) => _dayForGuestList = value;
+  int get daysInCurrentMonth => _daysInCurrentMonth;
   DateTime get today => _today;
+  List<RoomBooking> get bookingDataForAllRooms => _bookingDataForAllRooms;
 
-  Map<String, int> get currentMonth => _currentMonth;
-  set currentMonth(Map<String, int> map) =>
-      _currentMonth = {"year": map["year"]!, "month": map["month"]!};
-
-  List<RoomBooking> get roomBookingData => _roomBookingData;
-
-  void addMonths({required int month}) {
-    if (_isClicked) return;
-    _isClicked = true;
+  void addMonths({required int value}) async {
+    if (_isAddMonthClicked) return;
+    _isAddMonthClicked = true;
     print("clicked");
-    (_currentMonth)["month"] = ((_currentMonth)["month"])! + month;
-    if ((_currentMonth)["month"]! > 12) {
-      (_currentMonth)["year"] = ((_currentMonth)["year"])! + 1;
-      (_currentMonth)["month"] = ((_currentMonth)["month"])! - 12;
+    if (_currentMonth.month == 12 && value == 1) {
+      _currentMonth = DateTime(_currentMonth.year + 1, 1);
+    } else if (_currentMonth.month == 1 && value == -1) {
+      _currentMonth = DateTime(_currentMonth.year - 1, 12);
+    } else {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + value);
     }
-    if ((_currentMonth)["month"]! < 1) {
-      (_currentMonth)["year"] = ((_currentMonth)["year"])! - 1;
-      (_currentMonth)["month"] = ((_currentMonth)["month"])! + 12;
-    }
-    _roomBookingData = [];
-    getRoomBookingData();
-    index = 0;
-    update();
-    _isClicked = false;
-  }
-
-  String printCurrentMonth() {
-    return "${(_currentMonth["month"]! < 10) ? "0" : ""}${_currentMonth["month"]}/${_currentMonth["year"]}";
+    _dayForGuestList = 1;
+    _daysInCurrentMonth =
+        DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
+    _bookingDataForAllRooms = [];
+    await getBookingDataForAllRooms();
+    update(["guestList", "table", "dayLabel", "monthText"]);
+    _isAddMonthClicked = false;
   }
 
   bool isBeforeToday(int day) {
-    return DateTime(_currentMonth["year"]!, _currentMonth["month"]!, day)
+    return DateTime(_currentMonth.year, _currentMonth.month, day)
         .isBefore(today);
   }
 
   bool isInCurrentMonth(DateTime date) {
-    return DateTime(_currentMonth["year"]!, _currentMonth["month"]!, 1)
-            .isBefore(date) &&
-        DateTime(_currentMonth["year"]!, _currentMonth["month"]!,
-                DateUtils.daysInMonth(_currentMonth))
-            .isAfter(date);
+    return _currentMonth.year == date.year && _currentMonth.month == date.month;
   }
 
-  Future<List<List<Pair>>> getDisplayList(Room roomData) async {
-    List<Booking> bookingList = await getBookingData(roomData);
+  Future<List<List<Pair>>> createDisplayListForOneRoom(
+      Room roomData, List<Booking> bookingList) async {
     if (bookingList.isEmpty) {
       return List.generate(
           roomData.subQuantity,
-          (index) => List.generate(DateUtils.daysInMonth(_currentMonth),
+          (index) => List.generate(
+              DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month),
               (index) => Pair(first: -1, second: -1)));
     }
     List<List<Pair>> list = List.generate(
         roomData.subQuantity,
-        (index) => List.generate(DateUtils.daysInMonth(_currentMonth),
+        (index) => List.generate(
+            DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month),
             (index) => Pair(first: -1, second: -1)));
     for (int i = 0; i < bookingList.length; i++) {
-      int startIndex = (!isInCurrentMonth(bookingList[i].dateIn))
+      int startIndex = (!isInCurrentMonth(bookingList[i].checkInDate))
           ? 0
-          : bookingList[i].dateIn.day - 1;
-      bool earlyIn = bookingList[i].dateIn.hour < 14;
-      bool roundedIn = !isInCurrentMonth(bookingList[i].dateIn);
-      int endIndex = (!isInCurrentMonth(bookingList[i].dateOut))
-          ? DateUtils.daysInMonth(_currentMonth) - 1
-          : bookingList[i].dateOut.day - 1;
-      bool lateOut = (bookingList[i].dateOut.hour > 14) ||
-          (bookingList[i].dateOut.hour == 14 &&
-              (bookingList[i].dateOut.minute > 0));
-      bool roundedOut = !isInCurrentMonth(bookingList[i].dateOut);
+          : bookingList[i].checkInDate.day - 1;
+      bool earlyIn = bookingList[i].checkInDate.hour < 14;
+      bool roundedIn = !isInCurrentMonth(bookingList[i].checkInDate);
+      int endIndex = (!isInCurrentMonth(bookingList[i].checkOutDate))
+          ? DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month) -
+              1
+          : bookingList[i].checkOutDate.day - 1;
+      bool lateOut = (bookingList[i].checkOutDate.hour > 14) ||
+          (bookingList[i].checkOutDate.hour == 14 &&
+              (bookingList[i].checkOutDate.minute > 0));
+      bool roundedOut = !isInCurrentMonth(bookingList[i].checkOutDate);
 
       for (int k = startIndex; k <= endIndex; k++) {
         if (earlyIn && k == startIndex) {
@@ -120,47 +120,48 @@ class CalendarPageController extends GetxController {
     return list;
   }
 
-  Future<List<Booking>> getBookingData(Room roomData) async {
-    List<dynamic> bookingResList = jsonDecode((await GetConnect().post(
+  Future<List<Booking>> getBookingDataForOneRoom(Room roomData) async {
+    List<dynamic> oneRoomBookingListFromRes =
+        jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getBookingForDisplay.php",
       FormData({
-        "sessionID": Get.find<AuthController>().sessionID,
+        "sessionID": GetStorage().read("sessionID"),
         "roomID": roomData.roomID,
-        "month": currentMonth["month"],
-        "year": currentMonth["year"]
+        "month": currentMonth.month,
+        "year": currentMonth.year
       }),
     ))
-        .body);
-    List<List<BookingService>> allServiceList = [];
-    for (int i = 0; i < bookingResList.length; i++) {
-      List<dynamic> serviceListForABooking =
+            .body);
+    List<List<BookingService>> allServiceListForOneRoom = [];
+    for (int i = 0; i < oneRoomBookingListFromRes.length; i++) {
+      List<dynamic> serviceListForOneRoomBooking =
           jsonDecode((await GetConnect().post(
         "http://localhost/php-crash/getBookingServiceForDisplay.php",
         FormData({
-          "sessionID": Get.find<AuthController>().sessionID,
-          "bookingID": bookingResList[i]["bookingID"],
+          "sessionID": GetStorage().read("sessionID"),
+          "bookingID": oneRoomBookingListFromRes[i]["bookingID"],
         }),
       ))
               .body);
       List<BookingService> list = [];
-      for (var service in serviceListForABooking) {
+      for (var service in serviceListForOneRoomBooking) {
         list.add(BookingService.fromJson(service));
       }
-      allServiceList.add(list);
+      allServiceListForOneRoom.add(list);
     }
-    List<Booking> bookingList = List.generate(
-        bookingResList.length,
+    List<Booking> oneRoomBookingList = List.generate(
+        oneRoomBookingListFromRes.length,
         (index) => Booking.fromJson({}
-          ..addAll(bookingResList[index])
-          ..addAll({"bookingServiceList": allServiceList[index]})));
-    return bookingList;
+          ..addAll(oneRoomBookingListFromRes[index])
+          ..addAll({"bookingServiceList": allServiceListForOneRoom[index]})));
+    return oneRoomBookingList;
   }
 
   Future<List<Room>> getRoomList() async {
     List<dynamic> roomList = jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getRoomForDisplay.php",
       FormData({
-        "sessionID": Get.find<AuthController>().sessionID,
+        "sessionID": GetStorage().read("sessionID"),
       }),
     ))
         .body);
@@ -169,12 +170,13 @@ class CalendarPageController extends GetxController {
     return list;
   }
 
-  Future<void> getRoomBookingData() async {
+  Future<void> getBookingDataForAllRooms() async {
     List<RoomBooking> roomBookingData = [];
     List<Room> roomIDList = await getRoomList();
     for (Room roomData in roomIDList) {
-      List<Booking> bookingData = await getBookingData(roomData);
-      List<List<Pair>> displayArray = await getDisplayList(roomData);
+      List<Booking> bookingData = await getBookingDataForOneRoom(roomData);
+      List<List<Pair>> displayArray =
+          await createDisplayListForOneRoom(roomData, bookingData);
       roomBookingData.addAll([
         RoomBooking(
           bookingData: bookingData,
@@ -183,7 +185,7 @@ class CalendarPageController extends GetxController {
         )
       ]);
     }
-    _roomBookingData = roomBookingData;
-    update();
+    _bookingDataForAllRooms = roomBookingData;
+    update(["guestList", "table", "dayLabel", "monthText"]);
   }
 }
