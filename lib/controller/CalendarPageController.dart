@@ -121,6 +121,16 @@ class CalendarPageController extends GetxController {
   }
 
   Future<List<Booking>> getBookingDataForOneRoom(Room roomData) async {
+    print((await GetConnect().post(
+      "http://localhost/php-crash/getBookingForDisplay.php",
+      FormData({
+        "sessionID": GetStorage().read("sessionID"),
+        "roomID": roomData.roomID,
+        "month": currentMonth.month,
+        "year": currentMonth.year
+      }),
+    ))
+        .body);
     List<dynamic> oneRoomBookingListFromRes =
         jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getBookingForDisplay.php",

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:project_ii/view/GuestListView.dart';
 import 'generated/l10n.dart';
+import 'middleware/InformationPageMiddleware.dart';
 import 'view/HomePageView.dart';
 import 'view/LoginPageView.dart';
 import 'view/InformationPageView.dart';
@@ -10,11 +12,12 @@ import 'binding/MyBinding.dart';
 import 'middleware/HomePageMiddleware.dart';
 import 'middleware/LoginPageMiddleware.dart';
 
-void main() async {
-  MyBinding().dependencies();
-  await GetStorage.init();
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProjectII());
+void main() {
+  Future.delayed(const Duration(seconds: 0), () {
+    MyBinding().dependencies();
+    GetStorage.init();
+    WidgetsFlutterBinding.ensureInitialized();
+  }).then((value) => runApp(const ProjectII()));
 }
 
 class ProjectII extends StatelessWidget {
@@ -33,13 +36,17 @@ class ProjectII extends StatelessWidget {
       ),
       getPages: [
         GetPage(
-            name: "/login",
-            page: () => Title(
-                color: const Color(0xff68b6ef),
-                title: "Đăng nhập",
-                child: LoginPage()),
-            title: "Đăng nhập",
-            middlewares: [AvoidReturningMiddleware()]),
+          name: "/login",
+          page: () => Title(
+              color: const Color(0xff68b6ef),
+              title: "Đăng nhập",
+              child: LoginPage()),
+          title: "Đăng nhập",
+          middlewares: [AvoidReturningMiddleware()],
+          transition: Transition.zoom,
+          transitionDuration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutExpo,
+        ),
         GetPage(
             name: "/home",
             page: () => Title(
@@ -47,16 +54,30 @@ class ProjectII extends StatelessWidget {
                 title: "Trang chủ",
                 child: const HomePage()),
             title: "Trang chủ",
-            middlewares: [
-              HomePageMiddleware()
-            ],
+            middlewares: [HomePageMiddleware()],
+            transition: Transition.zoom,
+            transitionDuration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutExpo,
             children: [
               GetPage(
                   name: "/info",
                   page: () => Title(
                       color: const Color(0xff68b6ef),
                       title: "Thông tin",
-                      child: const InformationPage()))
+                      child: const InformationPage()),
+                  middlewares: [InformationPageMiddleware()],
+                  transition: Transition.zoom,
+                  transitionDuration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutExpo),
+              GetPage(
+                  name: "/guestList",
+                  page: () => Title(
+                      color: const Color(0xff68b6ef),
+                      title: "Danh sách khách hàng",
+                      child: const GuestListView()),
+                  transition: Transition.zoom,
+                  transitionDuration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutExpo)
             ]),
       ],
       localizationsDelegates: const [

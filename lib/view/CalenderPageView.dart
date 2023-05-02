@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:project_ii/controller/BookingPageController.dart';
 import '../controller/CalendarPageController.dart';
+import '../model/ServiceModel.dart';
 import '../utils/PairUtils.dart';
-import 'GuestListView.dart';
 
 class CalenderPage extends StatelessWidget {
   const CalenderPage({super.key});
@@ -47,12 +48,12 @@ class CalenderPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton(
-                            onPressed: () =>
-                                {} /*Get.to(GuestList(), arguments: {
-                              "roomBookingData": controller.roomBookingData,
-                              "day": controller.dayForList,
-                            })*/
-                            ,
+                            onPressed: () async => Get.toNamed(
+                                "/home/guestList?day=${controller.dayForGuestList}&month=${controller.currentMonth.month}&year=${controller.currentMonth.year}",
+                                arguments: {
+                                  "bookingDataForAllRooms":
+                                      controller.bookingDataForAllRooms
+                                }),
                             child: const Text("Xuất danh sách"),
                           ),
                           DropdownButton<int>(
@@ -124,7 +125,11 @@ class CalenderPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const Expanded(child: BookingInfo()),
+          const Expanded(
+              child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: BookingInfo(),
+          )),
         ],
       ),
     );
@@ -276,13 +281,22 @@ class HalfCell extends StatelessWidget {
           )
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
-            onTap: () => Get.toNamed("/home/info", arguments: {
-              "bookingData":
-                  controller.bookingDataForAllRooms[index1].bookingData[value],
-              "roomData": controller.bookingDataForAllRooms[index1].roomData
-            }),
+            onTap: () async {
+              List<Service> allServiceList =
+                  await Get.find<BookingPageController>().getServiceInfo();
+              await Get.delete<BookingPageController>();
+              await Get.toNamed("/home/info?ridx=$index1&bidx=$value",
+                  arguments: {
+                    "bookingDataForAllRooms": controller.bookingDataForAllRooms,
+                    "allServiceList": allServiceList,
+                  })?.then(
+                (value) {
+                  if (value["result"] == null) return;
+                },
+              );
+            },
             child: Tooltip(
-              waitDuration: const Duration(seconds: 1),
+              waitDuration: const Duration(milliseconds: 600),
               message:
                   "${controller.bookingDataForAllRooms[index1].roomData.getRoomDataToString()}\n${controller.bookingDataForAllRooms[index1].bookingData[value].getBookingInfoToString()}",
               child: Container(

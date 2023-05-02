@@ -38,7 +38,7 @@ class BookingPageController extends GetxController {
   final checkOutDateController = TextEditingController();
   final TextEditingController attentionController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
-  int _roomID = -1;
+  String _roomID = "";
   int _subNumber = -1;
   int _numberOfServices = 0;
   int _eatingRank = 0;
@@ -91,8 +91,8 @@ class BookingPageController extends GetxController {
     update();
   }
 
-  int get roomID => _roomID;
-  set roomID(int value) {
+  String get roomID => _roomID;
+  set roomID(String value) {
     _roomID = value;
     update();
   }
@@ -119,8 +119,8 @@ class BookingPageController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
-    Future.delayed(
-            const Duration(seconds: 0), () async => await getServiceInfo())
+    Future.delayed(const Duration(seconds: 0),
+            () async => allServiceList = await getServiceInfo())
         .then((value) => update());
   }
 
@@ -129,15 +129,17 @@ class BookingPageController extends GetxController {
     return catImage;
   }
 
-  Future<void> getServiceInfo() async {
-    List<dynamic> list = jsonDecode((await GetConnect().post(
+  Future<List<Service>> getServiceInfo() async {
+    List<dynamic> resList = jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getServiceForDisplay.php",
       FormData({"sessionID": GetStorage().read("sessionID")}),
     ))
         .body);
-    for (var s in list) {
-      allServiceList.add(Service.fromJson(s));
+    List<Service> list = [];
+    for (var s in resList) {
+      list.add(Service.fromJson(s));
     }
+    return list;
   }
 
   Future<void> createServiceController(int value, int index) async {
@@ -189,28 +191,30 @@ class BookingPageController extends GetxController {
             FormData({
               "sessionID": GetStorage().read("sessionID"),
               "catID": catID,
-              "roomID": Get.find<CalendarPageController>()
-                  .bookingDataForAllRooms[roomID]
-                  .roomData
-                  .roomID,
+              "roomID": roomID,
               "subNumber": subNumber,
               "checkInDate": checkInDate.toString(),
               "checkOutDate": checkOutDate.toString(),
               "attention": attentionController.text,
               "note": noteController.text,
               "eatingRank": eatingRank,
-              "bookingServicesList": jsonEncode(List.generate(
-                  numberOfServices,
-                  (index) => {
-                        "serviceID": allServiceList[index].serviceID,
-                        "serviceTime": serviceTimeValue[index].toString(),
-                        "serviceQuantity": (serviceQuantity[index] == null)
-                            ? null
-                            : serviceQuantity[index]?.text,
-                        "serviceDistance": (serviceDistance[index] == null)
-                            ? null
-                            : serviceDistance[index]?.text,
-                      }))
+              "bookingServicesList":
+                  jsonEncode(List.generate(numberOfServices, (index) {
+                if (allServiceList[index].serviceName == "Đón mèo")
+                  serviceTimeValue[index] = checkInDate;
+                if (allServiceList[index].serviceName == "Trả mèo")
+                  serviceTimeValue[index] = checkOutDate;
+                return {
+                  "serviceID": allServiceList[index].serviceID,
+                  "serviceTime": serviceTimeValue[index].toString(),
+                  "serviceQuantity": (serviceQuantity[index] == null)
+                      ? null
+                      : serviceQuantity[index]?.text,
+                  "serviceDistance": (serviceDistance[index] == null)
+                      ? null
+                      : serviceDistance[index]?.text,
+                };
+              }))
             })))
         .body)["message"];
     await Get.defaultDialog(

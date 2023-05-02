@@ -36,7 +36,7 @@ class LoginPageController extends GetxController {
       await GetStorage().write("fullname", jsonDecode(res.body)["fullname"]);
       _isClick = false;
       _isLogged = true;
-      Get.toNamed("/home");
+      Get.offNamed("/home");
     } else {
       Get.defaultDialog(
           title: "Thông báo", middleText: "Tài khoản hoặc mật khẩu sai.");

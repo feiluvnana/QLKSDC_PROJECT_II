@@ -83,8 +83,10 @@ class BookingPage extends StatelessWidget {
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return "Không để trống tên";
-                                  if (value.length > 50)
-                                    return "Tên dài hơn 50 ký tự";
+                                  if (!RegExp(r'^[\p{L}\s]{1,50}$',
+                                          unicode: true)
+                                      .hasMatch(value))
+                                    return "Tên không đúng định dạng";
                                   return null;
                                 },
                                 decoration: const InputDecoration(
@@ -135,10 +137,12 @@ class BookingPage extends StatelessWidget {
                             vertical: 10, horizontal: 16),
                         child: TextFormField(
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return "Không để trống số điện thoại";
-                            if (value[0] != "0" || value.length != 10)
+                            }
+                            if (!RegExp(r'^0\d{9}$').hasMatch(value)) {
                               return "Số điện thoại không đúng định dạng";
+                            }
                             return null;
                           },
                           controller: controller.ownerTelController,
@@ -178,9 +182,11 @@ class BookingPage extends StatelessWidget {
                                     child: TextFormField(
                                       validator: (value) {
                                         if (value == null || value.isEmpty)
-                                          return "Không để trống tên";
-                                        if (value.length > 20)
-                                          return "Tên dài hơn 20 ký tự";
+                                          return "Không để trống tên mèo";
+                                        if (!RegExp(r'^[\p{L}\s]{1,50}$',
+                                                unicode: true)
+                                            .hasMatch(value))
+                                          return "Tên mèo không đúng định dạng";
                                         return null;
                                       },
                                       controller: controller.catNameController,
@@ -270,6 +276,15 @@ class BookingPage extends StatelessWidget {
                                       vertical: 10, horizontal: 16),
                                   child: TextFormField(
                                     controller: controller.catSpeciesController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty)
+                                        return null;
+                                      if (!RegExp(r'^[\p{L}\s]{1,30}$',
+                                              unicode: true)
+                                          .hasMatch(value))
+                                        return "Giống mèo không đúng định dạng";
+                                      return null;
+                                    },
                                     decoration: const InputDecoration(
                                       labelText: "Giống mèo",
                                       border: OutlineInputBorder(),
@@ -322,6 +337,15 @@ class BookingPage extends StatelessWidget {
                                       vertical: 10, horizontal: 16),
                                   child: TextFormField(
                                     controller: controller.catWeightController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty)
+                                        return null;
+                                      if (!RegExp(r'^[1-9]\d*(\.\d+){0,1}$',
+                                              unicode: true)
+                                          .hasMatch(value))
+                                        return "Cân nặng mèo không đúng định dạng";
+                                      return null;
+                                    },
                                     decoration: const InputDecoration(
                                       suffix: Text("kg"),
                                       labelText: "Cân nặng",
@@ -344,14 +368,13 @@ class BookingPage extends StatelessWidget {
                                     validator: (value) {
                                       if (value == null || value.isEmpty)
                                         return "Không để trống tuổi mèo";
-                                      if (int.tryParse(value) == null)
-                                        return "Tuổi phải là số";
-                                      if (int.tryParse(value)! < 0)
-                                        return "Tuổi phải không âm";
+                                      if (!RegExp(r'[1-9]\d*').hasMatch(value))
+                                        return "Tuổi mèo không đúng định dạng";
                                       return null;
                                     },
                                     controller: controller.catAgeController,
                                     decoration: const InputDecoration(
+                                      errorMaxLines: 2,
                                       labelText: "Tuổi",
                                       border: OutlineInputBorder(),
                                     ),
@@ -438,8 +461,10 @@ class BookingPage extends StatelessWidget {
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return "Không để trống thể trạng";
-                                  if (value.length > 150)
-                                    return "Thể trạng dài hơn 150 ký tự";
+                                  if (!RegExp(r'^[^]{1,150}$',
+                                          unicode: true, multiLine: true)
+                                      .hasMatch(value))
+                                    return "Thể trạng không đúng định dạng";
                                   return null;
                                 },
                                 controller:
@@ -461,8 +486,10 @@ class BookingPage extends StatelessWidget {
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return null;
-                                  if (value.length > 150)
-                                    return "Đặc điểm hình thái dài hơn 150 ký tự";
+                                  if (!RegExp(r'^[^]{1,150}$',
+                                          unicode: true, multiLine: true)
+                                      .hasMatch(value))
+                                    return "Đặc điểm hình thái không đúng định dạng";
                                   return null;
                                 },
                                 controller: controller.catAppearanceController,
@@ -498,20 +525,24 @@ class BookingPage extends StatelessWidget {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
-                              child: DropdownButtonFormField<int>(
+                              child: DropdownButtonFormField<String>(
                                 isExpanded: true,
                                 items: List.generate(
                                     Get.find<CalendarPageController>()
                                         .bookingDataForAllRooms
                                         .length,
                                     (index) => DropdownMenuItem(
-                                        value: index,
+                                        value:
+                                            Get.find<CalendarPageController>()
+                                                .bookingDataForAllRooms[index]
+                                                .roomData
+                                                .roomID,
                                         child: Text(
                                             Get.find<CalendarPageController>()
                                                 .bookingDataForAllRooms[index]
                                                 .roomData
                                                 .roomID))),
-                                onChanged: (int? value) {
+                                onChanged: (String? value) {
                                   if (value == null) return;
                                   controller.subNumber = 1;
                                   controller.roomID = value;
@@ -524,7 +555,7 @@ class BookingPage extends StatelessWidget {
                                 value: null,
                                 hint: const Text("---"),
                                 decoration: const InputDecoration(
-                                  errorMaxLines: 2,
+                                  errorMaxLines: 3,
                                   labelText: "Mã phòng",
                                   border: OutlineInputBorder(),
                                 ),
@@ -538,12 +569,14 @@ class BookingPage extends StatelessWidget {
                                   vertical: 10, horizontal: 16),
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
-                                items: (controller.roomID == -1)
+                                items: (controller.roomID == "")
                                     ? null
                                     : List.generate(
                                         Get.find<CalendarPageController>()
-                                            .bookingDataForAllRooms[
-                                                controller.roomID]
+                                            .bookingDataForAllRooms
+                                            .firstWhere((element) =>
+                                                element.roomData.roomID ==
+                                                controller.roomID)
                                             .roomData
                                             .subQuantity,
                                         (index) => DropdownMenuItem(
@@ -559,12 +592,12 @@ class BookingPage extends StatelessWidget {
                                     return "Không để trống mã phòng con";
                                   return null;
                                 },
-                                value: (controller.roomID == -1)
+                                value: (controller.roomID == "")
                                     ? null
                                     : controller.subNumber,
                                 hint: const Text("---"),
                                 decoration: const InputDecoration(
-                                  errorMaxLines: 2,
+                                  errorMaxLines: 3,
                                   labelText: "Mã phòng con",
                                   border: OutlineInputBorder(),
                                 ),
@@ -579,7 +612,7 @@ class BookingPage extends StatelessWidget {
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 items: List.generate(
-                                  4,
+                                  controller.allServiceList.length,
                                   (index) => DropdownMenuItem(
                                     value: index + 1,
                                     child: Row(
@@ -626,6 +659,9 @@ class BookingPage extends StatelessWidget {
                                   if (controller
                                       .checkInDateController.text.isEmpty)
                                     return "Không để trống thời gian check-in";
+                                  if (controller.checkInDate
+                                      .isBefore(DateTime.now()))
+                                    return "Không thể check-in trong quá khứ";
                                   if (controller
                                       .checkOutDateController.text.isNotEmpty) {
                                     if (!controller.checkOutDate
@@ -634,7 +670,7 @@ class BookingPage extends StatelessWidget {
                                   }
                                   return null;
                                 },
-                                isIn: 1,
+                                isOutSerIn: 1,
                               ),
                             ),
                           ),
@@ -658,7 +694,7 @@ class BookingPage extends StatelessWidget {
                                   }
                                   return null;
                                 },
-                                isIn: -1,
+                                isOutSerIn: -1,
                               ),
                             ),
                           ),
@@ -675,6 +711,15 @@ class BookingPage extends StatelessWidget {
                               child: TextFormField(
                                 keyboardType: TextInputType.multiline,
                                 controller: controller.attentionController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return null;
+                                  if (!RegExp(r'^[^]{1,200}$',
+                                          unicode: true, multiLine: true)
+                                      .hasMatch(value))
+                                    return "Lưu ý không đúng định dạng";
+                                  return null;
+                                },
                                 maxLines: null,
                                 decoration: const InputDecoration(
                                   labelText: "Lưu ý",
@@ -690,6 +735,15 @@ class BookingPage extends StatelessWidget {
                               child: TextFormField(
                                 keyboardType: TextInputType.multiline,
                                 controller: controller.noteController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return null;
+                                  if (!RegExp(r'^[^]{1,200}$',
+                                          unicode: true, multiLine: true)
+                                      .hasMatch(value))
+                                    return "Ghi chú không đúng định dạng";
+                                  return null;
+                                },
                                 maxLines: null,
                                 decoration: const InputDecoration(
                                   labelText: "Ghi chú",
@@ -801,8 +855,20 @@ class ServiceInput extends StatelessWidget {
                   child: DateTimePicker(
                       controller: controller.serviceTime[index1]!,
                       titleOfTextField: "Thời gian",
-                      validator: (value) => null,
-                      isIn: 0,
+                      validator: (value) {
+                        if (controller.serviceTimeValue[index1] == null)
+                          return "Không để trống thời gian";
+                        if (controller.checkInDateController.text.isNotEmpty &&
+                            controller.checkOutDateController.text.isNotEmpty) {
+                          if (controller.serviceTimeValue[index1]!
+                                  .isAfter(controller.checkOutDate) ||
+                              controller.serviceTimeValue[index1]!
+                                  .isBefore(controller.checkInDate))
+                            return "Thời gian phải nằm trong khoảng check-in và check-out";
+                        }
+                        return null;
+                      },
+                      isOutSerIn: 0,
                       index1: index1),
                 ),
               ),
@@ -813,9 +879,8 @@ class ServiceInput extends StatelessWidget {
                 validator: (value) {
                   if (value == null || value.isEmpty)
                     return "Không để trống số lượng";
-                  if (int.tryParse(value) == null) return "Phải nhập số";
-                  if (int.tryParse(value)! < 1)
-                    return "Số lượng phải lớn hơn 0";
+                  if (!RegExp(r'^[1-9]\d*').hasMatch(value))
+                    return "Số lượng không đúng định dạng";
                   return null;
                 },
                 label: "Số lượng"),
@@ -826,9 +891,8 @@ class ServiceInput extends StatelessWidget {
                 validator: (value) {
                   if (value == null || value.isEmpty)
                     return "Không để trống khoảng cách";
-                  if (double.tryParse(value) == null) return "Phải nhập số";
-                  if (double.tryParse(value)! <= 0)
-                    return "Khoảng cách phải lớn hơn 0";
+                  if (!RegExp(r'^[1-9]\d*(\.\d+){0,1}$').hasMatch(value))
+                    return "Khoảng cách không đúng định dạng";
                   return null;
                 },
                 label: "Khoảng cách",
@@ -885,7 +949,7 @@ class DateTimePicker extends StatelessWidget {
   final TextEditingController controller;
   final String titleOfTextField;
   final String? Function(String?)? validator;
-  final int isIn;
+  final int isOutSerIn;
   final int? index1;
 
   const DateTimePicker(
@@ -893,7 +957,7 @@ class DateTimePicker extends StatelessWidget {
       required this.controller,
       required this.titleOfTextField,
       this.validator,
-      required this.isIn,
+      required this.isOutSerIn,
       this.index1});
 
   @override
@@ -922,9 +986,9 @@ class DateTimePicker extends StatelessWidget {
         if (time == null) return;
         date =
             DateTime(date.year, date.month, date.day, time.hour, time.minute);
-        if (isIn > 0) {
+        if (isOutSerIn > 0) {
           Get.find<BookingPageController>().checkInDate = date;
-        } else if (isIn < 0) {
+        } else if (isOutSerIn < 0) {
           Get.find<BookingPageController>().checkOutDate = date;
         } else {
           Get.find<BookingPageController>().serviceTimeValue[index1!] = date;

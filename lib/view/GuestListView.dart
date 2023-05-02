@@ -1,135 +1,158 @@
-/*import 'dart:convert';
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:syncfusion_flutter_xlsio/xlsio.dart' hide Column;
+import 'package:project_ii/model/RoomBookingModel.dart';
 
-import '../model/RoomBookingModel.dart';
+class GuestListView extends StatelessWidget {
+  const GuestListView({super.key});
 
-class GuestList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    List<RoomBooking> roomBookingData = Get.arguments["roomBookingData"];
-    int selectedDay = Get.arguments["day"];
     return Scaffold(
-        body: Column(
-      children: [
-        Table(
-          columnWidths: const <int, TableColumnWidth>{
-            0: FlexColumnWidth(12),
-            1: FlexColumnWidth(12),
-            2: FlexColumnWidth(9),
-            3: FlexColumnWidth(20),
-            4: FlexColumnWidth(13),
-            5: FlexColumnWidth(40),
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: const [
-            TableRow(
-              children: [
-                TableCell(child: Text("Số phòng")),
-                TableCell(child: Text("Số phòng phụ")),
-                TableCell(child: Text("Tên mèo")),
-                TableCell(child: Text("Đặc điểm hình thái")),
-                TableCell(child: Text("Hạng ăn")),
-                TableCell(child: Text("Ghi chú"))
-              ],
+      body: SingleChildScrollView(
+        child: SizedBox(
+          width: 1200,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [StayingTable()],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class StayingTable extends StatelessWidget {
+  const StayingTable({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    List<RoomBooking> bookingDataForAllRooms =
+        Get.arguments["bookingDataForAllRooms"];
+    int colorChanger = 0;
+    return Container(
+      decoration: const BoxDecoration(
+          border: Border.fromBorderSide(
+              BorderSide(width: 1, color: Color(0xff68b6ef)))),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                height: 30,
+                decoration: const BoxDecoration(
+                    border: Border(
+                        right: BorderSide(width: 1, color: Color(0xff68b6ef)),
+                        bottom:
+                            BorderSide(width: 1, color: Color(0xff68b6ef)))),
+                child: const Align(
+                    alignment: Alignment.center, child: Text("Phòng")),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Container(
+                height: 30,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                    border: Border(
+                        right: BorderSide(width: 1, color: Color(0xff68b6ef)))),
+                child: const Text("Hạng ăn"),
+              ),
+            ),
+            Expanded(
+              flex: 8,
+              child: Container(
+                height: 30,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                    border: Border(
+                        right: BorderSide(width: 1, color: Color(0xff68b6ef)))),
+                child: const Text("Thông tin"),
+              ),
+            ),
+            const Expanded(
+              flex: 10,
+              child: SizedBox(
+                height: 30,
+                child: Align(alignment: Alignment.center, child: Text("Chú ý")),
+              ),
             ),
           ],
         ),
-        ElevatedButton(
-            onPressed: () async {
-              await downloadExcel(
-                  createExcelAsBytes(roomBookingData, selectedDay));
-            },
-            child: const Text("Tải xuống danh sách")),
-      ],
-    ));
+        ...List.generate(
+            bookingDataForAllRooms.length,
+            (index) =>
+                createRow(bookingDataForAllRooms[index], colorChanger++)),
+      ]),
+    );
   }
 
-  List<int> createExcelAsBytes(
-      List<RoomBooking> roomBookingData, int selectedDay) {
-    final workbook = Workbook();
-    final sheet = workbook.worksheets[0];
-    sheet.showGridlines = true;
-    sheet.enableSheetCalculations();
+  Widget createRow(RoomBooking bookingDataForARoom, int colorChanger) {
+    DateTime guestListDay = DateTime(int.parse(Get.parameters["year"]!),
+        int.parse(Get.parameters["month"]!), int.parse(Get.parameters["day"]!));
 
-    sheet.getRangeByName("A1").columnWidth = 12;
-    sheet.getRangeByName("B1").columnWidth = 12;
-    sheet.getRangeByName("C1").columnWidth = 9;
-    sheet.getRangeByName("D1").columnWidth = 20;
-    sheet.getRangeByName("E1").columnWidth = 13;
-    sheet.getRangeByName("F1").columnWidth = 40;
+    List<Map<String, dynamic>> listForRow = [];
 
-    var titleStyle = workbook.styles.add("tStyle");
-    titleStyle
-      ..fontSize = 16
-      ..fontName = "Arial"
-      ..hAlign = HAlignType.center
-      ..vAlign = VAlignType.center
-      ..bold = true;
-    sheet.getRangeByName("A1:F2")
-      ..merge()
-      ..setText("DANH SÁCH MÈO")
-      ..cellStyle = titleStyle;
-
-    sheet.getRangeByName("A3").setText("Số phòng");
-    sheet.getRangeByName("B3").setText("Số phòng phụ");
-    sheet.getRangeByName("C3").setText("Tên mèo");
-    sheet.getRangeByName("D3").setText("Đặc điểm hình thái");
-    sheet.getRangeByName("E3").setText("Hạng ăn");
-    sheet.getRangeByName("F3").setText("Ghi chú");
-    var headerStyle = workbook.styles.add("hStyle");
-    headerStyle
-      ..fontSize = 11
-      ..fontName = "Arial"
-      ..hAlign = HAlignType.center
-      ..vAlign = VAlignType.center;
-    sheet.getRangeByName("A3:F3").cellStyle = headerStyle;
-
-    int beginRow = 4;
-
-    for (RoomBooking datum in roomBookingData) {
-      int counter = 0;
-      for (int i = 0; i < datum.displayArray.length; i++) {
-        if (datum.displayArray[i][selectedDay - 1] != -1) {
-          sheet.getRangeByName("B${beginRow + counter}").setValue(datum
-              .bookingData[datum.displayArray[i][selectedDay - 1]].subRoomID);
-          sheet.getRangeByName("C${beginRow + counter}").setValue(datum
-              .bookingData[datum.displayArray[i][selectedDay - 1]]
-              .catData
-              .catName);
-          sheet.getRangeByName("D${beginRow + counter}").setValue(datum
-              .bookingData[datum.displayArray[i][selectedDay - 1]]
-              .catData
-              .appearance);
-          sheet
-              .getRangeByName("E${beginRow + counter}")
-              .setValue("lorem ipsum");
-          sheet.getRangeByName("F${beginRow + counter}")
-            ..setValue(
-                datum.bookingData[datum.displayArray[i][selectedDay - 1]].note)
-            ..cellStyle.wrapText = true;
-          counter++;
-        }
+    for (var bd in bookingDataForARoom.bookingData) {
+      if (guestListDay.isAfter(ignoreHour(bd.checkInDate)) &&
+          guestListDay.isBefore(ignoreHour(bd.checkOutDate))) {
+        listForRow.add({
+          "subNumber": bd.subNumber,
+          "eatingRank": bd.eatingRank,
+          "bookingServiceList": bd.bookingServiceList,
+          "attention": bd.attention
+        });
       }
-      sheet.getRangeByName("A$beginRow:A${beginRow + counter - 1}")
-        ..merge()
-        ..setValue(datum.roomData.roomID);
-      beginRow += counter;
     }
 
-    return workbook.saveAsStream();
+    return (listForRow.isNotEmpty)
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                flex: 2,
+                child: Container(
+                    decoration: const BoxDecoration(
+                        border: Border(
+                            right: BorderSide(
+                                width: 1, color: Color(0xff68b6ef)))),
+                    child: Text(bookingDataForARoom.roomData.roomID)),
+              ),
+              Expanded(
+                flex: 22,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: List.generate(
+                    listForRow.length,
+                    (index) => Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: (colorChanger == 0)
+                                      ? const Color(0xffE3F2FD)
+                                      : null,
+                                  border: const Border(
+                                      right: BorderSide(
+                                          width: 1, color: Color(0xff68b6ef)))),
+                              child: Text(
+                                  listForRow[index]["subNumber"].toString())),
+                        ),
+                        const Expanded(flex: 21, child: Text("Sometext"))
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          )
+        : Container();
   }
 
-  Future<int> downloadExcel(List<int> bytes) async {
-    await AnchorElement(
-        href:
-            "data:application/octet-stream;charset:utf-16le;base64,${base64.encode(bytes)}")
-      ..setAttribute("download", "GuestList-15-04-2023.xlsx")
-      ..click();
-    return 0;
+  DateTime ignoreHour(DateTime time) {
+    return DateTime(time.year, time.month, time.day);
   }
 }
-*/
