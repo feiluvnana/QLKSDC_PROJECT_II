@@ -823,13 +823,13 @@ class ServiceInput extends StatelessWidget {
               items: List.generate(
                 controller.allServiceList.length,
                 (index2) => DropdownMenuItem(
-                  value: index2,
+                  value: index2 + 1,
                   child: Text(controller.allServiceList[index2].serviceName),
                 ),
               ),
               onChanged: (int? value) {
                 controller.serviceList[index1] = value!;
-                controller.createServiceController(value, index1);
+                controller.createServiceController(value - 1, index1);
               },
               validator: (value) {
                 if (value == null) return "Không để trống loại dịch vụ";

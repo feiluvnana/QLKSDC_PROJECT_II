@@ -48,12 +48,15 @@ class CalenderPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton(
-                            onPressed: () async => Get.toNamed(
-                                "/home/guestList?day=${controller.dayForGuestList}&month=${controller.currentMonth.month}&year=${controller.currentMonth.year}",
-                                arguments: {
-                                  "bookingDataForAllRooms":
-                                      controller.bookingDataForAllRooms
-                                }),
+                            onPressed: () async {
+                              await Get.delete<BookingPageController>();
+                              return Get.toNamed(
+                                  "/home/guestList?day=${controller.dayForGuestList}&month=${controller.currentMonth.month}&year=${controller.currentMonth.year}",
+                                  arguments: {
+                                    "bookingDataForAllRooms":
+                                        controller.bookingDataForAllRooms
+                                  });
+                            },
                             child: const Text("Xuất danh sách"),
                           ),
                           DropdownButton<int>(

@@ -177,12 +177,18 @@ class BookingPageController extends GetxController {
                   ? null
                   : base64Encode(catImage as List<int>),
               "catVaccination": catVaccination,
-              "catSpecies": catSpeciesController.text,
-              "catAppearance": catAppearanceController.text,
+              "catSpecies": catSpeciesController.text == ""
+                  ? null
+                  : catAppearanceController.text,
+              "catAppearance": catAppearanceController.text == ""
+                  ? null
+                  : catAppearanceController.text,
               "catSterilization": catSterilization,
               "catPhysicalCondition": catPhysicalConditionController.text,
               "catGender": catGender,
-              "catWeight": catWeightController.text,
+              "catWeight": catWeightController.text == ""
+                  ? null
+                  : catWeightController.text,
               "catWeightLevel": catWeightLevel
             })))
         .body)["catID"];
@@ -200,12 +206,12 @@ class BookingPageController extends GetxController {
               "eatingRank": eatingRank,
               "bookingServicesList":
                   jsonEncode(List.generate(numberOfServices, (index) {
-                if (allServiceList[index].serviceName == "Đón mèo")
+                if (allServiceList[serviceList[index]].serviceName == "Đón mèo")
                   serviceTimeValue[index] = checkInDate;
-                if (allServiceList[index].serviceName == "Trả mèo")
+                if (allServiceList[serviceList[index]].serviceName == "Trả mèo")
                   serviceTimeValue[index] = checkOutDate;
                 return {
-                  "serviceID": allServiceList[index].serviceID,
+                  "serviceID": allServiceList[serviceList[index]].serviceID,
                   "serviceTime": serviceTimeValue[index].toString(),
                   "serviceQuantity": (serviceQuantity[index] == null)
                       ? null

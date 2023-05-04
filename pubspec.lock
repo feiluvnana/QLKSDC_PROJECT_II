@@ -394,6 +394,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  spannable_grid:
+    dependency: "direct main"
+    description:
+      name: spannable_grid
+      sha256: "6a13f93cae27365c2ad017da763849941dfdbf14ef20f2ccf04affb116368e68"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.0"
   stack_trace:
     dependency: transitive
     description:
@@ -422,26 +430,26 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "05b079cb1be26a8d5c1afe714172d2eed9178049f4a7dc773b2cbb8b053eff8d"
+      sha256: c1c65f1fc377ff101ab5f840b9013c5267658e1185abb32df1a23c0aa0508974
       url: "https://pub.dev"
     source: hosted
-    version: "21.1.41"
+    version: "21.2.3"
   syncfusion_flutter_xlsio:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_xlsio
-      sha256: "7df5e47b57dc8c3531ed5a7abf8c44072d43b6e91ca4f4eee9b4407466139aee"
+      sha256: "182bb1320cf102528fecf039a93245c8a59af4e062584b4039d44cb6410341bb"
       url: "https://pub.dev"
     source: hosted
-    version: "21.1.41"
+    version: "21.2.3"
   syncfusion_officecore:
     dependency: transitive
     description:
       name: syncfusion_officecore
-      sha256: e678ff0349f9af43197c0263fd5bfcc761b8d120fc42c3052451e80b665191cc
+      sha256: "07237713804468e84714e276e63a4721e3a5c114f236808823bfa8f24779dfed"
       url: "https://pub.dev"
     source: hosted
-    version: "21.1.41"
+    version: "21.2.3"
   term_glyph:
     dependency: transitive
     description:

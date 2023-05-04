@@ -1,6 +1,11 @@
+import 'dart:convert';
+import 'dart:html';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/model/RoomBookingModel.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart';
+import 'package:intl/intl.dart';
+import '../model/BookingServiceModel.dart';
+import '../model/RoomBookingModel.dart';
 
 class GuestListView extends StatelessWidget {
   const GuestListView({super.key});
@@ -8,151 +13,129 @@ class GuestListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: SizedBox(
-          width: 1200,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [StayingTable()],
-          ),
-        ),
-      ),
+      body: ElevatedButton(
+          onPressed: () => createSpreadSheet(), child: Text("create")),
     );
   }
-}
 
-class StayingTable extends StatelessWidget {
-  const StayingTable({super.key});
+  Future<void> createSpreadSheet() async {
+    final Workbook wb = Workbook();
+    final Worksheet ws = wb.worksheets[0];
 
-  @override
-  Widget build(BuildContext context) {
+    final Style titleStyle = wb.styles.add('titleStyle');
+    titleStyle
+      ..fontName = 'Helvetica'
+      ..fontSize = 20
+      ..bold = true
+      ..wrapText = true
+      ..hAlign = HAlignType.center
+      ..vAlign = VAlignType.center;
+
+    final Style cellStyle = wb.styles.add('cellStyle');
+    cellStyle
+      ..fontName = 'Times New Roman'
+      ..fontSize = 14
+      ..wrapText = true
+      ..hAlign = HAlignType.left
+      ..vAlign = VAlignType.center
+      ..borders.all.lineStyle = LineStyle.medium;
+
+    ws.getRangeByName("A1").columnWidth = 8;
+    ws.getRangeByName("B1").columnWidth = 4;
+    ws.getRangeByName("C1").columnWidth = 10;
+    ws.getRangeByName("D1").columnWidth = 32.5;
+    ws.getRangeByName("E1").columnWidth = 31;
+
+    ws.getRangeByName("A1:E1")
+      ..merge()
+      ..rowHeight = 30
+      ..setText(
+          "Danh sách khách hàng ${Get.parameters["day"]}-${Get.parameters["month"]}-${Get.parameters["year"]}")
+      ..cellStyle = titleStyle;
+
+    ws.getRangeByName("A2:E2")
+      ..merge()
+      ..rowHeight = 30
+      ..setText("1. Danh sách khách ở")
+      ..cellStyle = titleStyle;
+
+    ws.getRangeByName("A3:B3")
+      ..merge()
+      ..setText("Phòng")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("C3")
+      ..setText("Hạng ăn")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("D3")
+      ..setText("Thông tin")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("E3")
+      ..setText("Lưu ý")
+      ..cellStyle = cellStyle;
+
     List<RoomBooking> bookingDataForAllRooms =
         Get.arguments["bookingDataForAllRooms"];
-    int colorChanger = 0;
-    return Container(
-      decoration: const BoxDecoration(
-          border: Border.fromBorderSide(
-              BorderSide(width: 1, color: Color(0xff68b6ef)))),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Container(
-                height: 30,
-                decoration: const BoxDecoration(
-                    border: Border(
-                        right: BorderSide(width: 1, color: Color(0xff68b6ef)),
-                        bottom:
-                            BorderSide(width: 1, color: Color(0xff68b6ef)))),
-                child: const Align(
-                    alignment: Alignment.center, child: Text("Phòng")),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Container(
-                height: 30,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                    border: Border(
-                        right: BorderSide(width: 1, color: Color(0xff68b6ef)))),
-                child: const Text("Hạng ăn"),
-              ),
-            ),
-            Expanded(
-              flex: 8,
-              child: Container(
-                height: 30,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                    border: Border(
-                        right: BorderSide(width: 1, color: Color(0xff68b6ef)))),
-                child: const Text("Thông tin"),
-              ),
-            ),
-            const Expanded(
-              flex: 10,
-              child: SizedBox(
-                height: 30,
-                child: Align(alignment: Alignment.center, child: Text("Chú ý")),
-              ),
-            ),
-          ],
-        ),
-        ...List.generate(
-            bookingDataForAllRooms.length,
-            (index) =>
-                createRow(bookingDataForAllRooms[index], colorChanger++)),
-      ]),
-    );
+    int lastRow = 4;
+    int currentRow = 4;
+    DateTime guestListDate = DateTime(int.parse(Get.parameters["year"]!),
+        int.parse(Get.parameters["month"]!), int.parse(Get.parameters["day"]!));
+    for (var bdForARoom in bookingDataForAllRooms) {
+      for (var bd in bdForARoom.bookingData) {
+        if (ignoreHour(bd.checkInDate).isBefore(guestListDate) &&
+            ignoreHour(bd.checkOutDate).isAfter(guestListDate)) {
+          ws.getRangeByName("B$currentRow")
+            ..setText(bd.subNumber.toString())
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("C$currentRow")
+            ..setText("Hạng ${bd.eatingRank}")
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("D$currentRow")
+            ..setText(getStringFromService(bd.bookingServiceList))
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("E$currentRow")
+            ..setText(bd.attention.toString())
+            ..cellStyle = cellStyle;
+          currentRow++;
+        }
+        ws.getRangeByName("A$lastRow:A${currentRow - 1}")
+          ..merge()
+          ..setText(bdForARoom.roomData.roomID)
+          ..cellStyle = cellStyle;
+        lastRow = currentRow;
+      }
+
+      final rawData = wb.saveAsStream();
+      wb.dispose();
+      final content = base64Encode(rawData);
+      AnchorElement(
+          href:
+              "data:application/octet-stream;charset=utf-16le;base64,$content")
+        ..setAttribute("download",
+            "Danh sách khách hàng ${Get.parameters["day"]}-${Get.parameters["month"]}-${Get.parameters["year"]}.xlsx")
+        ..click();
+    }
   }
 
-  Widget createRow(RoomBooking bookingDataForARoom, int colorChanger) {
-    DateTime guestListDay = DateTime(int.parse(Get.parameters["year"]!),
-        int.parse(Get.parameters["month"]!), int.parse(Get.parameters["day"]!));
+  DateTime ignoreHour(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
 
-    List<Map<String, dynamic>> listForRow = [];
-
-    for (var bd in bookingDataForARoom.bookingData) {
-      if (guestListDay.isAfter(ignoreHour(bd.checkInDate)) &&
-          guestListDay.isBefore(ignoreHour(bd.checkOutDate))) {
-        listForRow.add({
-          "subNumber": bd.subNumber,
-          "eatingRank": bd.eatingRank,
-          "bookingServiceList": bd.bookingServiceList,
-          "attention": bd.attention
-        });
+  String getStringFromService(List<BookingService>? list) {
+    String str = "";
+    if (list == null) return str;
+    for (int i = 0; i < list.length; i++) {
+      str += "${i + 1}. ${list[i].serviceName}\n";
+      if (list[i].serviceDistance != null) {
+        str += "   Khoảng cách đưa đón: ${list[i].serviceDistance}\n";
+      }
+      if (list[i].serviceQuantity != null) {
+        str += "   Số lượng đã đặt: ${list[i].serviceQuantity}\n";
+      }
+      if (list[i].serviceTime != null) {
+        str +=
+            "   Thời gian: ${DateFormat("dd/MM/yyyy hh:mm").format(list[i].serviceTime!)}\n";
       }
     }
-
-    return (listForRow.isNotEmpty)
-        ? Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Expanded(
-                flex: 2,
-                child: Container(
-                    decoration: const BoxDecoration(
-                        border: Border(
-                            right: BorderSide(
-                                width: 1, color: Color(0xff68b6ef)))),
-                    child: Text(bookingDataForARoom.roomData.roomID)),
-              ),
-              Expanded(
-                flex: 22,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(
-                    listForRow.length,
-                    (index) => Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  color: (colorChanger == 0)
-                                      ? const Color(0xffE3F2FD)
-                                      : null,
-                                  border: const Border(
-                                      right: BorderSide(
-                                          width: 1, color: Color(0xff68b6ef)))),
-                              child: Text(
-                                  listForRow[index]["subNumber"].toString())),
-                        ),
-                        const Expanded(flex: 21, child: Text("Sometext"))
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            ],
-          )
-        : Container();
-  }
-
-  DateTime ignoreHour(DateTime time) {
-    return DateTime(time.year, time.month, time.day);
+    return str;
   }
 }
