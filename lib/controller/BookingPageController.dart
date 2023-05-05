@@ -3,9 +3,10 @@ import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:image_picker_web/image_picker_web.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:project_ii/controller/HomePageController.dart';
 import '../model/ServiceModel.dart';
+import '../utils/InternalStorage.dart';
 import 'CalendarPageController.dart';
 
 class BookingPageController extends GetxController {
@@ -47,7 +48,6 @@ class BookingPageController extends GetxController {
   List<TextEditingController?> serviceTime = [];
   List<TextEditingController?> serviceQuantity = [];
   List<TextEditingController?> serviceDistance = [];
-  List<Service> allServiceList = [];
 
   int get currentStep => _currentStep;
   set currentStep(int value) {
@@ -117,19 +117,25 @@ class BookingPageController extends GetxController {
 
   @override
   void onInit() {
-    // TODO: implement onInit
     super.onInit();
-    Future.delayed(const Duration(seconds: 0),
-            () async => allServiceList = await getServiceInfo())
+    Future.delayed(
+            const Duration(seconds: 0), () async => await getServiceInfo())
         .then((value) => update());
   }
 
   Future<Uint8List?> getPhotos() async {
-    catImage = await ImagePickerWeb.getImageAsBytes();
+    XFile? image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 720,
+        maxHeight: 400,
+        imageQuality: 75);
+    if (image == null) return catImage;
+    catImage = await image.readAsBytes();
+    print(catImage?.lengthInBytes);
     return catImage;
   }
 
-  Future<List<Service>> getServiceInfo() async {
+  Future<void> getServiceInfo() async {
     List<dynamic> resList = jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getServiceForDisplay.php",
       FormData({"sessionID": GetStorage().read("sessionID")}),
@@ -139,18 +145,24 @@ class BookingPageController extends GetxController {
     for (var s in resList) {
       list.add(Service.fromJson(s));
     }
-    return list;
+    Get.find<InternalStorage>().write("allServiceList", list);
   }
 
   Future<void> createServiceController(int value, int index) async {
-    serviceQuantity[index] = (allServiceList[value].requiredQuantity)
+    serviceQuantity[index] = (Get.find<InternalStorage>()
+            .read("allServiceList")[value]
+            .requiredQuantity)
         ? TextEditingController()
         : null;
-    serviceDistance[index] = (allServiceList[value].requiredDistance)
+    serviceDistance[index] = (Get.find<InternalStorage>()
+            .read("allServiceList")[value]
+            .requiredDistance)
         ? TextEditingController()
         : null;
     serviceTime[index] =
-        (allServiceList[value].requiredTime) ? TextEditingController() : null;
+        (Get.find<InternalStorage>().read("allServiceList")[value].requiredTime)
+            ? TextEditingController()
+            : null;
     update();
   }
 
@@ -179,7 +191,7 @@ class BookingPageController extends GetxController {
               "catVaccination": catVaccination,
               "catSpecies": catSpeciesController.text == ""
                   ? null
-                  : catAppearanceController.text,
+                  : catSpeciesController.text,
               "catAppearance": catAppearanceController.text == ""
                   ? null
                   : catAppearanceController.text,
@@ -206,13 +218,31 @@ class BookingPageController extends GetxController {
               "eatingRank": eatingRank,
               "bookingServicesList":
                   jsonEncode(List.generate(numberOfServices, (index) {
-                if (allServiceList[serviceList[index]].serviceName == "Đón mèo")
+                if (Get.find<InternalStorage>()
+                        .read("allServiceList")
+                        .firstWhere((element) =>
+                            element.serviceID == serviceList[index])
+                        .serviceName ==
+                    "Đón mèo") {
                   serviceTimeValue[index] = checkInDate;
-                if (allServiceList[serviceList[index]].serviceName == "Trả mèo")
+                }
+                if (Get.find<InternalStorage>()
+                        .read("allServiceList")
+                        .firstWhere((element) =>
+                            element.serviceID == serviceList[index])
+                        .serviceName ==
+                    "Trả mèo") {
                   serviceTimeValue[index] = checkOutDate;
+                }
                 return {
-                  "serviceID": allServiceList[serviceList[index]].serviceID,
-                  "serviceTime": serviceTimeValue[index].toString(),
+                  "serviceID": Get.find<InternalStorage>()
+                      .read("allServiceList")
+                      .firstWhere(
+                          (element) => element.serviceID == serviceList[index])
+                      .serviceID,
+                  "serviceTime": (serviceTimeValue[index] == null)
+                      ? null
+                      : serviceTimeValue[index].toString(),
                   "serviceQuantity": (serviceQuantity[index] == null)
                       ? null
                       : serviceQuantity[index]?.text,

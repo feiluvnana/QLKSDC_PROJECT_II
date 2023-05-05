@@ -4,6 +4,7 @@ import '../controller/LoginPageController.dart';
 import '../controller/BookingPageController.dart';
 import '../controller/HomePageController.dart';
 import '../controller/CalendarPageController.dart';
+import '../utils/InternalStorage.dart';
 
 class MyBinding extends Bindings {
   @override
@@ -13,6 +14,7 @@ class MyBinding extends Bindings {
     Get.lazyPut(() => CalendarPageController(), fenix: true);
     Get.lazyPut(() => BookingPageController(), fenix: true);
     Get.lazyPut(() => InformationPageController(), fenix: true);
+    Get.put(InternalStorage(), permanent: true);
   }
 
   void delete() {
@@ -21,5 +23,6 @@ class MyBinding extends Bindings {
     Get.delete<CalendarPageController>();
     Get.delete<BookingPageController>();
     Get.delete<InformationPageController>();
+    Get.delete<InternalStorage>(force: true);
   }
 }

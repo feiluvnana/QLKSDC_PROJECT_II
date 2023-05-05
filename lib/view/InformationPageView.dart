@@ -7,6 +7,7 @@ import 'package:project_ii/model/BookingModel.dart';
 import 'package:project_ii/model/RoomModel.dart';
 import '../model/RoomBookingModel.dart';
 import '../model/ServiceModel.dart';
+import '../utils/InternalStorage.dart';
 
 class InformationPage extends StatelessWidget {
   const InformationPage({super.key});
@@ -110,7 +111,55 @@ class InformationPage extends StatelessWidget {
                           backgroundColor: const Color(0xffff6961),
                           foregroundColor: Colors.black,
                         ),
-                        onPressed: () => {},
+                        onPressed: () => {
+                          Get.defaultDialog<bool>(
+                            title: "Cảnh Báo",
+                            content: const Text(
+                                "Hành động này không thể đảo ngược. Xác nhận tiếp tục?"),
+                            confirm: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                              ),
+                              onPressed: () => Get.back(result: true),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  FaIcon(FontAwesomeIcons.check, size: 14),
+                                  Text(" Xác nhận")
+                                ],
+                              ),
+                            ),
+                            cancel: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xffff6961),
+                                foregroundColor: Colors.black,
+                              ),
+                              onPressed: () => Get.back(result: false),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  FaIcon(FontAwesomeIcons.x, size: 14),
+                                  Text(" Hủy")
+                                ],
+                              ),
+                            ),
+                          ).then((isConfirmed) {
+                            if (isConfirmed == true) {
+                              Get.find<InformationPageController>()
+                                  .cancelBooking(
+                                      bidx: int.parse(Get.parameters["bidx"]!),
+                                      ridx: int.parse(Get.parameters["ridx"]!))
+                                  .then((response) async {
+                                if (response["flag"] == "beforeCheckIn") {
+                                  await Get.defaultDialog(
+                                      title: "Thông báo",
+                                      content: Text(response["message"]!));
+                                  Get.back(closeOverlays: true);
+                                }
+                              });
+                            }
+                          })
+                        },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
@@ -136,9 +185,9 @@ class CatInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get
-        .arguments["bookingDataForAllRooms"][int.parse(Get.parameters["ridx"]!)]
-        .bookingData[int.parse(Get.parameters["bidx"]!)];
+    Booking bookingData = Get.find<InternalStorage>()
+        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
+        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
     Widget thisPageCatImage = (bookingData.catData.catImage == null)
         ? const Placeholder(color: Color(0xff68b6ef))
         : bookingData.catData.catImage!;
@@ -268,9 +317,9 @@ class OwnerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get
-        .arguments["bookingDataForAllRooms"][int.parse(Get.parameters["ridx"]!)]
-        .bookingData[int.parse(Get.parameters["bidx"]!)];
+    Booking bookingData = Get.find<InternalStorage>()
+        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
+        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -338,13 +387,14 @@ class BookingInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<RoomBooking> bookingDataForAllRooms =
-        Get.arguments["bookingDataForAllRooms"];
+        Get.find<InternalStorage>().read("bookingDataForAllRooms");
     Booking bookingData =
         bookingDataForAllRooms[int.parse(Get.parameters["ridx"]!)]
-            .bookingData[int.parse(Get.parameters["bidx"]!)];
+            .bookingDataList[int.parse(Get.parameters["bidx"]!)];
     Room roomData =
         bookingDataForAllRooms[int.parse(Get.parameters["ridx"]!)].roomData;
-    List<Service> allServiceList = Get.arguments["allServiceList"];
+    List<Service> allServiceList =
+        Get.find<InternalStorage>().read("allServiceList");
     return GetBuilder<InformationPageController>(
         id: "form1",
         builder: (controller) {
@@ -645,9 +695,9 @@ class ServiceInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get
-        .arguments["bookingDataForAllRooms"][int.parse(Get.parameters["ridx"]!)]
-        .bookingData[int.parse(Get.parameters["bidx"]!)];
+    Booking bookingData = Get.find<InternalStorage>()
+        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
+        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

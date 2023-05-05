@@ -4,14 +4,28 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controller/BookingPageController.dart';
-import '../controller/CalendarPageController.dart';
+import '../utils/InternalStorage.dart';
 
 class BookingPage extends StatelessWidget {
   const BookingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var internalStorage = Get.find<InternalStorage>();
     return GetBuilder<BookingPageController>(builder: (controller) {
+      if (internalStorage.read("allServiceList") == null) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+            Text('Đang tải...'),
+          ],
+        );
+      }
       return Align(
         alignment: Alignment.topCenter,
         child: SizedBox(
@@ -528,20 +542,20 @@ class BookingPage extends StatelessWidget {
                               child: DropdownButtonFormField<String>(
                                 isExpanded: true,
                                 items: List.generate(
-                                    Get.find<CalendarPageController>()
-                                        .bookingDataForAllRooms
+                                    internalStorage
+                                        .read("bookingDataForAllRooms")
                                         .length,
                                     (index) => DropdownMenuItem(
-                                        value:
-                                            Get.find<CalendarPageController>()
-                                                .bookingDataForAllRooms[index]
-                                                .roomData
-                                                .roomID,
-                                        child: Text(
-                                            Get.find<CalendarPageController>()
-                                                .bookingDataForAllRooms[index]
-                                                .roomData
-                                                .roomID))),
+                                        value: internalStorage
+                                            .read(
+                                                "bookingDataForAllRooms")[index]
+                                            .roomData
+                                            .roomID,
+                                        child: Text(internalStorage
+                                            .read(
+                                                "bookingDataForAllRooms")[index]
+                                            .roomData
+                                            .roomID))),
                                 onChanged: (String? value) {
                                   if (value == null) return;
                                   controller.subNumber = 1;
@@ -572,8 +586,8 @@ class BookingPage extends StatelessWidget {
                                 items: (controller.roomID == "")
                                     ? null
                                     : List.generate(
-                                        Get.find<CalendarPageController>()
-                                            .bookingDataForAllRooms
+                                        internalStorage
+                                            .read("bookingDataForAllRooms")
                                             .firstWhere((element) =>
                                                 element.roomData.roomID ==
                                                 controller.roomID)
@@ -612,7 +626,9 @@ class BookingPage extends StatelessWidget {
                               child: DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 items: List.generate(
-                                  controller.allServiceList.length,
+                                  Get.find<InternalStorage>()
+                                      .read("allServiceList")
+                                      .length,
                                   (index) => DropdownMenuItem(
                                     value: index + 1,
                                     child: Row(
@@ -821,10 +837,12 @@ class ServiceInput extends StatelessWidget {
             child: DropdownButtonFormField<int>(
               isExpanded: true,
               items: List.generate(
-                controller.allServiceList.length,
+                Get.find<InternalStorage>().read("allServiceList").length,
                 (index2) => DropdownMenuItem(
                   value: index2 + 1,
-                  child: Text(controller.allServiceList[index2].serviceName),
+                  child: Text(Get.find<InternalStorage>()
+                      .read("allServiceList")[index2]
+                      .serviceName),
                 ),
               ),
               onChanged: (int? value) {

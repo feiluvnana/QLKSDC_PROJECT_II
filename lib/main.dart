@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:project_ii/view/GuestListView.dart';
 import 'generated/l10n.dart';
 import 'middleware/InformationPageMiddleware.dart';
 import 'view/HomePageView.dart';
@@ -48,37 +47,27 @@ class ProjectII extends StatelessWidget {
           curve: Curves.easeOutExpo,
         ),
         GetPage(
-            name: "/home",
+          name: "/home",
+          page: () => Title(
+              color: const Color(0xff68b6ef),
+              title: "Trang chủ",
+              child: const HomePage()),
+          title: "Trang chủ",
+          middlewares: [HomePageMiddleware()],
+          transition: Transition.zoom,
+          transitionDuration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutExpo,
+        ),
+        GetPage(
+            name: "/info",
             page: () => Title(
                 color: const Color(0xff68b6ef),
-                title: "Trang chủ",
-                child: const HomePage()),
-            title: "Trang chủ",
-            middlewares: [HomePageMiddleware()],
+                title: "Thông tin",
+                child: const InformationPage()),
+            middlewares: [InformationPageMiddleware()],
             transition: Transition.zoom,
             transitionDuration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutExpo,
-            children: [
-              GetPage(
-                  name: "/info",
-                  page: () => Title(
-                      color: const Color(0xff68b6ef),
-                      title: "Thông tin",
-                      child: const InformationPage()),
-                  middlewares: [InformationPageMiddleware()],
-                  transition: Transition.zoom,
-                  transitionDuration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutExpo),
-              GetPage(
-                  name: "/guestList",
-                  page: () => Title(
-                      color: const Color(0xff68b6ef),
-                      title: "Danh sách khách hàng",
-                      child: const GuestListView()),
-                  transition: Transition.zoom,
-                  transitionDuration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutExpo)
-            ]),
+            curve: Curves.easeOutExpo),
       ],
       localizationsDelegates: const [
         S.delegate,

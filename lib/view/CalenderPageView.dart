@@ -4,10 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:project_ii/controller/BookingPageController.dart';
 import '../controller/CalendarPageController.dart';
-import '../model/ServiceModel.dart';
+import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
+import '../utils/GuestList.dart';
 
-class CalenderPage extends StatelessWidget {
+class CalenderPage extends StatelessWidget with GuestList {
   const CalenderPage({super.key});
 
   @override
@@ -48,17 +49,18 @@ class CalenderPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton(
-                            onPressed: () async {
-                              await Get.delete<BookingPageController>();
-                              return Get.toNamed(
-                                  "/home/guestList?day=${controller.dayForGuestList}&month=${controller.currentMonth.month}&year=${controller.currentMonth.year}",
-                                  arguments: {
-                                    "bookingDataForAllRooms":
-                                        controller.bookingDataForAllRooms
-                                  });
-                            },
-                            child: const Text("Xuất danh sách"),
-                          ),
+                              onPressed: () async {
+                                await createSpreadSheet(
+                                    controller.dayForGuestList,
+                                    controller.currentMonth.month,
+                                    controller.currentMonth.year);
+                              },
+                              child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    FaIcon(FontAwesomeIcons.download, size: 14),
+                                    Text(" Xuất danh sách")
+                                  ])),
                           DropdownButton<int>(
                             items: List.generate(
                                 controller.daysInCurrentMonth,
@@ -128,11 +130,7 @@ class CalenderPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const Expanded(
-              child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: BookingInfo(),
-          )),
+          const Expanded(child: BookingInfo()),
         ],
       ),
     );
@@ -147,36 +145,32 @@ class BookingInfo extends StatelessWidget {
     return GetBuilder<CalendarPageController>(
         id: "table",
         builder: (controller) {
-          return FutureBuilder(
-              future: displayTable(controller, context),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                      Text('Đang tải...'),
-                    ],
-                  );
-                }
-                return snapshot.requireData;
-              });
+          if (Get.find<InternalStorage>().read("bookingDataForAllRooms") ==
+              null) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+                Text('Đang tải...'),
+              ],
+            );
+          }
+          return displayTable(controller, context);
         });
   }
 
-  Future<Widget> displayTable(
-      CalendarPageController controller, BuildContext context) async {
-    await Future.delayed(const Duration(seconds: 1));
+  Widget displayTable(CalendarPageController controller, BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
-          controller.bookingDataForAllRooms.length,
+          (Get.find<InternalStorage>().read("bookingDataForAllRooms") as List)
+              .length,
           (index1) {
             return Container(
               decoration: BoxDecoration(border: Border.all(width: 0.45)),
@@ -185,8 +179,10 @@ class BookingInfo extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: MediaQuery.of(context).size.width / 32,
-                    child: Text(controller
-                        .bookingDataForAllRooms[index1].roomData.roomID),
+                    child: Text(Get.find<InternalStorage>()
+                        .read("bookingDataForAllRooms")[index1]
+                        .roomData
+                        .roomID),
                   ),
                   Flexible(
                     child: GridView.count(
@@ -196,8 +192,10 @@ class BookingInfo extends StatelessWidget {
                       crossAxisCount: controller.daysInCurrentMonth,
                       children: List.generate(
                           (controller.daysInCurrentMonth *
-                              (controller.bookingDataForAllRooms[index1]
-                                  .roomData.subQuantity)), (index2) {
+                              (Get.find<InternalStorage>()
+                                  .read("bookingDataForAllRooms")[index1]
+                                  .roomData
+                                  .subQuantity as int)), (index2) {
                         return (getDisplayValue(controller, index1, index2)
                                     .first ==
                                 getDisplayValue(controller, index1, index2)
@@ -248,7 +246,8 @@ class BookingInfo extends StatelessWidget {
 
   Pair getDisplayValue(
       CalendarPageController controller, int index1, int index2) {
-    return controller.bookingDataForAllRooms[index1]
+    return Get.find<InternalStorage>()
+            .read("bookingDataForAllRooms")[index1]
             .displayArray[index2 ~/ controller.daysInCurrentMonth]
         [index2 % controller.daysInCurrentMonth];
   }
@@ -285,23 +284,18 @@ class HalfCell extends StatelessWidget {
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
             onTap: () async {
-              List<Service> allServiceList =
-                  await Get.find<BookingPageController>().getServiceInfo();
-              await Get.delete<BookingPageController>();
-              await Get.toNamed("/home/info?ridx=$index1&bidx=$value",
-                  arguments: {
-                    "bookingDataForAllRooms": controller.bookingDataForAllRooms,
-                    "allServiceList": allServiceList,
-                  })?.then(
-                (value) {
-                  if (value["result"] == null) return;
-                },
+              if (Get.find<InternalStorage>().read("allServiceList") == null) {
+                await Get.find<BookingPageController>().getServiceInfo();
+                await Get.delete<BookingPageController>();
+              }
+              await Get.toNamed("/info?ridx=$index1&bidx=$value")?.then(
+                (value) async => await controller.getBookingDataForAllRooms(),
               );
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 600),
               message:
-                  "${controller.bookingDataForAllRooms[index1].roomData.getRoomDataToString()}\n${controller.bookingDataForAllRooms[index1].bookingData[value].getBookingInfoToString()}",
+                  "${Get.find<InternalStorage>().read("bookingDataForAllRooms")[index1].roomData.getRoomDataToString()}\n${Get.find<InternalStorage>().read("bookingDataForAllRooms")[index1].bookingDataList[value].getBookingInfoToString()}",
               child: Container(
                 margin: (isTheBeginningOfABooking(
                         controller, index1, index2, value))
@@ -315,12 +309,16 @@ class HalfCell extends StatelessWidget {
                     ? RichText(
                         text: TextSpan(children: [
                           TextSpan(
-                              text: controller.bookingDataForAllRooms[index1]
-                                  .bookingData[value].catData.catName,
+                              text: Get.find<InternalStorage>()
+                                  .read("bookingDataForAllRooms")[index1]
+                                  .bookingDataList[value]
+                                  .catData
+                                  .catName,
                               style: TextStyle(
-                                  fontSize: (controller
-                                              .bookingDataForAllRooms[index1]
-                                              .bookingData[value]
+                                  fontSize: (Get.find<InternalStorage>()
+                                              .read("bookingDataForAllRooms")[
+                                                  index1]
+                                              .bookingDataList[value]
                                               .catData
                                               .catName
                                               .length >
@@ -343,7 +341,8 @@ class HalfCell extends StatelessWidget {
 
   Pair getDisplayValue(
       CalendarPageController controller, int index1, int index2) {
-    return controller.bookingDataForAllRooms[index1]
+    return Get.find<InternalStorage>()
+            .read("bookingDataForAllRooms")[index1]
             .displayArray[index2 ~/ controller.daysInCurrentMonth]
         [index2 % controller.daysInCurrentMonth];
   }
@@ -407,19 +406,37 @@ class HalfCell extends StatelessWidget {
   int getNumberOfNights(
       CalendarPageController controller, int index1, int index2, int value) {
     return DateTime(
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkOutDate.year,
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkOutDate.month,
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkOutDate.day)
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkOutDate
+                .year,
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkOutDate
+                .month,
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkOutDate
+                .day)
         .difference(DateTime(
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkInDate.year,
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkInDate.month,
-            controller.bookingDataForAllRooms[index1].bookingData[value]
-                .checkInDate.day))
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkInDate
+                .year,
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkInDate
+                .month,
+            Get.find<InternalStorage>()
+                .read("bookingDataForAllRooms")[index1]
+                .bookingDataList[value]
+                .checkInDate
+                .day))
         .inDays;
   }
 }

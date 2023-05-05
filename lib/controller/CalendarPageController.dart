@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:project_ii/utils/InternalStorage.dart';
 import '../model/BookingModel.dart';
 import '../model/BookingServiceModel.dart';
 import '../model/RoomBookingModel.dart';
@@ -11,7 +12,6 @@ import '../utils/PairUtils.dart';
 
 class CalendarPageController extends GetxController {
   late DateTime _currentMonth, _today;
-  late List<RoomBooking> _bookingDataForAllRooms;
   late bool _isAddMonthClicked;
   late int _dayForGuestList;
   late int _daysInCurrentMonth;
@@ -22,11 +22,11 @@ class CalendarPageController extends GetxController {
     _today =
         DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     _currentMonth = DateTime(_today.year, _today.month);
-    _bookingDataForAllRooms = [];
     _isAddMonthClicked = false;
     _dayForGuestList = _today.day;
     _daysInCurrentMonth =
         DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
+
     Future.delayed(const Duration(seconds: 0),
             () async => await getBookingDataForAllRooms())
         .then(
@@ -39,9 +39,9 @@ class CalendarPageController extends GetxController {
   set dayForGuestList(int value) => _dayForGuestList = value;
   int get daysInCurrentMonth => _daysInCurrentMonth;
   DateTime get today => _today;
-  List<RoomBooking> get bookingDataForAllRooms => _bookingDataForAllRooms;
 
   void addMonths({required int value}) async {
+    Get.find<InternalStorage>().remove("bookingDataForAllRooms");
     if (_isAddMonthClicked) return;
     _isAddMonthClicked = true;
     print("clicked");
@@ -55,7 +55,6 @@ class CalendarPageController extends GetxController {
     _dayForGuestList = 1;
     _daysInCurrentMonth =
         DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
-    _bookingDataForAllRooms = [];
     await getBookingDataForAllRooms();
     update(["guestList", "table", "dayLabel", "monthText"]);
     _isAddMonthClicked = false;
@@ -121,16 +120,6 @@ class CalendarPageController extends GetxController {
   }
 
   Future<List<Booking>> getBookingDataForOneRoom(Room roomData) async {
-    print((await GetConnect().post(
-      "http://localhost/php-crash/getBookingForDisplay.php",
-      FormData({
-        "sessionID": GetStorage().read("sessionID"),
-        "roomID": roomData.roomID,
-        "month": currentMonth.month,
-        "year": currentMonth.year
-      }),
-    ))
-        .body);
     List<dynamic> oneRoomBookingListFromRes =
         jsonDecode((await GetConnect().post(
       "http://localhost/php-crash/getBookingForDisplay.php",
@@ -189,13 +178,14 @@ class CalendarPageController extends GetxController {
           await createDisplayListForOneRoom(roomData, bookingData);
       roomBookingData.addAll([
         RoomBooking(
-          bookingData: bookingData,
+          bookingDataList: bookingData,
           roomData: roomData,
           displayArray: displayArray,
         )
       ]);
     }
-    _bookingDataForAllRooms = roomBookingData;
+    Get.find<InternalStorage>()
+        .write("bookingDataForAllRooms", roomBookingData);
     update(["guestList", "table", "dayLabel", "monthText"]);
   }
 }
