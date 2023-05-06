@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
                             FormData(
                                 {"sessionID": GetStorage().read("sessionID")}),
                           );
-                          await GetStorage().remove("sessionID");
+                          await GetStorage().erase();
                           Get.offAllNamed("/login");
                         },
                         child: Row(

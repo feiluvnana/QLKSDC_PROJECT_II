@@ -144,27 +144,31 @@ class BookingInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<CalendarPageController>(
         id: "table",
-        builder: (controller) {
-          if (Get.find<InternalStorage>().read("bookingDataForAllRooms") ==
-              null) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                ),
-                Text('Đang tải...'),
-              ],
-            );
-          }
-          return displayTable(controller, context);
-        });
+        builder: (controller) => FutureBuilder(
+            future: displayTable(controller, context),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                    Text('Đang tải...'),
+                  ],
+                );
+              }
+              return snapshot.data!;
+            }));
   }
 
-  Widget displayTable(CalendarPageController controller, BuildContext context) {
+  Future<Widget> displayTable(
+      CalendarPageController controller, BuildContext context) async {
+    await Future.delayed(const Duration(seconds: 2));
     return SingleChildScrollView(
+      primary: true,
       scrollDirection: Axis.vertical,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -185,17 +189,18 @@ class BookingInfo extends StatelessWidget {
                         .roomID),
                   ),
                   Flexible(
-                    child: GridView.count(
+                    child: GridView.builder(
                       primary: false,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
-                      crossAxisCount: controller.daysInCurrentMonth,
-                      children: List.generate(
-                          (controller.daysInCurrentMonth *
-                              (Get.find<InternalStorage>()
-                                  .read("bookingDataForAllRooms")[index1]
-                                  .roomData
-                                  .subQuantity as int)), (index2) {
+                      itemCount: (controller.daysInCurrentMonth *
+                          Get.find<InternalStorage>()
+                              .read("bookingDataForAllRooms")[index1]
+                              .roomData
+                              .subQuantity) as int,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: controller.daysInCurrentMonth),
+                      itemBuilder: (context, index2) {
                         return (getDisplayValue(controller, index1, index2)
                                     .first ==
                                 getDisplayValue(controller, index1, index2)
@@ -232,7 +237,7 @@ class BookingInfo extends StatelessWidget {
                                   ),
                                 ],
                               );
-                      }),
+                      },
                     ),
                   ),
                 ],

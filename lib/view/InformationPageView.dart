@@ -16,6 +16,7 @@ class InformationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
+        primary: true,
         child: Padding(
           padding: EdgeInsets.only(
               left: 90, right: MediaQuery.of(context).size.width / 10 * 3),
