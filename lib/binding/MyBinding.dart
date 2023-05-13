@@ -18,11 +18,6 @@ class MyBinding extends Bindings {
   }
 
   void delete() {
-    Get.delete<LoginPageController>();
-    Get.delete<HomePageController>();
-    Get.delete<CalendarPageController>();
-    Get.delete<BookingPageController>();
-    Get.delete<InformationPageController>();
-    Get.delete<InternalStorage>(force: true);
+    Get.deleteAll(force: true);
   }
 }

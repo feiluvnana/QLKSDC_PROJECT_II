@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:project_ii/controller/HomePageController.dart';
 import 'BookingPageView.dart';
-import 'CalenderPageView.dart';
+import 'CalendarPageView.dart';
 import 'RoomPageView.dart';
 
 class HomePage extends StatelessWidget {
@@ -49,8 +49,7 @@ class HomePage extends StatelessWidget {
                         onPressed: () async {
                           await GetConnect().post(
                             "http://localhost/php-crash/logout.php",
-                            FormData(
-                                {"sessionID": GetStorage().read("sessionID")}),
+                            FormData({"sessionID": GetStorage().read("sessionID")}),
                           );
                           await GetStorage().erase();
                           Get.offAllNamed("/login");
@@ -58,8 +57,7 @@ class HomePage extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            FaIcon(FontAwesomeIcons.arrowRightFromBracket,
-                                size: 14),
+                            FaIcon(FontAwesomeIcons.arrowRightFromBracket, size: 14),
                             Text(" Đăng xuất"),
                           ],
                         )),

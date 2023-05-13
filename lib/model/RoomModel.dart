@@ -1,17 +1,17 @@
 import 'package:get/get.dart';
 
 class Room {
-  final String roomID, roomType;
-  final double roomPrice;
-  final int subQuantity;
+  final String id, type;
+  final double price;
+  final int total;
 
   Room.fromJson(Map<String, dynamic> json)
-      : roomID = json["roomID"],
-        roomType = json["roomType"],
-        roomPrice = json["roomPrice"],
-        subQuantity = json["subQuantity"];
+      : id = json["room_id"],
+        type = json["room_type"],
+        price = json["room_price"],
+        total = json["room_total"];
 
   String getRoomDataToString() {
-    return "Mã phòng: $roomID\nGía phòng: ${roomPrice.toPrecision(0)}VNĐ";
+    return "Mã phòng: $id\nGía phòng: ${price.toPrecision(0)}VNĐ";
   }
 }

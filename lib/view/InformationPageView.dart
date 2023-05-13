@@ -3,10 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:project_ii/controller/InformationPageController.dart';
-import 'package:project_ii/model/BookingModel.dart';
+import 'package:project_ii/model/OrderModel.dart';
 import 'package:project_ii/model/RoomModel.dart';
-import '../model/RoomBookingModel.dart';
+import '../model/RoomGroupModel.dart';
 import '../model/ServiceModel.dart';
+import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
 
 class InformationPage extends StatelessWidget {
@@ -27,7 +28,7 @@ class InformationPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
-                    onPressed: () => Get.back(result: {"result": null}),
+                    onPressed: () => Get.offNamed("/home"),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
@@ -74,7 +75,40 @@ class InformationPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.black,
                         ),
-                        onPressed: () => {},
+                        onPressed: () {
+                          Get.find<InformationPageController>()
+                              .saveChanges(
+                                  bidx: int.parse(Get.parameters["bidx"]!),
+                                  ridx: int.parse(Get.parameters["ridx"]!))
+                              .then((response) async {
+                            if (response["validation"] == false) return;
+                            if (response["form1Init"] == true &&
+                                response["form2Init"] == true) {
+                              await Get.defaultDialog(
+                                  title: "Thông báo",
+                                  content: Text(
+                                      "${response["form1"] == true ? "Lưu thay đổi thông tin đặt phòng thành công" : "Lưu thay đổi thông tin đặt phòng thất bại"}\n${response["form2"] == true ? "Lưu thay đổi thông tin dịch vụ thành công" : "Lưu thay đổi thông tin dịch vụ thất bại"}"));
+                              Get.offNamed("/home");
+                            } else if (response["form1Init"] == true &&
+                                response["form2Init"] == false) {
+                              await Get.defaultDialog(
+                                  title: "Thông báo",
+                                  content: Text(response["form1"] == true
+                                      ? "Lưu thay đổi thông tin đặt phòng thành công"
+                                      : "Lưu thay đổi thông tin đặt phòng thất bại"));
+                              Get.offNamed("/home");
+                            } else if (response["form1Init"] == false &&
+                                response["form2Init"] == true) {
+                              await Get.defaultDialog(
+                                  title: "Thông báo",
+                                  content: Text(response["form2"] == true
+                                      ? "Lưu thay đổi thông tin dịch vụ thành công"
+                                      : "Lưu thay đổi thông tin dịch vụ thất bại"));
+                              Get.offNamed("/home");
+                            } else if (response["form1Init"] == true &&
+                                response["form2Init"] == true) {}
+                          });
+                        },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
@@ -151,11 +185,17 @@ class InformationPage extends StatelessWidget {
                                       bidx: int.parse(Get.parameters["bidx"]!),
                                       ridx: int.parse(Get.parameters["ridx"]!))
                                   .then((response) async {
-                                if (response["flag"] == "beforeCheckIn") {
+                                if (response == "accepted") {
                                   await Get.defaultDialog(
                                       title: "Thông báo",
-                                      content: Text(response["message"]!));
-                                  Get.back(closeOverlays: true);
+                                      content: const Text(
+                                          "Huỷ đặt phòng thành công"));
+                                  Get.offNamed("/home");
+                                } else {
+                                  await Get.defaultDialog(
+                                      title: "Thông báo",
+                                      content:
+                                          const Text("Huỷ đặt phòng thất bại"));
                                 }
                               });
                             }
@@ -186,12 +226,13 @@ class CatInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get.find<InternalStorage>()
-        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
-        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
-    Widget thisPageCatImage = (bookingData.catData.catImage == null)
+    Order order = (Get.find<InternalStorage>()
+                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
+            as RoomGroup)
+        .ordersList[int.parse(Get.parameters["bidx"]!)];
+    Widget thisPageCatImage = (order.cat.image == null)
         ? const Placeholder(color: Color(0xff68b6ef))
-        : bookingData.catData.catImage!;
+        : order.cat.image!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +267,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catName),
+                    child: Text(order.cat.name),
                   )
                 ],
               ),
@@ -251,7 +292,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catGender ?? ""),
+                    child: Text(order.cat.gender ?? ""),
                   )
                 ],
               ),
@@ -264,7 +305,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catAge.toString()),
+                    child: Text(order.cat.age.toString()),
                   )
                 ],
               ),
@@ -276,7 +317,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catPhysicalCondition),
+                    child: Text(order.cat.physicalCondition),
                   )
                 ],
               ),
@@ -289,7 +330,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catSpecies ?? ""),
+                    child: Text(order.cat.species ?? ""),
                   )
                 ],
               ),
@@ -301,7 +342,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.catAppearance ?? ""),
+                    child: Text(order.cat.catAppearance ?? ""),
                   )
                 ],
               )
@@ -318,9 +359,10 @@ class OwnerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get.find<InternalStorage>()
-        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
-        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
+    Order order = (Get.find<InternalStorage>()
+                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
+            as RoomGroup)
+        .ordersList[int.parse(Get.parameters["bidx"]!)];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -354,10 +396,9 @@ class OwnerInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8),
-                    child: Text((bookingData.catData.ownerData.ownerGender ==
-                            "Nam")
-                        ? "(Anh) ${bookingData.catData.ownerData.ownerName}"
-                        : "(Chị) ${bookingData.catData.ownerData.ownerName}"),
+                    child: Text((order.cat.owner.gender == "Nam")
+                        ? "(Anh) ${order.cat.owner.name}"
+                        : "(Chị) ${order.cat.owner.name}"),
                   )
                 ],
               ),
@@ -370,7 +411,7 @@ class OwnerInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(bookingData.catData.ownerData.ownerTel),
+                    child: Text(order.cat.owner.tel),
                   )
                 ],
               ),
@@ -387,15 +428,11 @@ class BookingInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<RoomBooking> bookingDataForAllRooms =
-        Get.find<InternalStorage>().read("bookingDataForAllRooms");
-    Booking bookingData =
-        bookingDataForAllRooms[int.parse(Get.parameters["ridx"]!)]
-            .bookingDataList[int.parse(Get.parameters["bidx"]!)];
-    Room roomData =
-        bookingDataForAllRooms[int.parse(Get.parameters["ridx"]!)].roomData;
-    List<Service> allServiceList =
-        Get.find<InternalStorage>().read("allServiceList");
+    List<RoomGroup> roomGroupsList =
+        Get.find<InternalStorage>().read("roomGroupsList");
+    Order order = roomGroupsList[int.parse(Get.parameters["ridx"]!)]
+        .ordersList[int.parse(Get.parameters["bidx"]!)];
+    Room roomData = roomGroupsList[int.parse(Get.parameters["ridx"]!)].room;
     return GetBuilder<InformationPageController>(
         id: "form1",
         builder: (controller) {
@@ -415,7 +452,7 @@ class BookingInfo extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () async => await controller.toggleForm1(
-                        bookingData: bookingData, roomData: roomData),
+                        order: order, room: roomData),
                     child: FaIcon(
                         (controller.editForm1)
                             ? FontAwesomeIcons.xmark
@@ -451,11 +488,8 @@ class BookingInfo extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: (bookingData.checkInDate
-                                        .isBefore(DateTime.now()) ||
-                                    !controller.editForm1)
-                                ? Text(
-                                    "${roomData.roomID}(${bookingData.subNumber})")
+                            child: (!controller.editForm1)
+                                ? Text("${roomData.id}(${order.subRoomNum})")
                                 : Row(
                                     children: [
                                       Flexible(
@@ -467,23 +501,25 @@ class BookingInfo extends StatelessWidget {
                                               DropdownButtonFormField<String>(
                                             isExpanded: true,
                                             items: List.generate(
-                                                bookingDataForAllRooms.length,
+                                                roomGroupsList.length,
                                                 (index) => DropdownMenuItem(
-                                                    value:
-                                                        bookingDataForAllRooms[
-                                                                index]
-                                                            .roomData
-                                                            .roomID,
+                                                    value: roomGroupsList[index]
+                                                        .room
+                                                        .id,
                                                     child: Text(
-                                                        bookingDataForAllRooms[
-                                                                index]
-                                                            .roomData
-                                                            .roomID))),
-                                            onChanged: (String? value) {
-                                              if (value == null) return;
-                                              controller.modifiedSubNumber = 1;
-                                              controller.modifiedRoomID = value;
-                                            },
+                                                        roomGroupsList[index]
+                                                            .room
+                                                            .id))),
+                                            onChanged: (!order.checkIn
+                                                    .isBefore(DateTime.now()))
+                                                ? (String? value) {
+                                                    if (value == null) return;
+                                                    controller
+                                                        .modifiedSubNumber = 1;
+                                                    controller.modifiedRoomID =
+                                                        value;
+                                                  }
+                                                : null,
                                             value: controller.modifiedRoomID,
                                             hint: const Text("---"),
                                             decoration: const InputDecoration(
@@ -502,23 +538,26 @@ class BookingInfo extends StatelessWidget {
                                           child: DropdownButtonFormField<int>(
                                             isExpanded: true,
                                             items: List.generate(
-                                                bookingDataForAllRooms
+                                                roomGroupsList
                                                     .firstWhere((element) =>
-                                                        element
-                                                            .roomData.roomID ==
+                                                        element.room.id ==
                                                         controller
                                                             .modifiedRoomID)
-                                                    .roomData
-                                                    .subQuantity,
+                                                    .room
+                                                    .total,
                                                 (index) => DropdownMenuItem(
                                                     value: index + 1,
                                                     child:
                                                         Text("${index + 1}"))),
-                                            onChanged: (int? value) {
-                                              if (value == null) return;
-                                              controller.modifiedSubNumber =
-                                                  value;
-                                            },
+                                            onChanged: (!order.checkIn
+                                                    .isBefore(DateTime.now()))
+                                                ? (int? value) {
+                                                    if (value == null) return;
+                                                    controller
+                                                            .modifiedSubNumber =
+                                                        value;
+                                                  }
+                                                : null,
                                             value: controller.modifiedSubNumber,
                                             hint: const Text("---"),
                                             decoration: const InputDecoration(
@@ -545,7 +584,7 @@ class BookingInfo extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(DateFormat("yyyy-MM-dd HH:mm:ss")
-                                .format(bookingData.bookingDate)),
+                                .format(order.date)),
                           )
                         ],
                       ),
@@ -557,10 +596,8 @@ class BookingInfo extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: (!controller.editForm1 ||
-                                    bookingData.checkInDate
-                                        .isBefore(DateTime.now()))
-                                ? Text(bookingData.eatingRank.toString())
+                            child: (!controller.editForm1)
+                                ? Text(order.eatingRank.toString())
                                 : Padding(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 10, horizontal: 16),
@@ -586,10 +623,14 @@ class BookingInfo extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      onChanged: (int? value) {
-                                        if (value == null) return;
-                                        controller.modifiedEatingRank = value;
-                                      },
+                                      onChanged: (!order.checkIn
+                                              .isBefore(DateTime.now()))
+                                          ? (int? value) {
+                                              if (value == null) return;
+                                              controller.modifiedEatingRank =
+                                                  value;
+                                            }
+                                          : null,
                                       value: controller.modifiedEatingRank,
                                       hint: const Text("---"),
                                       decoration: const InputDecoration(
@@ -612,60 +653,123 @@ class BookingInfo extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Flexible(
-                                    child: RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          const TextSpan(text: "Check-in:\n"),
-                                          TextSpan(
-                                            text: DateFormat(
-                                                    "yyyy-MM-dd HH:mm:ss")
-                                                .format(
-                                                    bookingData.checkInDate),
-                                            style: TextStyle(
-                                                color: (bookingData
-                                                            .checkInDate.hour <
-                                                        14)
-                                                    ? Colors.red
-                                                    : null),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Flexible(
-                                    child: RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          const TextSpan(text: "Check-out:\n"),
-                                          TextSpan(
-                                            text: DateFormat(
-                                                    "yyyy-MM-dd HH:mm:ss")
-                                                .format(
-                                                    bookingData.checkOutDate),
-                                            style: TextStyle(
-                                                color: (bookingData.checkOutDate
-                                                                .hour >
-                                                            14 ||
-                                                        (bookingData.checkOutDate
-                                                                    .hour ==
-                                                                14 &&
-                                                            bookingData
-                                                                    .checkOutDate
-                                                                    .minute >
-                                                                0))
-                                                    ? Colors.red
-                                                    : null),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ]),
+                            child: (!controller.editForm1)
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                        Flexible(
+                                          child: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                const TextSpan(
+                                                    text: "Check-in:\n"),
+                                                TextSpan(
+                                                  text: DateFormat(
+                                                          "yyyy-MM-dd HH:mm")
+                                                      .format(order.checkIn),
+                                                  style: TextStyle(
+                                                      color:
+                                                          (order.checkIn.hour <
+                                                                  14)
+                                                              ? Colors.red
+                                                              : null),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Flexible(
+                                          child: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                const TextSpan(
+                                                    text: "Check-out:\n"),
+                                                TextSpan(
+                                                  text: DateFormat(
+                                                          "yyyy-MM-dd HH:mm")
+                                                      .format(order.checkOut),
+                                                  style: TextStyle(
+                                                      color: (order.checkOut
+                                                                      .hour >
+                                                                  14 ||
+                                                              (order.checkOut
+                                                                          .hour ==
+                                                                      14 &&
+                                                                  order.checkOut
+                                                                          .minute >
+                                                                      0))
+                                                          ? Colors.red
+                                                          : null),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ])
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                        Flexible(
+                                          child: DateTimePicker(
+                                            controller: controller
+                                                .modifiedCheckInDateController,
+                                            titleOfTextField:
+                                                "Thời gian check-in",
+                                            isOutSerIn: 1,
+                                            validator: (value) {
+                                              if (controller
+                                                  .modifiedCheckInDateController
+                                                  .text
+                                                  .isEmpty)
+                                                return "Không để trống thời gian check-in";
+                                              if (controller.modifiedCheckInDate
+                                                  .isBefore(DateTime.now()))
+                                                return "Không thể check-in trong quá khứ";
+                                              if (controller
+                                                  .modifiedCheckOutDateController
+                                                  .text
+                                                  .isNotEmpty) {
+                                                if (!controller
+                                                    .modifiedCheckInDate
+                                                    .isBefore(controller
+                                                        .modifiedCheckOutDate))
+                                                  return "Thời gian check-in phải trước thời gian check-out";
+                                              }
+                                              return null;
+                                            },
+                                            isEnabled: !order.checkIn
+                                                .isBefore(DateTime.now()),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Flexible(
+                                          child: DateTimePicker(
+                                              controller: controller
+                                                  .modifiedCheckOutDateController,
+                                              titleOfTextField:
+                                                  "Thời gian check-out",
+                                              isOutSerIn: -1,
+                                              validator: (value) {
+                                                if (controller
+                                                    .modifiedCheckOutDateController
+                                                    .text
+                                                    .isEmpty)
+                                                  return "Không để trống thời gian check-out";
+                                                if (controller
+                                                    .modifiedCheckInDateController
+                                                    .text
+                                                    .isNotEmpty) {
+                                                  if (!controller
+                                                      .modifiedCheckOutDate
+                                                      .isAfter(controller
+                                                          .modifiedCheckInDate))
+                                                    return "Thời gian check-in phải trước thời gian check-out";
+                                                }
+                                                return null;
+                                              }),
+                                        ),
+                                      ]),
                           )
                         ],
                       ),
@@ -677,7 +781,7 @@ class BookingInfo extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(bookingData.byRep),
+                            child: Text(order.inCharge),
                           )
                         ],
                       ),
@@ -696,118 +800,357 @@ class ServiceInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Booking bookingData = Get.find<InternalStorage>()
-        .read("bookingDataForAllRooms")[int.parse(Get.parameters["ridx"]!)]
-        .bookingDataList[int.parse(Get.parameters["bidx"]!)];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          "Thông tin dịch vụ",
-          style: TextStyle(
-            color: Color(0xff3d426b),
-            fontSize: 28,
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xff68b6ef), width: 1)),
-          child: Table(
-            columnWidths: const {
-              0: FixedColumnWidth(120),
-              1: FixedColumnWidth(800)
-            },
-            border: const TableBorder(
-                verticalInside: BorderSide(
-                    width: 1,
-                    color: Color(0xff68b6ef),
-                    style: BorderStyle.solid)),
+    List<RoomGroup> roomGroupsList =
+        Get.find<InternalStorage>().read("roomGroupsList");
+    Order order = roomGroupsList[int.parse(Get.parameters["ridx"]!)]
+        .ordersList[int.parse(Get.parameters["bidx"]!)];
+    Room room = roomGroupsList[int.parse(Get.parameters["ridx"]!)].room;
+    return GetBuilder<InformationPageController>(
+        id: "form2",
+        builder: (controller) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TableRow(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text("Danh sách dịch vụ"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: const Color(0xff68b6ef), width: 1)),
-                      child: Table(
-                        columnWidths: const {
-                          0: FlexColumnWidth(),
-                          1: FlexColumnWidth(),
-                          2: FlexColumnWidth(),
-                        },
-                        border: const TableBorder(
-                            verticalInside: BorderSide(
-                                width: 1,
-                                color: Color(0xff68b6ef),
-                                style: BorderStyle.solid)),
-                        children: [
-                          const TableRow(children: [
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text("Tên dịch vụ"),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text("Thông tin"),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text("Đơn giá"),
-                            )
-                          ]),
-                          ...List.generate(
-                              (bookingData.bookingServiceList == null)
-                                  ? 0
-                                  : bookingData.bookingServiceList!.length,
-                              (index) {
-                            var serviceQuantity = bookingData
-                                .bookingServiceList![index].serviceQuantity;
-                            var serviceTime = bookingData
-                                .bookingServiceList![index].serviceTime;
-                            var serviceDistance = bookingData
-                                .bookingServiceList![index].serviceDistance;
-                            return TableRow(
-                              decoration: (index % 2 == 0)
-                                  ? BoxDecoration(color: Colors.grey[200])
-                                  : null,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(bookingData
-                                      .bookingServiceList![index].serviceName),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                      "${(serviceQuantity == null) ? "" : "Số lượng: $serviceQuantity\n"}${(serviceTime == null) ? "" : "Thời gian: ${DateFormat("dd/MM/yyyy").format(serviceTime)}\n"}${(serviceDistance == null) ? "" : "Khoảng cách: ${serviceDistance}km"}"),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(bookingData
-                                      .bookingServiceList![index].servicePrice
-                                      .toInt()
-                                      .toString()),
-                                ),
-                              ],
-                            );
-                          })
-                        ],
-                      ),
+                  const Text(
+                    "Thông tin dịch vụ ",
+                    style: TextStyle(
+                      color: Color(0xff3d426b),
+                      fontSize: 28,
                     ),
-                  )
+                  ),
+                  GestureDetector(
+                    onTap: () async =>
+                        await controller.toggleForm2(order: order, room: room),
+                    child: FaIcon(
+                        (controller.editForm2)
+                            ? FontAwesomeIcons.xmark
+                            : FontAwesomeIcons.penToSquare,
+                        size: 28,
+                        color: const Color(0xff68b6ef)),
+                  ),
                 ],
               ),
+              Container(
+                decoration: BoxDecoration(
+                    border:
+                        Border.all(color: const Color(0xff68b6ef), width: 1)),
+                child: Table(
+                  columnWidths: const {
+                    0: FixedColumnWidth(120),
+                    1: FixedColumnWidth(800)
+                  },
+                  border: const TableBorder(
+                      verticalInside: BorderSide(
+                          width: 1,
+                          color: Color(0xff68b6ef),
+                          style: BorderStyle.solid)),
+                  children: [
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text("Danh sách dịch vụ"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: const Color(0xff68b6ef), width: 1)),
+                            child: (!controller.editForm2)
+                                ? Table(
+                                    columnWidths: const {
+                                      0: FlexColumnWidth(),
+                                      1: FlexColumnWidth(),
+                                      2: FlexColumnWidth(),
+                                    },
+                                    border: const TableBorder(
+                                        verticalInside: BorderSide(
+                                            width: 1,
+                                            color: Color(0xff68b6ef),
+                                            style: BorderStyle.solid)),
+                                    children: [
+                                      const TableRow(children: [
+                                        Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text("Tên dịch vụ"),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text("Thông tin"),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text("Đơn giá"),
+                                        )
+                                      ]),
+                                      ...List.generate(
+                                          (order.additionsList == null)
+                                              ? 0
+                                              : order.additionsList!.length,
+                                          (index) {
+                                        var serviceQuantity = order
+                                            .additionsList![index].quantity;
+                                        var serviceTime =
+                                            order.additionsList![index].time;
+                                        var serviceDistance = order
+                                            .additionsList![index].distance;
+                                        return TableRow(
+                                          decoration: (index % 2 == 0)
+                                              ? const BoxDecoration(
+                                                  color: Color(0xffE3F2FD))
+                                              : null,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(order
+                                                  .additionsList![index]
+                                                  .serviceName),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                  "${(serviceQuantity == null) ? "" : "Số lượng: $serviceQuantity\n"}${(serviceTime == null) ? "" : "Thời gian: ${DateFormat("dd/MM/yyyy HH:mm").format(serviceTime)}\n"}${(serviceDistance == null) ? "" : "Thông tin vị trí: $serviceDistance"}"),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(order
+                                                  .additionsList![index]
+                                                  .servicePrice
+                                                  .toInt()
+                                                  .toString()),
+                                            ),
+                                          ],
+                                        );
+                                      })
+                                    ],
+                                  )
+                                : Form(
+                                    key: controller.formKey2,
+                                    child: ServiceModifier(
+                                        controller: controller)),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            ],
+          );
+        });
+  }
+}
+
+class ServiceModifier extends StatelessWidget {
+  final InformationPageController controller;
+
+  const ServiceModifier({super.key, required this.controller});
+  @override
+  Widget build(BuildContext context) {
+    return FormField(
+      builder: (state) => Padding(
+        padding: const EdgeInsets.all(10),
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            labelText: "Danh sách dịch vụ",
+            border: OutlineInputBorder(),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(
+                  controller.modifiedNumberOfAdditions,
+                  (index1) =>
+                      ServiceInput(controller: controller, index1: index1),
+                ),
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    controller.modifiedAdditionsList.add(-1);
+                    controller.modifiedAdditionTime.add(null);
+                    controller.modifiedAdditionDistance.add(null);
+                    controller.modifiedAdditionQuantity.add(null);
+                    controller.modifiedAdditionTimeValue.add(null);
+                    controller.modifiedNumberOfAdditions =
+                        controller.modifiedNumberOfAdditions + 1;
+                  },
+                  child: const Text("Thêm dịch vụ"))
             ],
           ),
-        )
+        ),
+      ),
+    );
+  }
+}
+
+class ServiceInput extends StatelessWidget {
+  final InformationPageController controller;
+  final int index1;
+
+  const ServiceInput(
+      {super.key, required this.controller, required this.index1});
+
+  @override
+  Widget build(BuildContext context) {
+    Order order = (Get.find<InternalStorage>()
+                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
+            as RoomGroup)
+        .ordersList[int.parse(Get.parameters["bidx"]!)];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            child: DropdownButtonFormField<int>(
+              isExpanded: true,
+              items: List.generate(
+                Get.find<InternalStorage>().read("servicesList").length,
+                (index2) => DropdownMenuItem(
+                  value: index2 + 1,
+                  child: Text(Get.find<InternalStorage>()
+                      .read("servicesList")[index2]
+                      .name),
+                ),
+              ),
+              onChanged: (int? value) {
+                controller.modifiedAdditionsList[index1] = value!;
+                controller.createModifiedController(value, index1);
+              },
+              validator: (value) {
+                if (value == null) return "Không để trống loại dịch vụ";
+                return null;
+              },
+              value: (controller.modifiedAdditionsList[index1] == -1)
+                  ? null
+                  : controller.modifiedAdditionsList[index1],
+              hint: const Text("---"),
+              decoration: const InputDecoration(
+                labelText: "Loại dịch vụ",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+        ),
+        (controller.modifiedAdditionTime[index1] == null)
+            ? Flexible(flex: 0, child: Container())
+            : Flexible(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: DateTimePicker(
+                      controller: controller.modifiedAdditionTime[index1]!,
+                      titleOfTextField: "Thời gian",
+                      validator: (value) {
+                        if (controller.modifiedAdditionTimeValue[index1] ==
+                            null) return "Không để trống thời gian";
+
+                        if (controller.modifiedAdditionTimeValue[index1]!
+                                .isAfter(order.checkOut) ||
+                            controller.modifiedAdditionTimeValue[index1]!
+                                .isBefore(order.checkIn)) {
+                          return "Thời gian phải nằm trong khoảng check-in và check-out";
+                        }
+                        return null;
+                      },
+                      isOutSerIn: 0,
+                      index1: index1),
+                ),
+              ),
+        (controller.modifiedAdditionQuantity[index1] == null)
+            ? Flexible(flex: 0, child: Container())
+            : ServiceValue(
+                controller: controller.modifiedAdditionQuantity[index1]!,
+                validator: (value) {
+                  if (value == null || value.isEmpty)
+                    return "Không để trống số lượng";
+                  if (!RegExp(r'^[1-9]\d*').hasMatch(value))
+                    return "Số lượng không đúng định dạng";
+                  return null;
+                },
+                label: "Số lượng"),
+        (controller.modifiedAdditionDistance[index1] == null)
+            ? Flexible(flex: 0, child: Container())
+            : Flexible(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: TextFormField(
+                    controller: controller.modifiedAdditionDistance[index1]!,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                        labelText: "Thông tin vị trí",
+                        border: const OutlineInputBorder(),
+                        suffix: InkWell(
+                            onTap: () async {
+                              await Get.to(() => const MyApp())?.then((value) {
+                                controller.modifiedAdditionDistance[index1]
+                                        ?.text =
+                                    "(${value["distance"].toStringAsPrecision(2)}km) ${value["address"]}";
+                              });
+                            },
+                            child: const FaIcon(FontAwesomeIcons.map))),
+                  ),
+                ),
+              ),
+        Flexible(
+            child: ElevatedButton(
+                onPressed: () {
+                  controller.modifiedAdditionsList.removeAt(index1);
+                  controller.modifiedAdditionTime.removeAt(index1);
+                  controller.modifiedAdditionQuantity.removeAt(index1);
+                  controller.modifiedAdditionDistance.removeAt(index1);
+                  controller.modifiedAdditionTimeValue.removeAt(index1);
+                  controller.modifiedNumberOfAdditions =
+                      controller.modifiedNumberOfAdditions - 1;
+                },
+                child: const Text("Xóa dịch vụ"))),
       ],
+    );
+  }
+}
+
+class ServiceValue extends StatelessWidget {
+  final TextEditingController controller;
+  final String? Function(String?) validator;
+  final String label;
+  final String? suffix;
+
+  const ServiceValue(
+      {super.key,
+      required this.controller,
+      required this.validator,
+      required this.label,
+      this.suffix});
+
+  @override
+  Widget build(BuildContext context) {
+    print("ServiceValue build");
+    return Flexible(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        child: TextFormField(
+          controller: controller,
+          validator: validator,
+          decoration: InputDecoration(
+            suffix: (suffix == null) ? null : Text(suffix!),
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -817,6 +1160,7 @@ class DateTimePicker extends StatelessWidget {
   final String titleOfTextField;
   final String? Function(String?)? validator;
   final int isOutSerIn;
+  final bool isEnabled;
   final int? index1;
 
   const DateTimePicker(
@@ -825,6 +1169,7 @@ class DateTimePicker extends StatelessWidget {
       required this.titleOfTextField,
       this.validator,
       required this.isOutSerIn,
+      this.isEnabled = true,
       this.index1});
 
   @override
@@ -832,6 +1177,7 @@ class DateTimePicker extends StatelessWidget {
     return InkWell(
       mouseCursor: MaterialStateMouseCursor.clickable,
       onTap: () async {
+        if (!isEnabled) return;
         var date = (await showDatePicker(
           locale: const Locale("vi", "VN"),
           context: context,
@@ -854,11 +1200,12 @@ class DateTimePicker extends StatelessWidget {
         date =
             DateTime(date.year, date.month, date.day, time.hour, time.minute);
         if (isOutSerIn > 0) {
-          Get.find().checkInDate = date;
+          Get.find<InformationPageController>().modifiedCheckInDate = date;
         } else if (isOutSerIn < 0) {
-          Get.find().checkOutDate = date;
+          Get.find<InformationPageController>().modifiedCheckOutDate = date;
         } else {
-          Get.find().serviceTimeValue[index1!] = date;
+          Get.find<InformationPageController>()
+              .modifiedAdditionTimeValue[index1!] = date;
         }
         if (context.mounted) {
           controller.text = DateFormat('dd/MM/yyyy HH:mm').format(date);
@@ -866,6 +1213,7 @@ class DateTimePicker extends StatelessWidget {
       },
       child: IgnorePointer(
         child: TextFormField(
+          enabled: isEnabled,
           controller: controller,
           validator: validator,
           decoration: InputDecoration(

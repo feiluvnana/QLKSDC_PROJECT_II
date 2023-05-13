@@ -3,9 +3,9 @@ import 'dart:html';
 import 'package:get/get.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 import 'package:intl/intl.dart';
-import '../model/BookingModel.dart';
-import '../model/BookingServiceModel.dart';
-import '../model/RoomBookingModel.dart';
+import '../model/OrderModel.dart';
+import '../model/AdditionModel.dart';
+import '../model/RoomGroupModel.dart';
 import '../utils/InternalStorage.dart';
 
 mixin GuestList {
@@ -63,34 +63,34 @@ mixin GuestList {
       ..setText("Lưu ý")
       ..cellStyle = cellStyle;
 
-    List<RoomBooking> bookingDataForAllRooms =
-        Get.find<InternalStorage>().read("bookingDataForAllRooms");
+    List<RoomGroup> roomGroupsList =
+        Get.find<InternalStorage>().read("roomGroupsList");
     int lastRow = 4;
     int currentRow = 4;
     DateTime guestListDate = DateTime(year, month, day);
-    for (var bdForARoom in bookingDataForAllRooms) {
-      for (var bd in bdForARoom.bookingDataList) {
-        if (ignoreHour(bd.checkInDate).isBefore(guestListDate) &&
-            ignoreHour(bd.checkOutDate).isAfter(guestListDate)) {
+    for (var roomGroup in roomGroupsList) {
+      for (var order in roomGroup.ordersList) {
+        if (ignoreHour(order.checkIn).isBefore(guestListDate) &&
+            ignoreHour(order.checkOut).isAfter(guestListDate)) {
           ws.getRangeByName("B$currentRow")
-            ..setText(bd.subNumber.toString())
+            ..setText(order.subRoomNum.toString())
             ..cellStyle = cellStyle;
           ws.getRangeByName("C$currentRow")
-            ..setText("Hạng ${bd.eatingRank}")
+            ..setText("Hạng ${order.eatingRank}")
             ..cellStyle = cellStyle;
           ws.getRangeByName("D$currentRow")
             ..setText(getStringFromServiceForPart1(
-                bd.bookingServiceList, guestListDate))
+                order.additionsList, guestListDate))
             ..cellStyle = cellStyle;
           ws.getRangeByName("E$currentRow")
-            ..setText(bd.attention.toString())
+            ..setText(order.attention.toString())
             ..cellStyle = cellStyle;
           currentRow++;
         }
       }
       ws.getRangeByName("A$lastRow:A${currentRow - 1}")
         ..merge()
-        ..setText(bdForARoom.roomData.roomID)
+        ..setText(roomGroup.room.id)
         ..cellStyle = cellStyle;
       lastRow = currentRow;
     }
@@ -118,27 +118,75 @@ mixin GuestList {
     currentRow++;
     lastRow = currentRow;
 
-    for (var bdForARoom in bookingDataForAllRooms) {
-      for (var bd in bdForARoom.bookingDataList) {
-        if (ignoreHour(bd.checkInDate) == guestListDate) {
+    for (var roomGroup in roomGroupsList) {
+      for (var order in roomGroup.ordersList) {
+        if (ignoreHour(order.checkIn) == guestListDate) {
           ws.getRangeByName("B$currentRow")
-            ..setText(bd.subNumber.toString())
+            ..setText(order.subRoomNum.toString())
             ..cellStyle = cellStyle;
           ws.getRangeByName("C$currentRow")
-            ..setText("Hạng ${bd.eatingRank}")
+            ..setText("Hạng ${order.eatingRank}")
             ..cellStyle = cellStyle;
           ws.getRangeByName("D$currentRow")
-            ..setText(getStringFromServiceForPart2(guestListDate, bd))
+            ..setText(getStringFromServiceForPart2(guestListDate, order))
             ..cellStyle = cellStyle;
           ws.getRangeByName("E$currentRow")
-            ..setText(bd.attention.toString())
+            ..setText(order.attention.toString())
             ..cellStyle = cellStyle;
           currentRow++;
         }
       }
       ws.getRangeByName("A$lastRow:A${currentRow - 1}")
         ..merge()
-        ..setText(bdForARoom.roomData.roomID)
+        ..setText(roomGroup.room.id)
+        ..cellStyle = cellStyle;
+      lastRow = currentRow;
+    }
+
+    ws.getRangeByName("A$currentRow:E$currentRow")
+      ..merge()
+      ..rowHeight = 30
+      ..setText("3. Danh sách khách check-out")
+      ..cellStyle = titleStyle;
+    currentRow++;
+
+    ws.getRangeByName("A$currentRow:B$currentRow")
+      ..merge()
+      ..setText("Phòng")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("C$currentRow")
+      ..setText("Hạng ăn")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("D$currentRow")
+      ..setText("Thông tin")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("E$currentRow")
+      ..setText("Lưu ý")
+      ..cellStyle = cellStyle;
+    currentRow++;
+    lastRow = currentRow;
+
+    for (var roomGroup in roomGroupsList) {
+      for (var order in roomGroup.ordersList) {
+        if (ignoreHour(order.checkOut) == guestListDate) {
+          ws.getRangeByName("B$currentRow")
+            ..setText(order.subRoomNum.toString())
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("C$currentRow")
+            ..setText("Hạng ${order.eatingRank}")
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("D$currentRow")
+            ..setText(getStringFromServiceForPart3(guestListDate, order))
+            ..cellStyle = cellStyle;
+          ws.getRangeByName("E$currentRow")
+            ..setText(order.attention.toString())
+            ..cellStyle = cellStyle;
+          currentRow++;
+        }
+      }
+      ws.getRangeByName("A$lastRow:A${currentRow - 1}")
+        ..merge()
+        ..setText(roomGroup.room.id)
         ..cellStyle = cellStyle;
       lastRow = currentRow;
     }
@@ -157,42 +205,61 @@ mixin GuestList {
   }
 
   String getStringFromServiceForPart1(
-      List<BookingService>? list, DateTime guestListDate) {
+      List<Addition>? list, DateTime guestListDate) {
     String str = "";
     int countService = 0;
     if (list == null) return str;
     for (var l in list) {
       if (l.serviceName == "Đón mèo" || l.serviceName == "Trả mèo") continue;
-      if (l.serviceTime != null) {
-        if (ignoreHour(l.serviceTime!) != guestListDate) continue;
+      if (l.time != null) {
+        if (ignoreHour(l.time!) != guestListDate) continue;
       }
       str += "${++countService}. ${l.serviceName}\n";
     }
     return str;
   }
 
-  String getStringFromServiceForPart2(
-      DateTime guestListDate, Booking bookingData) {
+  String getStringFromServiceForPart2(DateTime guestListDate, Order order) {
     String str = "";
     int countService = 0;
-    var list = bookingData.bookingServiceList;
+    var list = order.additionsList;
     if (list == null) return str;
-    str +=
-        "Thời gian check-in: ${DateFormat("dd/MM/yyyy hh:mm").format(bookingData.checkInDate)}\n";
+    str += "Thời gian check-in: ${DateFormat("HH:mm").format(order.checkIn)}\n";
     for (var l in list) {
       if (l.serviceName == "Đón mèo") {
         str += "${++countService}. ${l.serviceName}\n";
-        str +=
-            "   Thời gian: ${l.serviceTime?.hour}:${l.serviceTime?.minute}\n";
+        str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
         continue;
       }
-      if (l.serviceTime != null) {
-        if (ignoreHour(l.serviceTime!) != guestListDate) continue;
+      if (l.time != null) {
+        if (ignoreHour(l.time!) != guestListDate) continue;
       }
       str += "${++countService}. ${l.serviceName}\n";
-      if (l.serviceQuantity != null) {
-        str += "   Số lượng khách đặt: ${l.serviceQuantity}";
+      if (l.quantity != null) {
+        str += "   Số lượng khách đặt: ${l.quantity}";
       }
+    }
+    return str;
+  }
+
+  String getStringFromServiceForPart3(
+      DateTime guestListDate, Order bookingData) {
+    String str = "";
+    int countService = 0;
+    var list = bookingData.additionsList;
+    if (list == null) return str;
+    str +=
+        "Thời gian check-out: ${DateFormat("HH:mm").format(bookingData.checkOut)}\n";
+    for (var l in list) {
+      if (l.serviceName == "Trả mèo") {
+        str += "${++countService}. ${l.serviceName}\n";
+        str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
+        continue;
+      }
+      if (l.time != null) {
+        if (ignoreHour(l.time!) != guestListDate) continue;
+      }
+      str += "${++countService}. ${l.serviceName}\n";
     }
     return str;
   }

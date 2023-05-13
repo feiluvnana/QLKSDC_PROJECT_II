@@ -42,8 +42,6 @@ class ProjectII extends StatelessWidget {
               child: LoginPage()),
           title: "Đăng nhập",
           middlewares: [AvoidReturningMiddleware()],
-          transition: Transition.zoom,
-          transitionDuration: const Duration(milliseconds: 500),
           curve: Curves.easeOutExpo,
         ),
         GetPage(
@@ -54,8 +52,6 @@ class ProjectII extends StatelessWidget {
               child: const HomePage()),
           title: "Trang chủ",
           middlewares: [HomePageMiddleware()],
-          transition: Transition.zoom,
-          transitionDuration: const Duration(milliseconds: 500),
           curve: Curves.easeOutExpo,
         ),
         GetPage(
@@ -65,8 +61,6 @@ class ProjectII extends StatelessWidget {
                 title: "Thông tin",
                 child: const InformationPage()),
             middlewares: [InformationPageMiddleware()],
-            transition: Transition.zoom,
-            transitionDuration: const Duration(milliseconds: 500),
             curve: Curves.easeOutExpo),
       ],
       localizationsDelegates: const [

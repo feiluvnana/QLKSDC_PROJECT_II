@@ -16,38 +16,37 @@ class BookingPageController extends GetxController {
   final GlobalKey<FormState> formKey2 = GlobalKey();
   final GlobalKey<FormState> formKey3 = GlobalKey();
 
-  final TextEditingController ownerNameController = TextEditingController();
+  final ownerNameController = TextEditingController();
   String? _ownerGender;
-  final TextEditingController ownerTelController = TextEditingController();
+  final ownerTelController = TextEditingController();
 
-  final TextEditingController catNameController = TextEditingController();
-  final TextEditingController catWeightController = TextEditingController();
-  int _catWeightLevel = 0;
+  final catNameController = TextEditingController();
+  final catWeightController = TextEditingController();
+  int _catWeightRank = 0;
   String? _catGender;
   Uint8List? _catImage;
-  final TextEditingController catAgeController = TextEditingController();
+  final catAgeController = TextEditingController();
   int _catSterilization = -1;
   int _catVaccination = -1;
-  final TextEditingController catPhysicalConditionController =
-      TextEditingController();
-  final TextEditingController catAppearanceController = TextEditingController();
-  final TextEditingController catSpeciesController = TextEditingController();
+  final catPhysicalConditionController = TextEditingController();
+  final catAppearanceController = TextEditingController();
+  final catSpeciesController = TextEditingController();
 
-  DateTime checkInDate = DateTime.now();
-  DateTime checkOutDate = DateTime.now();
-  final checkInDateController = TextEditingController();
-  final checkOutDateController = TextEditingController();
-  final TextEditingController attentionController = TextEditingController();
-  final TextEditingController noteController = TextEditingController();
+  DateTime orderCheckIn = DateTime.now();
+  DateTime orderCheckOut = DateTime.now();
+  final orderCheckInController = TextEditingController();
+  final orderCheckOutController = TextEditingController();
+  final orderAttentionController = TextEditingController();
+  final orderNoteController = TextEditingController();
   String _roomID = "";
-  int _subNumber = -1;
-  int _numberOfServices = 0;
+  int _subRoomNum = -1;
+  int _numberOfAdditions = 0;
   int _eatingRank = 0;
-  List<int> serviceList = [];
-  List<DateTime?> serviceTimeValue = [];
-  List<TextEditingController?> serviceTime = [];
-  List<TextEditingController?> serviceQuantity = [];
-  List<TextEditingController?> serviceDistance = [];
+  List<int> additionsList = [];
+  List<DateTime?> additionTimeList = [];
+  List<TextEditingController?> additionTimeController = [];
+  List<TextEditingController?> additionQuantityController = [];
+  List<TextEditingController?> additionDistanceController = [];
 
   int get currentStep => _currentStep;
   set currentStep(int value) {
@@ -61,9 +60,9 @@ class BookingPageController extends GetxController {
     update();
   }
 
-  int get catWeightLevel => _catWeightLevel;
-  set catWeightLevel(int value) {
-    _catWeightLevel = value;
+  int get catWeightRank => _catWeightRank;
+  set catWeightRank(int value) {
+    _catWeightRank = value;
     update();
   }
 
@@ -97,15 +96,15 @@ class BookingPageController extends GetxController {
     update();
   }
 
-  int get subNumber => _subNumber;
-  set subNumber(int value) {
-    _subNumber = value;
+  int get subRoomNum => _subRoomNum;
+  set subRoomNum(int value) {
+    _subRoomNum = value;
     update();
   }
 
-  int get numberOfServices => _numberOfServices;
-  set numberOfServices(int value) {
-    _numberOfServices = value;
+  int get numberOfAdditions => _numberOfAdditions;
+  set numberOfAdditions(int value) {
+    _numberOfAdditions = value;
     update();
   }
 
@@ -118,8 +117,7 @@ class BookingPageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Future.delayed(
-            const Duration(seconds: 0), () async => await getServiceInfo())
+    Future.delayed(const Duration(seconds: 0), () async => await getServices())
         .then((value) => update());
   }
 
@@ -135,34 +133,34 @@ class BookingPageController extends GetxController {
     return catImage;
   }
 
-  Future<void> getServiceInfo() async {
-    List<dynamic> resList = jsonDecode((await GetConnect().post(
-      "http://localhost/php-crash/getServiceForDisplay.php",
+  Future<void> getServices() async {
+    List<dynamic> resList = await GetConnect()
+        .post(
+      "http://localhost/php-crash/getService.php",
       FormData({"sessionID": GetStorage().read("sessionID")}),
-    ))
-        .body);
+    )
+        .then((res) {
+      if (res.body == null) return [];
+      if (jsonDecode(res.body)["status"] == "successed") {
+        return jsonDecode(jsonDecode(res.body)["result"]);
+      }
+      return [];
+    });
     List<Service> list = [];
     for (var s in resList) {
       list.add(Service.fromJson(s));
     }
-    Get.find<InternalStorage>().write("allServiceList", list);
+    Get.find<InternalStorage>().write("servicesList", list);
   }
 
   Future<void> createServiceController(int value, int index) async {
-    serviceQuantity[index] = (Get.find<InternalStorage>()
-            .read("allServiceList")[value]
-            .requiredQuantity)
-        ? TextEditingController()
-        : null;
-    serviceDistance[index] = (Get.find<InternalStorage>()
-            .read("allServiceList")[value]
-            .requiredDistance)
-        ? TextEditingController()
-        : null;
-    serviceTime[index] =
-        (Get.find<InternalStorage>().read("allServiceList")[value].requiredTime)
-            ? TextEditingController()
-            : null;
+    Service service = Get.find<InternalStorage>().read("servicesList")[value];
+    additionQuantityController[index] =
+        (service.quantityNeed) ? TextEditingController() : null;
+    additionDistanceController[index] =
+        (service.distanceNeed) ? TextEditingController() : null;
+    additionTimeController[index] =
+        (service.timeNeed) ? TextEditingController() : null;
     update();
   }
 
@@ -177,7 +175,7 @@ class BookingPageController extends GetxController {
               "ownerTel": ownerTelController.text,
               "ownerGender": ownerGender
             })))
-        .body)["ownerID"];
+        .body)["owner_id"];
     int catID = jsonDecode((await GetConnect().post(
             "http://localhost/php-crash/setCatInfo.php",
             FormData({
@@ -201,65 +199,69 @@ class BookingPageController extends GetxController {
               "catWeight": catWeightController.text == ""
                   ? null
                   : catWeightController.text,
-              "catWeightLevel": catWeightLevel
+              "catWeightRank": catWeightRank
             })))
-        .body)["catID"];
-    String message = jsonDecode((await GetConnect().post(
-            "http://localhost/php-crash/setBookingInfo.php",
+        .body)["cat_id"];
+    String status = jsonDecode((await GetConnect().post(
+            "http://localhost/php-crash/setOrderInfo.php",
             FormData({
               "sessionID": GetStorage().read("sessionID"),
               "catID": catID,
               "roomID": roomID,
-              "subNumber": subNumber,
-              "checkInDate": checkInDate.toString(),
-              "checkOutDate": checkOutDate.toString(),
-              "attention": attentionController.text,
-              "note": noteController.text,
+              "subRoomNum": subRoomNum,
+              "checkIn": orderCheckIn.toString(),
+              "checkOut": orderCheckOut.toString(),
+              "attention": orderAttentionController.text,
+              "note": orderNoteController.text,
               "eatingRank": eatingRank,
-              "bookingServicesList":
-                  jsonEncode(List.generate(numberOfServices, (index) {
-                if (Get.find<InternalStorage>()
-                        .read("allServiceList")
-                        .firstWhere((element) =>
-                            element.serviceID == serviceList[index])
-                        .serviceName ==
+              "inCharge": GetStorage().read("name"),
+              "additionsList":
+                  jsonEncode(List.generate(numberOfAdditions, (index) {
+                List<Service> servicesList =
+                    Get.find<InternalStorage>().read("servicesList");
+                if (servicesList
+                        .firstWhere(
+                            (element) => element.id == additionsList[index])
+                        .name ==
                     "Đón mèo") {
-                  serviceTimeValue[index] = checkInDate;
+                  additionTimeList[index] = orderCheckIn;
                 }
-                if (Get.find<InternalStorage>()
-                        .read("allServiceList")
-                        .firstWhere((element) =>
-                            element.serviceID == serviceList[index])
-                        .serviceName ==
+                if (servicesList
+                        .firstWhere(
+                            (element) => element.id == additionsList[index])
+                        .name ==
                     "Trả mèo") {
-                  serviceTimeValue[index] = checkOutDate;
+                  additionTimeList[index] = orderCheckOut;
                 }
                 return {
-                  "serviceID": Get.find<InternalStorage>()
-                      .read("allServiceList")
+                  "serviceID": servicesList
                       .firstWhere(
-                          (element) => element.serviceID == serviceList[index])
-                      .serviceID,
-                  "serviceTime": (serviceTimeValue[index] == null)
+                          (element) => element.id == additionsList[index])
+                      .id,
+                  "additionTime": (additionTimeList[index] == null)
                       ? null
-                      : serviceTimeValue[index].toString(),
-                  "serviceQuantity": (serviceQuantity[index] == null)
-                      ? null
-                      : serviceQuantity[index]?.text,
-                  "serviceDistance": (serviceDistance[index] == null)
-                      ? null
-                      : serviceDistance[index]?.text,
+                      : additionTimeList[index].toString(),
+                  "additionQuantity":
+                      (additionQuantityController[index] == null)
+                          ? null
+                          : additionQuantityController[index]?.text,
+                  "additionDistance":
+                      (additionDistanceController[index] == null)
+                          ? null
+                          : additionDistanceController[index]?.text,
                 };
               }))
             })))
-        .body)["message"];
+        .body)["status"];
     await Get.defaultDialog(
       barrierDismissible: true,
       title: "Thông báo",
-      content: Text(message),
+      content: Text((status != "successed")
+          ? "Đặt phòng thất bại do có thể đã có khách đặt"
+          : "Đặt phòng thành công"),
     ).then((value) => _isSubmitClicked = false);
-    if (message == "Đã đặt phòng thành công.") {
-      await Get.find<CalendarPageController>().getBookingDataForAllRooms();
+    if (status == "successed") {
+      await Get.find<CalendarPageController>().getRoomGroups();
       Get.find<HomePageController>()
         ..homePageIndex = 0
         ..update();

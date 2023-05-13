@@ -11,7 +11,11 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: FutureBuilder(
-          future: Future.delayed(const Duration(seconds: 4)),
+          future: Future.wait([
+            precacheImage(const AssetImage("images/logo.png"), context),
+            precacheImage(
+                const AssetImage("images/loginBackground.jpg"), context)
+          ]),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return Center(

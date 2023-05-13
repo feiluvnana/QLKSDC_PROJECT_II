@@ -11,8 +11,7 @@ class RoomPage extends StatelessWidget {
       children: [
         Flexible(
           flex: 4,
-          child: Container(
-              padding: const EdgeInsets.all(20), child: const Placeholder()),
+          child: Container(padding: const EdgeInsets.all(20), child: const Placeholder()),
         ),
         Flexible(
           flex: 1,
@@ -22,11 +21,9 @@ class RoomPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ElevatedButton(
-                  style:
-                      ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
                   onPressed: () async {
-                    await GetConnect()
-                        .post("http://localhost/php-crash/room.php", {});
+                    await GetConnect().post("http://localhost/php-crash/room.php", {});
                   },
                   child: Container(
                     width: 50,

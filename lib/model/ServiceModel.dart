@@ -1,14 +1,14 @@
 class Service {
-  final int serviceID;
-  final String serviceName;
-  final double servicePrice;
-  final bool requiredDistance, requiredQuantity, requiredTime;
+  final int id;
+  final String name;
+  final double price;
+  final bool distanceNeed, quantityNeed, timeNeed;
 
   Service.fromJson(Map<String, dynamic> json)
-      : serviceID = json["serviceID"],
-        serviceName = json["serviceName"],
-        servicePrice = json["servicePrice"],
-        requiredDistance = json["requiredDistance"] == 1,
-        requiredQuantity = json["requiredQuantity"] == 1,
-        requiredTime = json["requiredTime"] == 1;
+      : id = json["service_id"],
+        name = json["service_name"],
+        price = json["service_price"],
+        distanceNeed = json["service_distance_need"] == 1,
+        quantityNeed = json["service_quantity_need"] == 1,
+        timeNeed = json["service_time_need"] == 1;
 }
