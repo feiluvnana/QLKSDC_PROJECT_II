@@ -1,186 +1,226 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:project_ii/controller/BookingPageController.dart';
-import '../controller/CalendarPageController.dart';
+import 'package:project_ii/controller/login_page_bloc.dart';
+import '../controller/calendar_page_bloc.dart';
 import '../model/RoomGroupModel.dart';
 import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
-import '../utils/GuestList.dart';
+import '../utils/ExcelGenerator.dart';
 
-class CalenderPage extends StatelessWidget with GuestList {
+class CalenderPage extends StatelessWidget with ExcelGenerator {
   const CalenderPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.topLeft,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return BlocProvider(
+      create: (_) => CalendarPageBloc(),
+      child: Builder(builder: (context) {
+        return Container(
+          alignment: Alignment.topLeft,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    child: const FaIcon(FontAwesomeIcons.arrowLeft),
-                    onTap: () =>
-                        Get.find<CalendarPageController>().addMonths(value: -1),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                          child: const FaIcon(FontAwesomeIcons.arrowLeft),
+                          onTap: () => context
+                              .read<CalendarPageBloc>()
+                              .add(MonthDecreasedEvent())),
+                      BlocBuilder<CalendarPageBloc, CalendarState>(
+                        buildWhen: (previous, current) =>
+                            previous.currentMonth != current.currentMonth,
+                        builder: (context, state) => Text(
+                            DateFormat("MM/yyyy").format(state.currentMonth)),
+                      ),
+                      GestureDetector(
+                        child: const FaIcon(FontAwesomeIcons.arrowRight),
+                        onTap: () => context
+                            .read<CalendarPageBloc>()
+                            .add(MonthIncreasedEvent()),
+                      ),
+                    ],
                   ),
-                  GetBuilder<CalendarPageController>(
-                    id: "monthText",
-                    builder: (controller) => Text(
-                        DateFormat("MM/yyyy").format(controller.currentMonth)),
-                  ),
-                  GestureDetector(
-                    child: const FaIcon(FontAwesomeIcons.arrowRight),
-                    onTap: () =>
-                        Get.find<CalendarPageController>().addMonths(value: 1),
-                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton(
+                          onPressed: () async {
+                            await createGuestList(
+                                BlocProvider.of<CalendarPageBloc>(context)
+                                    .state
+                                    .dayForGuestList,
+                                BlocProvider.of<CalendarPageBloc>(context)
+                                    .state
+                                    .currentMonth
+                                    .month,
+                                BlocProvider.of<CalendarPageBloc>(context)
+                                    .state
+                                    .currentMonth
+                                    .year);
+                          },
+                          child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                FaIcon(FontAwesomeIcons.download, size: 14),
+                                Text(" Xuất danh sách")
+                              ])),
+                      BlocBuilder<CalendarPageBloc, CalendarState>(
+                        buildWhen: (previous, current) =>
+                            previous.dayForGuestList != current.dayForGuestList,
+                        builder: (context, state) => DropdownButton<int>(
+                          items: List.generate(
+                              DateUtils.getDaysInMonth(state.currentMonth.year,
+                                  state.currentMonth.month),
+                              (index) => DropdownMenuItem(
+                                    value: index + 1,
+                                    child: Text("${index + 1}"),
+                                  )),
+                          onChanged: (int? value) {
+                            context
+                                .read<CalendarPageBloc>()
+                                .add(GuestListDayChangedEvent(value));
+                          },
+                          value: state.dayForGuestList,
+                        ),
+                      )
+                    ],
+                  )
                 ],
               ),
-              GetBuilder<CalendarPageController>(
-                  id: "guestList",
-                  builder: (controller) => Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ElevatedButton(
-                              onPressed: () async {
-                                await createSpreadSheet(
-                                    controller.dayForGuestList,
-                                    controller.currentMonth.month,
-                                    controller.currentMonth.year);
-                              },
-                              child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    FaIcon(FontAwesomeIcons.download, size: 14),
-                                    Text(" Xuất danh sách")
-                                  ])),
-                          DropdownButton<int>(
-                            items: List.generate(
-                                controller.daysInCurrentMonth,
-                                (index) => DropdownMenuItem(
-                                      value: index + 1,
-                                      child: Text("${index + 1}"),
-                                    )),
-                            onChanged: (int? value) {
-                              controller.dayForGuestList = value!;
-                              controller.update(["guestList"]);
-                            },
-                            value: controller.dayForGuestList,
-                          )
-                        ],
-                      ))
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width / 32,
-              ),
-              Flexible(
-                child: GetBuilder<CalendarPageController>(
-                  id: "dayLabel",
-                  builder: (controller) => GridView.count(
-                    shrinkWrap: true,
-                    childAspectRatio: 2,
-                    crossAxisCount: controller.daysInCurrentMonth,
-                    children: List.generate(
-                      controller.daysInCurrentMonth,
-                      (index) => Container(
-                        margin: const EdgeInsets.all(1),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: (DateTime(
-                                            controller.currentMonth.year,
-                                            controller.currentMonth.month,
-                                            index + 1)
-                                        .weekday >
-                                    5)
-                                ? const Color(0xff6b8e4e)
-                                : const Color(0xffb2c5b2),
-                            border:
-                                Border.all(color: Colors.black, width: 0.25)),
-                        child: Text(
-                          DateTime(
-                                          controller.currentMonth.year,
-                                          controller.currentMonth.month,
-                                          index + 1)
-                                      .weekday ==
-                                  7
-                              ? "CN"
-                              : "T${DateTime(controller.currentMonth.year, controller.currentMonth.month, index + 1).weekday + 1}",
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width / 32,
+                  ),
+                  Flexible(
+                    child: BlocBuilder<CalendarPageBloc, CalendarState>(
+                      builder: (context, state) => GridView.count(
+                        shrinkWrap: true,
+                        childAspectRatio: 2,
+                        crossAxisCount: DateUtils.getDaysInMonth(
+                            state.currentMonth.year, state.currentMonth.month),
+                        children: List.generate(
+                          DateUtils.getDaysInMonth(state.currentMonth.year,
+                              state.currentMonth.month),
+                          (index) => Container(
+                            margin: const EdgeInsets.all(1),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                                color: (DateTime(
+                                                state.currentMonth.year,
+                                                state.currentMonth.month,
+                                                index + 1)
+                                            .weekday >
+                                        5)
+                                    ? const Color(0xff6b8e4e)
+                                    : const Color(0xffb2c5b2),
+                                border: Border.all(
+                                    color: Colors.black, width: 0.25)),
+                            child: Text(
+                              DateTime(
+                                              state.currentMonth.year,
+                                              state.currentMonth.month,
+                                              index + 1)
+                                          .weekday ==
+                                      7
+                                  ? "CN"
+                                  : "T${DateTime(state.currentMonth.year, state.currentMonth.month, index + 1).weekday + 1}",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
+              const SizedBox(height: 20),
+              Expanded(child: BookingInfo()),
             ],
           ),
-          const SizedBox(height: 20),
-          const Expanded(child: BookingInfo()),
-        ],
-      ),
+        );
+      }),
     );
   }
 }
 
 class BookingInfo extends StatelessWidget {
-  const BookingInfo({super.key});
+  BuildContext? _storedContext;
+  final loadingWidget = SizedBox(
+      width: 200,
+      height: 200,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Padding(
+              padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
+          Spacer(),
+          Text("Đang xác thực...")
+        ],
+      ));
+  BookingInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<CalendarPageController>(
-        id: "table",
-        builder: (controller) {
-          if (Get.find<InternalStorage>().read("roomGroupsList") == null) {
-            Future.delayed(
-                const Duration(milliseconds: 300),
-                () => Get.defaultDialog(
-                    title: "", content: const Text("Đang tải...")));
-          }
-          Future.delayed(const Duration(milliseconds: 300), () => Get.back());
-          List<RoomGroup> roomGroup =
-              Get.find<InternalStorage>().read("roomGroupsList");
+    return BlocConsumer<CalendarPageBloc, CalendarState>(
+        listener: (context, state) {
+      if (state.state != RenderState.completed) {
+        _storedContext = context;
+        showDialog(
+            context: context,
+            builder: (_) => Dialog(child: loadingWidget),
+            barrierDismissible: false);
+      } else if (_storedContext != null) {
+        Navigator.of(_storedContext!).pop();
+        _storedContext = null;
+      }
+    }, builder: (context, state) {
+      Future.delayed(const Duration(milliseconds: 200),
+          () => context.read<CalendarPageBloc>().add(RenderCompletedEvent()));
+      Future.delayed(const Duration(milliseconds: 200),
+          () => context.read<CalendarPageBloc>().add(RenderCompletedEvent()));
 
-          return SingleChildScrollView(
-            primary: true,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                    roomGroup.length,
-                    (index1) =>
-                        DisplayTable(controller: controller, index1: index1))),
-          );
-        });
+      List<RoomGroup> roomGroup =
+          Get.find<InternalStorage>().read("roomGroupsList");
+      return SingleChildScrollView(
+        primary: true,
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(
+                roomGroup.length, (index1) => DisplayTable(index1: index1))),
+      );
+    });
   }
 }
 
 class DisplayTable extends StatelessWidget {
-  final CalendarPageController controller;
   final int index1;
 
-  const DisplayTable(
-      {super.key, required this.controller, required this.index1});
+  const DisplayTable({super.key, required this.index1});
 
   @override
   Widget build(BuildContext context) {
-    print("build Big");
     RoomGroup roomGroup =
         Get.find<InternalStorage>().read("roomGroupsList")[index1];
+    CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
+    int days = DateUtils.getDaysInMonth(
+        bloc.state.currentMonth.year, bloc.state.currentMonth.month);
     return Container(
       decoration: BoxDecoration(border: Border.all(width: 0.45)),
       child: Row(
@@ -195,40 +235,40 @@ class DisplayTable extends StatelessWidget {
               primary: false,
               shrinkWrap: true,
               padding: EdgeInsets.zero,
-              itemCount: controller.daysInCurrentMonth * roomGroup.room.total,
+              itemCount: days * roomGroup.room.total,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: controller.daysInCurrentMonth),
+                  crossAxisCount: days),
               itemBuilder: (context, index2) {
-                return (getDisplayValue(controller, index1, index2).first ==
-                        getDisplayValue(controller, index1, index2).second)
+                return (getDisplayValue(days, index1, index2).first ==
+                        getDisplayValue(days, index1, index2).second)
                     ? Cell(
-                        controller: controller,
                         index1: index1,
                         index2: index2,
-                        value:
-                            getDisplayValue(controller, index1, index2).first)
+                        value: getDisplayValue(
+                                DateUtils.getDaysInMonth(
+                                    bloc.state.currentMonth.year,
+                                    bloc.state.currentMonth.month),
+                                index1,
+                                index2)
+                            .first)
                     : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Flexible(
                             flex: 1,
                             child: HalfCell(
-                                controller: controller,
                                 index1: index1,
                                 index2: index2,
-                                value:
-                                    getDisplayValue(controller, index1, index2)
-                                        .first),
+                                value: getDisplayValue(days, index1, index2)
+                                    .first),
                           ),
                           Flexible(
                             flex: 1,
                             child: HalfCell(
-                                controller: controller,
                                 index1: index1,
                                 index2: index2,
-                                value:
-                                    getDisplayValue(controller, index1, index2)
-                                        .second),
+                                value: getDisplayValue(days, index1, index2)
+                                    .second),
                           ),
                         ],
                       );
@@ -240,24 +280,20 @@ class DisplayTable extends StatelessWidget {
     );
   }
 
-  Pair getDisplayValue(
-      CalendarPageController controller, int index1, int index2) {
+  Pair getDisplayValue(int days, int index1, int index2) {
     RoomGroup roomGroup =
         Get.find<InternalStorage>().read("roomGroupsList")[index1];
-    return roomGroup.displayArray[index2 ~/ controller.daysInCurrentMonth]
-        [index2 % controller.daysInCurrentMonth];
+    return roomGroup.displayArray[index2 ~/ days][index2 % days];
   }
 }
 
 class Cell extends StatelessWidget {
-  final CalendarPageController controller;
   final int index1;
   final int index2;
   final int value;
 
   const Cell(
       {super.key,
-      required this.controller,
       required this.index1,
       required this.index2,
       required this.value});
@@ -265,17 +301,20 @@ class Cell extends StatelessWidget {
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
         Get.find<InternalStorage>().read("roomGroupsList")[index1];
+    CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
+    int days = DateUtils.getDaysInMonth(
+        bloc.state.currentMonth.year, bloc.state.currentMonth.month);
     return (value == -1)
         ? Container(
             margin: const EdgeInsets.all(1),
             decoration: BoxDecoration(
-                color: (controller.isBeforeToday(
-                        index2 % controller.daysInCurrentMonth + 1))
+                color: (isBeforeToday(bloc.state.currentMonth, bloc.state.today,
+                        index2 % days + 1))
                     ? Colors.grey[400]
                     : Colors.grey[200]),
             alignment: Alignment.bottomRight,
             child: Text(
-              "${index2 % controller.daysInCurrentMonth + 1}",
+              "${index2 % days + 1}",
               style: const TextStyle(fontSize: 10),
             ),
           )
@@ -286,76 +325,70 @@ class Cell extends StatelessWidget {
                 await Get.find<BookingPageController>().getServices();
                 await Get.delete<BookingPageController>();
               }
-              await Get.toNamed("/info?ridx=$index1&bidx=$value")?.then(
-                (value) async => await controller.getRoomGroups(),
-              );
+              await Get.toNamed("/info?ridx=$index1&bidx=$value");
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
                   "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[value].getBookingInfoToString()}",
               child: Container(
-                margin: (isTheBeginningOfABooking(
-                        controller, index1, index2, value))
+                margin: (isTheBeginningOfABooking(days, index1, index2, value))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)
-                    : (isTheEndOfABooking(controller, index1, index2, value))
+                    : (isTheEndOfABooking(days, index1, index2, value))
                         ? const EdgeInsets.only(right: 1, top: 1, bottom: 1)
                         : const EdgeInsets.only(top: 1, bottom: 1),
                 decoration: const BoxDecoration(color: Color(0xff89b4f7)),
                 alignment: Alignment.bottomLeft,
-                child: (isSuitableForText(controller, index1, index2, value))
+                child: (isSuitableForText(days, index1, index2, value))
                     ? FittedBox(
                         child: Text(
-                            "${roomGroup.ordersList[value].cat.name}\n${getNumberOfNights(controller, index1, index2, value)}"))
+                            "${roomGroup.ordersList[value].cat.name}\n${getNumberOfNights(index1, index2, value)}"))
                     : const Text(""),
               ),
             ),
           );
   }
 
-  Pair getDisplayValue(
-      CalendarPageController controller, int index1, int index2) {
-    return Get.find<InternalStorage>()
-            .read("roomGroupsList")[index1]
-            .displayArray[index2 ~/ controller.daysInCurrentMonth]
-        [index2 % controller.daysInCurrentMonth];
+  bool isBeforeToday(DateTime currentMonth, DateTime today, int day) {
+    return DateTime(currentMonth.year, currentMonth.month, day).isBefore(today);
   }
 
-  bool isTheEndOfABooking(
-      CalendarPageController controller, int index1, int index2, int value) {
-    if (index2 % controller.daysInCurrentMonth ==
-        controller.daysInCurrentMonth - 1) return true;
-    if (value != getDisplayValue(controller, index1, index2 + 1).first) {
+  Pair getDisplayValue(int days, int index1, int index2) {
+    RoomGroup roomGroup =
+        Get.find<InternalStorage>().read("roomGroupsList")[index1];
+    return roomGroup.displayArray[index2 ~/ days][index2 % days];
+  }
+
+  bool isTheEndOfABooking(int days, int index1, int index2, int value) {
+    if (index2 % days == days - 1) return true;
+    if (value != getDisplayValue(days, index1, index2 + 1).first) {
       return true;
     }
     return false;
   }
 
-  bool isTheBeginningOfABooking(
-      CalendarPageController controller, int index1, int index2, int value) {
-    if (index2 % controller.daysInCurrentMonth == 0) {
+  bool isTheBeginningOfABooking(int days, int index1, int index2, int value) {
+    if (index2 % days == 0) {
       return true;
     }
-    if (value != getDisplayValue(controller, index1, index2 - 1).second) {
-      return true;
-    }
-    return false;
-  }
-
-  bool isSuitableForText(
-      CalendarPageController controller, int index1, int index2, int value) {
-    if (index2 % controller.daysInCurrentMonth == 0) {
-      return true;
-    }
-    if (value != getDisplayValue(controller, index1, index2 - 1).first ||
-        value != getDisplayValue(controller, index1, index2 - 1).second) {
+    if (value != getDisplayValue(days, index1, index2 - 1).second) {
       return true;
     }
     return false;
   }
 
-  int getNumberOfNights(
-      CalendarPageController controller, int index1, int index2, int value) {
+  bool isSuitableForText(int days, int index1, int index2, int value) {
+    if (index2 % days == 0) {
+      return true;
+    }
+    if (value != getDisplayValue(days, index1, index2 - 1).first ||
+        value != getDisplayValue(days, index1, index2 - 1).second) {
+      return true;
+    }
+    return false;
+  }
+
+  int getNumberOfNights(int index1, int index2, int value) {
     RoomGroup roomGroup =
         Get.find<InternalStorage>().read("roomGroupsList")[index1];
     DateTime checkOut = roomGroup.ordersList[value].checkOut;
@@ -367,14 +400,12 @@ class Cell extends StatelessWidget {
 }
 
 class HalfCell extends StatelessWidget {
-  final CalendarPageController controller;
   final int index1;
   final int index2;
   final int value;
 
   const HalfCell(
       {super.key,
-      required this.controller,
       required this.index1,
       required this.index2,
       required this.value});
@@ -382,17 +413,20 @@ class HalfCell extends StatelessWidget {
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
         Get.find<InternalStorage>().read("roomGroupsList")[index1];
+    CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
+    int days = DateUtils.getDaysInMonth(
+        bloc.state.currentMonth.year, bloc.state.currentMonth.month);
     return (value == -1)
         ? Container(
             margin: const EdgeInsets.all(1),
             decoration: BoxDecoration(
-                color: (controller.isBeforeToday(
-                        index2 % controller.daysInCurrentMonth + 1))
+                color: (isBeforeToday(bloc.state.currentMonth, bloc.state.today,
+                        index2 % days + 1))
                     ? Colors.grey[400]
                     : Colors.grey[200]),
             alignment: Alignment.bottomRight,
             child: Text(
-              "${index2 % controller.daysInCurrentMonth + 1}",
+              "${index2 % days + 1}",
               style: const TextStyle(fontSize: 10),
             ),
           )
@@ -403,19 +437,16 @@ class HalfCell extends StatelessWidget {
                 await Get.find<BookingPageController>().getServices();
                 await Get.delete<BookingPageController>();
               }
-              await Get.toNamed("/info?ridx=$index1&bidx=$value")?.then(
-                (value) async => await controller.getRoomGroups(),
-              );
+              await Get.toNamed("/info?ridx=$index1&bidx=$value");
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
                   "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[value].getBookingInfoToString()}",
               child: Container(
-                margin: (isTheBeginningOfABooking(
-                        controller, index1, index2, value))
+                margin: (isTheBeginningOfABooking(days, index1, index2, value))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)
-                    : (isTheEndOfABooking(controller, index1, index2, value))
+                    : (isTheEndOfABooking(days, index1, index2, value))
                         ? const EdgeInsets.only(right: 1, top: 1, bottom: 1)
                         : const EdgeInsets.only(top: 1, bottom: 1),
                 decoration: const BoxDecoration(color: Color(0xff89b4f7)),
@@ -425,26 +456,26 @@ class HalfCell extends StatelessWidget {
           );
   }
 
-  Pair getDisplayValue(
-      CalendarPageController controller, int index1, int index2) {
-    return Get.find<InternalStorage>()
-            .read("roomGroupsList")[index1]
-            .displayArray[index2 ~/ controller.daysInCurrentMonth]
-        [index2 % controller.daysInCurrentMonth];
+  bool isBeforeToday(DateTime currentMonth, DateTime today, int day) {
+    return DateTime(currentMonth.year, currentMonth.month, day).isBefore(today);
   }
 
-  bool isTheEndOfABooking(
-      CalendarPageController controller, int index1, int index2, int value) {
-    int first = getDisplayValue(controller, index1, index2).first;
+  Pair getDisplayValue(int days, int index1, int index2) {
+    return Get.find<InternalStorage>()
+        .read("roomGroupsList")[index1]
+        .displayArray[index2 ~/ days][index2 % days];
+  }
+
+  bool isTheEndOfABooking(int days, int index1, int index2, int value) {
+    int first = getDisplayValue(days, index1, index2).first;
     if (first == value) {
       return true;
     }
     return false;
   }
 
-  bool isTheBeginningOfABooking(
-      CalendarPageController controller, int index1, int index2, int value) {
-    int second = getDisplayValue(controller, index1, index2).second;
+  bool isTheBeginningOfABooking(int days, int index1, int index2, int value) {
+    int second = getDisplayValue(days, index1, index2).second;
     if (second == value) {
       return true;
     }

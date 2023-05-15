@@ -9,8 +9,9 @@ import '../model/RoomGroupModel.dart';
 import '../model/ServiceModel.dart';
 import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
+import '../utils/ExcelGenerator.dart';
 
-class InformationPage extends StatelessWidget {
+class InformationPage extends StatelessWidget with ExcelGenerator {
   const InformationPage({super.key});
 
   @override
@@ -127,7 +128,11 @@ class InformationPage extends StatelessWidget {
                           backgroundColor: const Color(0xfffaf884),
                           foregroundColor: Colors.black,
                         ),
-                        onPressed: () => {},
+                        onPressed: () {
+                          createBill(
+                              bidx: int.parse(Get.parameters["bidx"]!),
+                              ridx: int.parse(Get.parameters["ridx"]!));
+                        },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [

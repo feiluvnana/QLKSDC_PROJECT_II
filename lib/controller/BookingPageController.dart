@@ -4,10 +4,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:project_ii/controller/HomePageController.dart';
+import 'package:project_ii/controller/home_page_bloc.dart';
+import '../data/providers/room_group_data_provider.dart';
 import '../model/ServiceModel.dart';
 import '../utils/InternalStorage.dart';
-import 'CalendarPageController.dart';
+import 'calendar_page_bloc.dart';
 
 class BookingPageController extends GetxController {
   bool _isSubmitClicked = false;
@@ -261,10 +262,9 @@ class BookingPageController extends GetxController {
           : "Đặt phòng thành công"),
     ).then((value) => _isSubmitClicked = false);
     if (status == "successed") {
-      await Get.find<CalendarPageController>().getRoomGroups();
-      Get.find<HomePageController>()
-        ..homePageIndex = 0
-        ..update();
+      await RoomGroupDataProvider(
+              currentMonth: DateTime.now(), today: DateTime.now())
+          .getRoomGroups();
     }
   }
 }

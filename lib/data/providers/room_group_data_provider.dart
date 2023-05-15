@@ -1,71 +1,25 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
-import 'package:project_ii/utils/InternalStorage.dart';
-import '../model/OrderModel.dart';
-import '../model/AdditionModel.dart';
-import '../model/RoomGroupModel.dart';
-import '../model/RoomModel.dart';
-import '../utils/PairUtils.dart';
 
-class CalendarPageController extends GetxController {
-  late DateTime _currentMonth, _today;
-  late bool _isAddMonthClicked;
-  late int _dayForGuestList;
-  late int _daysInCurrentMonth;
+import '../../model/AdditionModel.dart';
+import '../../model/OrderModel.dart';
+import '../../model/RoomGroupModel.dart';
+import '../../model/RoomModel.dart';
+import '../../utils/InternalStorage.dart';
+import '../../utils/PairUtils.dart';
 
-  @override
-  void onInit() {
-    super.onInit();
-    _today =
-        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    _currentMonth = DateTime(_today.year, _today.month);
-    _isAddMonthClicked = false;
-    _dayForGuestList = _today.day;
-    _daysInCurrentMonth =
-        DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
+class RoomGroupDataProvider {
+  final DateTime currentMonth;
+  final DateTime today;
 
-    Future.delayed(
-            const Duration(seconds: 0), () async => await getRoomGroups())
-        .then(
-            (value) => update(["guestList", "table", "dayLabel", "monthText"]));
-  }
-
-  DateTime get currentMonth => _currentMonth;
-  set currentMonth(DateTime value) => _currentMonth = value;
-  int get dayForGuestList => _dayForGuestList;
-  set dayForGuestList(int value) => _dayForGuestList = value;
-  int get daysInCurrentMonth => _daysInCurrentMonth;
-  DateTime get today => _today;
-
-  void addMonths({required int value}) async {
-    Get.find<InternalStorage>().remove("bookingDataForAllRooms");
-    if (_isAddMonthClicked) return;
-    _isAddMonthClicked = true;
-    if (_currentMonth.month == 12 && value == 1) {
-      _currentMonth = DateTime(_currentMonth.year + 1, 1);
-    } else if (_currentMonth.month == 1 && value == -1) {
-      _currentMonth = DateTime(_currentMonth.year - 1, 12);
-    } else {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + value);
-    }
-    _dayForGuestList = 1;
-    _daysInCurrentMonth =
-        DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
-    await getRoomGroups();
-    update(["guestList", "table", "dayLabel", "monthText"]);
-    _isAddMonthClicked = false;
-  }
-
-  bool isBeforeToday(int day) {
-    return DateTime(_currentMonth.year, _currentMonth.month, day)
-        .isBefore(today);
-  }
+  const RoomGroupDataProvider(
+      {required this.currentMonth, required this.today});
 
   bool isInCurrentMonth(DateTime date) {
-    return _currentMonth.year == date.year && _currentMonth.month == date.month;
+    return currentMonth.year == date.year && currentMonth.month == date.month;
   }
 
   Future<List<List<Pair>>> createDisplayListForOneRoom(
@@ -74,13 +28,13 @@ class CalendarPageController extends GetxController {
       return List.generate(
           roomData.total,
           (index) => List.generate(
-              DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month),
+              DateUtils.getDaysInMonth(currentMonth.year, currentMonth.month),
               (index) => Pair(first: -1, second: -1)));
     }
     List<List<Pair>> list = List.generate(
         roomData.total,
         (index) => List.generate(
-            DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month),
+            DateUtils.getDaysInMonth(currentMonth.year, currentMonth.month),
             (index) => Pair(first: -1, second: -1)));
     for (int i = 0; i < bookingList.length; i++) {
       int startIndex = (!isInCurrentMonth(bookingList[i].checkIn))
@@ -89,8 +43,7 @@ class CalendarPageController extends GetxController {
       bool earlyIn = bookingList[i].checkIn.hour < 14;
       bool roundedIn = !isInCurrentMonth(bookingList[i].checkIn);
       int endIndex = (!isInCurrentMonth(bookingList[i].checkOut))
-          ? DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month) -
-              1
+          ? DateUtils.getDaysInMonth(currentMonth.year, currentMonth.month) - 1
           : bookingList[i].checkOut.day - 1;
       bool lateOut = (bookingList[i].checkOut.hour > 14) ||
           (bookingList[i].checkOut.hour == 14 &&
@@ -205,6 +158,5 @@ class CalendarPageController extends GetxController {
       ]);
     }
     Get.find<InternalStorage>().write("roomGroupsList", roomGroupsList);
-    update(["guestList", "table", "dayLabel", "monthText"]);
   }
 }

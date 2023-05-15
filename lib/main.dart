@@ -3,13 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'generated/l10n.dart';
-import 'middleware/InformationPageMiddleware.dart';
-import 'view/HomePageView.dart';
-import 'view/LoginPageView.dart';
+import 'view/home_page_view.dart';
+import 'view/login_page_view.dart';
 import 'view/InformationPageView.dart';
 import 'binding/MyBinding.dart';
-import 'middleware/HomePageMiddleware.dart';
-import 'middleware/LoginPageMiddleware.dart';
 
 void main() {
   Future.delayed(const Duration(seconds: 0), () {
@@ -41,7 +38,6 @@ class ProjectII extends StatelessWidget {
               title: "Đăng nhập",
               child: LoginPage()),
           title: "Đăng nhập",
-          middlewares: [AvoidReturningMiddleware()],
           curve: Curves.easeOutExpo,
         ),
         GetPage(
@@ -51,7 +47,6 @@ class ProjectII extends StatelessWidget {
               title: "Trang chủ",
               child: const HomePage()),
           title: "Trang chủ",
-          middlewares: [HomePageMiddleware()],
           curve: Curves.easeOutExpo,
         ),
         GetPage(
@@ -60,7 +55,6 @@ class ProjectII extends StatelessWidget {
                 color: const Color(0xff68b6ef),
                 title: "Thông tin",
                 child: const InformationPage()),
-            middlewares: [InformationPageMiddleware()],
             curve: Curves.easeOutExpo),
       ],
       localizationsDelegates: const [
