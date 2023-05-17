@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get.dart';
-import 'package:project_ii/controller/login_page_bloc.dart';
+import 'package:project_ii/blocs/login_page_bloc.dart';
 
 class LoginPage extends StatelessWidget {
-  BuildContext? _storedContext;
-  final loadingWidget = SizedBox(
-      width: 200,
-      height: 200,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Padding(
-              padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
-          Spacer(),
-          Text("Đang xác thực...")
-        ],
-      ));
+  final loadingEntry = OverlayEntry(
+    builder: (context) => Container(
+      color: Colors.black54,
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      child: Align(
+        child: Container(
+            width: 200,
+            height: 200,
+            color: Colors.white,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator()),
+                Text("Đang xác thực...")
+              ],
+            )),
+      ),
+    ),
+  );
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -51,71 +59,86 @@ class LoginPage extends StatelessWidget {
                 );
               }
               return BlocConsumer<LoginPageBloc, LoginState>(
+                  listenWhen: (previous, current) =>
+                      previous.state != current.state,
                   listener: (context, state) {
-                if (state.state == AuthenticationState.authenticating) {
-                  _storedContext = context;
-                  showDialog(
-                      context: context,
-                      builder: (_) => Dialog(child: loadingWidget),
-                      barrierDismissible: false);
-                } else if (state.state == AuthenticationState.authenticated) {
-                  Get.offNamed("/home");
-                  context.read<LoginPageBloc>().close();
-                } else if (_storedContext != null) {
-                  Navigator.of(_storedContext!).pop();
-                  _storedContext = null;
-                }
-              }, builder: (context, state) {
-                return Container(
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage("images/loginBackground.jpg")),
-                    color: Colors.white,
-                  ),
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Expanded(child: SizedBox()),
-                      Flexible(
-                        child: Container(
-                          width: MediaQuery.of(context).size.width / 3,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                              border:
-                                  Border.all(color: const Color(0xFF000000)),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(4)),
-                              color: const Color(0xaaffffff)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Column(mainAxisSize: MainAxisSize.min, children: [
-                                UsernameInput(
-                                    usernameController: _usernameController),
-                                PasswordInput(
-                                    passwordController: _passwordController)
-                              ]),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    context
-                                        .read<LoginPageBloc>()
-                                        .add(SubmitButtonPressedEvent());
-                                  },
-                                  child: const Text("Đăng nhập"),
+                    if (state.state == AuthenticationState.authenticating) {
+                      Overlay.of(context).insert(loadingEntry);
+                    } else {
+                      loadingEntry.remove();
+                      if (state.state == AuthenticationState.authenticated) {
+                        context
+                            .read<LoginPageBloc>()
+                            .add(GotoHomePage(context));
+                      }
+                    }
+                  },
+                  builder: (context, state) {
+                    return Container(
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                            image: AssetImage("images/loginBackground.jpg")),
+                        color: Colors.white,
+                      ),
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Expanded(child: SizedBox()),
+                          Flexible(
+                            child: Container(
+                              width: MediaQuery.of(context).size.width / 3,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: const Color(0xFF000000)),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(4)),
+                                  color: const Color(0xaaffffff)),
+                              child: Form(
+                                key: state.formKey,
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          UsernameInput(
+                                              usernameController:
+                                                  _usernameController),
+                                          PasswordInput(
+                                              passwordController:
+                                                  _passwordController)
+                                        ]),
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          {
+                                            print(DateTime.now()
+                                                .millisecondsSinceEpoch);
+                                            context.read<LoginPageBloc>().add(
+                                                SubmitButtonPressedEvent(
+                                                    _usernameController.text,
+                                                    _passwordController.text));
+                                            print(DateTime.now()
+                                                .millisecondsSinceEpoch);
+                                          }
+                                        },
+                                        child: const Text("Đăng nhập"),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const Expanded(child: SizedBox())
+                        ],
                       ),
-                      const Expanded(child: SizedBox())
-                    ],
-                  ),
-                );
-              });
+                    );
+                  });
             }),
       ),
     );
@@ -134,14 +157,20 @@ class UsernameInput extends StatelessWidget {
         builder: (context, state) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: TextField(
+            child: TextFormField(
               controller: usernameController,
-              onChanged: (value) => context
-                  .read<LoginPageBloc>()
-                  .add(UsernameChangedEvent(username: value)),
+              validator: (value) {
+                if (value == null) return "Không để trống tài khoản";
+                if (value.isEmpty) return "Không để trống tài khoản";
+                if (!RegExp(r"^\w{5,}$").hasMatch(value)) {
+                  return "Tài khoản chỉ chứa chữ cái hoặc số và dài hơn 5 ký tự";
+                }
+                return null;
+              },
               decoration: const InputDecoration(
                 labelText: "Tài khoản",
                 labelStyle: TextStyle(color: Colors.black87),
+                errorMaxLines: 2,
                 floatingLabelStyle: TextStyle(color: Colors.blue),
                 border: OutlineInputBorder(),
               ),
@@ -163,12 +192,17 @@ class PasswordInput extends StatelessWidget {
         builder: (context, state) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: TextField(
+            child: TextFormField(
               controller: passwordController,
-              onChanged: (value) => context
-                  .read<LoginPageBloc>()
-                  .add(PasswordChangedEvent(password: value)),
               obscureText: true,
+              validator: (value) {
+                if (value == null) return "Không để trống mật khẩu";
+                if (value.isEmpty) return "Không để trống mật khẩu";
+                if (!RegExp(r"^\w{8,}$").hasMatch(value)) {
+                  return "Mật khẩu chỉ chứa chữ cái số và dài hơn 8 ký tự";
+                }
+                return null;
+              },
               decoration: const InputDecoration(
                 labelText: "Mật khẩu",
                 labelStyle: TextStyle(color: Colors.black87),

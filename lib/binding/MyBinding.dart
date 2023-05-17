@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
-import 'package:project_ii/controller/InformationPageController.dart';
-import '../controller/login_page_bloc.dart';
-import '../controller/BookingPageController.dart';
-import '../controller/home_page_bloc.dart';
-import '../controller/calendar_page_bloc.dart';
+import 'package:project_ii/blocs/InformationPageController.dart';
+import '../blocs/login_page_bloc.dart';
+import '../blocs/BookingPageController.dart';
+import '../blocs/home_page_bloc.dart';
+import '../blocs/calendar_page_bloc.dart';
 import '../utils/InternalStorage.dart';
 
 class MyBinding extends Bindings {

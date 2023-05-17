@@ -11,8 +11,8 @@ import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
 import '../utils/ExcelGenerator.dart';
 
-class CalenderPage extends StatelessWidget with ExcelGenerator {
-  const CalenderPage({super.key});
+class CalendarPage extends StatelessWidget with ExcelGenerator {
+  const CalendarPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +151,7 @@ class CalenderPage extends StatelessWidget with ExcelGenerator {
                 ],
               ),
               const SizedBox(height: 20),
-              Expanded(child: BookingInfo()),
+              const Expanded(child: BookingInfo()),
             ],
           ),
         );
@@ -161,51 +161,43 @@ class CalenderPage extends StatelessWidget with ExcelGenerator {
 }
 
 class BookingInfo extends StatelessWidget {
-  BuildContext? _storedContext;
-  final loadingWidget = SizedBox(
-      width: 200,
-      height: 200,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Padding(
-              padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
-          Spacer(),
-          Text("Đang xác thực...")
-        ],
-      ));
-  BookingInfo({super.key});
+  const BookingInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CalendarPageBloc, CalendarState>(
-        listener: (context, state) {
-      if (state.state != RenderState.completed) {
-        _storedContext = context;
-        showDialog(
-            context: context,
-            builder: (_) => Dialog(child: loadingWidget),
-            barrierDismissible: false);
-      } else if (_storedContext != null) {
-        Navigator.of(_storedContext!).pop();
-        _storedContext = null;
-      }
-    }, builder: (context, state) {
-      Future.delayed(const Duration(milliseconds: 200),
-          () => context.read<CalendarPageBloc>().add(RenderCompletedEvent()));
-      Future.delayed(const Duration(milliseconds: 200),
-          () => context.read<CalendarPageBloc>().add(RenderCompletedEvent()));
-
-      List<RoomGroup> roomGroup =
-          Get.find<InternalStorage>().read("roomGroupsList");
-      return SingleChildScrollView(
-        primary: true,
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(
-                roomGroup.length, (index1) => DisplayTable(index1: index1))),
-      );
-    });
+        listener: (context, state) {},
+        builder: (context, state) {
+          if (state.state == RenderState.waiting) {
+            BlocProvider.of<CalendarPageBloc>(context).add(DataNeededEvent());
+            return Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                  Text('Đang tải...'),
+                ],
+              ),
+            );
+          }
+          Future.delayed(
+              const Duration(milliseconds: 100),
+              () => BlocProvider.of<CalendarPageBloc>(context)
+                  .add(RenderCompletedEvent()));
+          List<RoomGroup> roomGroup =
+              Get.find<InternalStorage>().read("roomGroupsList");
+          return SingleChildScrollView(
+            primary: true,
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(roomGroup.length,
+                    (index1) => DisplayTable(index1: index1))),
+          );
+        });
   }
 }
 

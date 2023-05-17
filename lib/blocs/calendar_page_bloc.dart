@@ -16,6 +16,8 @@ class GuestListDayChangedEvent extends CalendarPageEvent {
 
 class RenderCompletedEvent extends CalendarPageEvent {}
 
+class DataNeededEvent extends CalendarPageEvent {}
+
 enum RenderState { rendering, completed, waiting }
 
 class CalendarState extends Equatable {
@@ -52,9 +54,9 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
             today: DateTime(
                 DateTime.now().year, DateTime.now().month, DateTime.now().day),
             dayForGuestList: DateTime.now().day,
-            state: RenderState.rendering)) {
+            state: RenderState.waiting)) {
     on<MonthIncreasedEvent>((event, emit) {
-      if (state.state == RenderState.rendering) return;
+      if (state.state != RenderState.completed) return;
       DateTime newMonth;
       if (state.currentMonth.month == 12) {
         newMonth = DateTime(state.currentMonth.year + 1, 1);
@@ -65,7 +67,7 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       emit(state.copyWith(currentMonth: newMonth));
     });
     on<MonthDecreasedEvent>((event, emit) {
-      if (state.state == RenderState.rendering) return;
+      if (state.state != RenderState.completed) return;
       DateTime newMonth;
       if (state.currentMonth.month == 1) {
         newMonth = DateTime(state.currentMonth.year - 1, 12);
@@ -76,11 +78,18 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       emit(state.copyWith(currentMonth: newMonth));
     });
     on<GuestListDayChangedEvent>((event, emit) {
+      if (state.state != RenderState.completed) return;
       emit(state.copyWith(dayForGuestList: event.dayForGuestList));
     });
     on<RenderCompletedEvent>(
       (event, emit) => emit(state.copyWith(state: RenderState.completed)),
     );
+    on<DataNeededEvent>((event, emit) async {
+      await RoomGroupDataProvider(
+              currentMonth: state.currentMonth, today: state.today)
+          .getRoomGroups();
+      emit(state.copyWith(state: RenderState.rendering));
+    });
   }
 
   @override

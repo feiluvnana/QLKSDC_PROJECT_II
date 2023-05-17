@@ -2,7 +2,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/controller/InformationPageController.dart';
+import 'package:project_ii/blocs/InformationPageController.dart';
 import 'package:project_ii/model/OrderModel.dart';
 import 'package:project_ii/model/RoomModel.dart';
 import '../model/RoomGroupModel.dart';

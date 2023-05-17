@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:project_ii/utils/InternalStorage.dart';
 import 'generated/l10n.dart';
+import 'package:go_router/go_router.dart';
 import 'view/home_page_view.dart';
 import 'view/login_page_view.dart';
 import 'view/InformationPageView.dart';
@@ -13,50 +15,48 @@ void main() {
     MyBinding().dependencies();
     GetStorage.init();
     WidgetsFlutterBinding.ensureInitialized();
-  }).then((value) => runApp(const ProjectII()));
+  }).then((value) => runApp(ProjectII()));
 }
 
 class ProjectII extends StatelessWidget {
-  const ProjectII({super.key});
+  ProjectII({super.key});
+
+  final _router = GoRouter(initialLocation: "/login", routes: [
+    GoRoute(path: "/", builder: (context, state) => Container()),
+    GoRoute(
+        path: "/login",
+        builder: (context, state) => Title(
+            color: const Color(0xff68b6ef),
+            title: "Đăng nhập",
+            child: LoginPage()),
+        redirect: (context, state) =>
+            (GetStorage().read("sessionID") != null) ? "/home" : null),
+    GoRoute(
+        path: "/home",
+        builder: (context, state) => Title(
+            color: const Color(0xff68b6ef),
+            title: "Trang chủ",
+            child: const HomePage()),
+        redirect: (context, state) =>
+            (GetStorage().read("sessionID") == null) ? "/login" : null),
+    GoRoute(
+        path: "/info",
+        builder: (context, state) => Title(
+            color: const Color(0xff68b6ef),
+            title: "Thông tin",
+            child: const InformationPage()),
+        redirect: (context, state) =>
+            (Get.find<InternalStorage>().read("roomGroupsList") == null ||
+                    Get.find<InternalStorage>().read("servicesList") == null)
+                ? "/home"
+                : null),
+  ]);
 
   @override
   Widget build(BuildContext context) {
     S.load(const Locale("vi", "VN"));
-    return GetMaterialApp(
-      unknownRoute: GetPage(
-        name: '/notfound',
-        page: () => Title(
-            color: const Color(0xff68b6ef),
-            title: "Trang không tồn tại",
-            child: const Text("Trang không tồn tại")),
-      ),
-      getPages: [
-        GetPage(
-          name: "/login",
-          page: () => Title(
-              color: const Color(0xff68b6ef),
-              title: "Đăng nhập",
-              child: LoginPage()),
-          title: "Đăng nhập",
-          curve: Curves.easeOutExpo,
-        ),
-        GetPage(
-          name: "/home",
-          page: () => Title(
-              color: const Color(0xff68b6ef),
-              title: "Trang chủ",
-              child: const HomePage()),
-          title: "Trang chủ",
-          curve: Curves.easeOutExpo,
-        ),
-        GetPage(
-            name: "/info",
-            page: () => Title(
-                color: const Color(0xff68b6ef),
-                title: "Thông tin",
-                child: const InformationPage()),
-            curve: Curves.easeOutExpo),
-      ],
+    return MaterialApp.router(
+      routerConfig: _router,
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -79,7 +79,6 @@ class ProjectII extends StatelessWidget {
             800: Color(0xff68b6ef),
             900: Color(0xff68b6ef),
           })),
-      initialRoute: "/login",
     );
   }
 }

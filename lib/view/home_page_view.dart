@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:project_ii/controller/home_page_bloc.dart';
 import 'BookingPageView.dart';
 import 'CalendarPageView.dart';
@@ -15,15 +16,15 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocProvider(
-        create: (context) => HomePageCubit(),
-        child: BlocBuilder<HomePageCubit, int>(
+        create: (context) => HomePageBloc(),
+        child: BlocBuilder<HomePageBloc, HomeState>(
           builder: (context, state) => Row(
             children: [
               NavigationRail(
                 elevation: 12,
-                onDestinationSelected: (index) {
-                  BlocProvider.of<HomePageCubit>(context).goto(index);
-                },
+                onDestinationSelected: (index) =>
+                    BlocProvider.of<HomePageBloc>(context)
+                        .add(TabChangedEvent(index, primaryFocus)),
                 destinations: const [
                   NavigationRailDestination(
                     icon: FaIcon(FontAwesomeIcons.book),
@@ -46,7 +47,7 @@ class HomePage extends StatelessWidget {
                     label: Text("Quản lý dịch vụ"),
                   ),
                 ],
-                selectedIndex: state,
+                selectedIndex: state.selectedIndex,
                 extended: true,
                 trailing: ElevatedButton(
                     onPressed: () async {
@@ -55,7 +56,7 @@ class HomePage extends StatelessWidget {
                         FormData({"sessionID": GetStorage().read("sessionID")}),
                       );
                       await GetStorage().erase();
-                      Get.offAllNamed("/login");
+                      context.go("/login");
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -67,12 +68,11 @@ class HomePage extends StatelessWidget {
                     )),
               ),
               Expanded(
-                child: const [
-                  CalenderPage(),
-                  BookingPage(),
-                  RoomPage(),
-                  Text("child4"),
-                ][state],
+                child: IndexedStack(
+                  index: state.selectedIndex,
+                  children: List.generate(
+                      5, (index) => Builder(builder: state.builders[index])),
+                ),
               )
             ],
           ),

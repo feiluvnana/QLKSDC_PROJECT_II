@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../controller/BookingPageController.dart';
+import '../blocs/BookingPageController.dart';
 import '../model/RoomGroupModel.dart';
 import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
