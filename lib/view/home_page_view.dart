@@ -4,10 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:project_ii/controller/home_page_bloc.dart';
-import 'BookingPageView.dart';
-import 'CalendarPageView.dart';
-import 'RoomPageView.dart';
+import 'package:project_ii/blocs/home_page_bloc.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

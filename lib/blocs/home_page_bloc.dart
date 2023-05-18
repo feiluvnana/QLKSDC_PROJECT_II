@@ -19,7 +19,7 @@ class HomeState extends Equatable {
   static int calendar = 0, booking = 1, room = 2, service = 3, history = 4;
   static List<Widget Function(BuildContext)> builderCalls = [
     (context) => const CalendarPage(),
-    (context) => const BookingPage(),
+    (context) => BookingPage(),
     (context) => const RoomPage(),
     (context) => const Text("service"),
     (context) => const Text("history")

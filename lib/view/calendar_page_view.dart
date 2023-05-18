@@ -3,9 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:project_ii/controller/BookingPageController.dart';
-import 'package:project_ii/controller/login_page_bloc.dart';
-import '../controller/calendar_page_bloc.dart';
+import '../blocs/calendar_page_bloc.dart';
 import '../model/RoomGroupModel.dart';
 import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
@@ -313,10 +311,6 @@ class Cell extends StatelessWidget {
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
             onTap: () async {
-              if (Get.find<InternalStorage>().read("servicesList") == null) {
-                await Get.find<BookingPageController>().getServices();
-                await Get.delete<BookingPageController>();
-              }
               await Get.toNamed("/info?ridx=$index1&bidx=$value");
             },
             child: Tooltip(
@@ -425,10 +419,6 @@ class HalfCell extends StatelessWidget {
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
             onTap: () async {
-              if (Get.find<InternalStorage>().read("servicesList") == null) {
-                await Get.find<BookingPageController>().getServices();
-                await Get.delete<BookingPageController>();
-              }
               await Get.toNamed("/info?ridx=$index1&bidx=$value");
             },
             child: Tooltip(

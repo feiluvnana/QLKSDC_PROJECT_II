@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -9,828 +10,842 @@ import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
 
 class BookingPage extends StatelessWidget {
-  const BookingPage({super.key});
+  final _ownerNameController = TextEditingController();
+
+  final _ownerTelController = TextEditingController();
+
+  var _catNameController;
+
+  var _catSpeciesController;
+
+  var _catWeightController;
+
+  var _catAgeController;
+
+  var _catPhysicalConditionController;
+
+  var _catAppearanceController;
+
+  var _orderAttentionController;
+
+  var _orderNoteController;
+
+  BookingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    print("BookingPage build");
     var internalStorage = Get.find<InternalStorage>();
-    return GetBuilder<BookingPageController>(builder: (controller) {
-      if (internalStorage.read("servicesList") == null) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-            Text('Đang tải...'),
-          ],
-        );
-      }
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width / 5 * 3,
-          child: Stepper(
-            currentStep: controller.currentStep,
-            controlsBuilder: (context, details) {
-              return Row(
-                children: <Widget>[
-                  ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(foregroundColor: Colors.black),
-                    onPressed: details.onStepContinue,
-                    child: const Text('XÁC NHẬN'),
+    return BlocProvider(
+      create: (_) => BookingPageBloc(),
+      child: BlocConsumer<BookingPageBloc, BookingState>(
+          listener: (context, state) {},
+          builder: (context, state) {
+            if (state.renderState == BookingPageRenderState.waiting) {
+              BlocProvider.of<BookingPageBloc>(context).add(DataNeededEvent());
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
                   ),
-                  const SizedBox(width: 20),
-                  (controller.currentStep != 0)
-                      ? ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffff6961),
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed: details.onStepCancel,
-                          child: const Text('QUAY LẠI'),
-                        )
-                      : Container(),
+                  Text('Đang tải dữ liệu...'),
                 ],
               );
-            },
-            onStepContinue: () async {
-              if (controller.currentStep == 0 &&
-                  controller.formKey1.currentState?.validate() != true) return;
-              if (controller.currentStep == 1 &&
-                  controller.formKey2.currentState?.validate() != true) return;
-              if (controller.currentStep == 2 &&
-                  controller.formKey3.currentState?.validate() != true) return;
-              if (controller.currentStep < 2) {
-                controller.currentStep = controller.currentStep + 1;
-              } else {
-                await controller.sendDataToDatabase();
-              }
-            },
-            onStepCancel: () {
-              if (controller.currentStep > 0)
-                controller.currentStep = controller.currentStep - 1;
-            },
-            steps: [
-              Step(
-                state: (controller.currentStep == 0)
-                    ? StepState.editing
-                    : StepState.indexed,
-                isActive: controller.currentStep >= 0,
-                title: const Text("Nhập thông tin khách hàng"),
-                content: Form(
-                  key: controller.formKey1,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                controller: controller.ownerNameController,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return "Không để trống tên";
-                                  if (!RegExp(r'^[\p{L}\s]{1,50}$',
-                                          unicode: true)
-                                      .hasMatch(value)) {
-                                    return "Tên không đúng định dạng";
-                                  }
-                                  return null;
-                                },
-                                decoration: const InputDecoration(
-                                  labelText: "Tên khách hàng",
-                                  border: OutlineInputBorder(),
+            }
+            Future.delayed(
+                const Duration(milliseconds: 100),
+                () => BlocProvider.of<BookingPageBloc>(context)
+                    .add(RenderCompletedEvent()));
+            return Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width / 5 * 3,
+                child: Stepper(
+                  currentStep: state.currentStep,
+                  controlsBuilder: (context, details) {
+                    return Row(
+                      children: <Widget>[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.black),
+                          onPressed: details.onStepContinue,
+                          child: const Text('XÁC NHẬN'),
+                        ),
+                        const SizedBox(width: 20),
+                        (state.currentStep != 0)
+                            ? ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xffff6961),
+                                  foregroundColor: Colors.black,
                                 ),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            flex: 1,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DropdownButtonFormField<String>(
-                                isExpanded: true,
-                                validator: (value) {
-                                  if (value == null)
-                                    return "Không để trống giới tính";
-                                  return null;
-                                },
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: "Nam",
-                                    child: Text("Nam"),
+                                onPressed: details.onStepCancel,
+                                child: const Text('QUAY LẠI'),
+                              )
+                            : Container(),
+                      ],
+                    );
+                  },
+                  onStepContinue: () {
+                    context.read<BookingPageBloc>().add(NextEvent());
+                  },
+                  onStepCancel: () {
+                    context.read<BookingPageBloc>().add(PreviousEvent());
+                  },
+                  steps: [
+                    //Step1
+                    Step(
+                      state: (state.currentStep == 0)
+                          ? StepState.editing
+                          : StepState.indexed,
+                      isActive: state.currentStep >= 0,
+                      title: const Text("Nhập thông tin khách hàng"),
+                      content: BlocBuilder<BookingPageBloc, BookingState>(
+                        buildWhen: (previous, current) =>
+                            previous.step1State != previous.step1State,
+                        builder: (context, state) => Form(
+                          key: state.step1State.formKey1,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    flex: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: TextFormField(
+                                        controller: _ownerNameController,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty)
+                                            return "Không để trống tên";
+                                          if (!RegExp(r'^[\p{L}\s]{1,50}$',
+                                                  unicode: true)
+                                              .hasMatch(value)) {
+                                            return "Tên không đúng định dạng";
+                                          }
+                                          return null;
+                                        },
+                                        decoration: const InputDecoration(
+                                          labelText: "Tên khách hàng",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  DropdownMenuItem(
-                                    value: "Nữ",
-                                    child: Text("Nữ"),
-                                  ),
+                                  Flexible(
+                                    flex: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: DropdownButtonFormField<String>(
+                                        isExpanded: true,
+                                        validator: (value) {
+                                          if (value == null) {
+                                            return "Không để trống giới tính";
+                                          }
+                                          return null;
+                                        },
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: "Nam",
+                                            child: Text("Nam"),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: "Nữ",
+                                            child: Text("Nữ"),
+                                          ),
+                                        ],
+                                        onChanged: (String? value) {},
+                                        value: null,
+                                        hint: const Text("---"),
+                                        decoration: const InputDecoration(
+                                          labelText: "Giới tính",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  )
                                 ],
-                                onChanged: (String? value) {
-                                  controller.ownerGender = value!;
-                                },
-                                value: null,
-                                hint: const Text("---"),
-                                decoration: const InputDecoration(
-                                  labelText: "Giới tính",
-                                  border: OutlineInputBorder(),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 16),
+                                child: TextFormField(
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Không để trống số điện thoại";
+                                    }
+                                    if (!RegExp(r'^0\d{9}$').hasMatch(value)) {
+                                      return "Số điện thoại không đúng định dạng";
+                                    }
+                                    return null;
+                                  },
+                                  controller: _ownerTelController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Số điện thoại",
+                                    border: OutlineInputBorder(),
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 16),
-                        child: TextFormField(
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Không để trống số điện thoại";
-                            }
-                            if (!RegExp(r'^0\d{9}$').hasMatch(value)) {
-                              return "Số điện thoại không đúng định dạng";
-                            }
-                            return null;
-                          },
-                          controller: controller.ownerTelController,
-                          decoration: const InputDecoration(
-                            labelText: "Số điện thoại",
-                            border: OutlineInputBorder(),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              Step(
-                state: (controller.currentStep == 1)
-                    ? StepState.editing
-                    : StepState.indexed,
-                isActive: controller.currentStep >= 1,
-                title: const Text("Nhập thông tin mèo"),
-                content: Form(
-                  key: controller.formKey2,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 16),
-                                    child: TextFormField(
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty)
-                                          return "Không để trống tên mèo";
-                                        if (!RegExp(r'^[\p{L}\s]{1,50}$',
-                                                unicode: true)
-                                            .hasMatch(value)) {
-                                          return "Tên mèo không đúng định dạng";
-                                        }
-                                        return null;
-                                      },
-                                      controller: controller.catNameController,
-                                      decoration: const InputDecoration(
-                                        labelText: "Tên mèo",
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    )),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: DropdownButtonFormField<int>(
-                                    isExpanded: true,
-                                    validator: (value) {
-                                      if (value == null)
-                                        return "Không để trống tình trạng thiến";
-                                      return null;
-                                    },
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 0,
-                                        child: Text("Chưa thiến"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 1,
-                                        child: Text("Đã thiến"),
-                                      ),
-                                    ],
-                                    onChanged: (int? value) {
-                                      controller.catSterilization = value!;
-                                    },
-                                    value: null,
-                                    hint: const Text("---"),
-                                    decoration: const InputDecoration(
-                                      errorMaxLines: 2,
-                                      labelText: "Tình trạng thiến",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: DropdownButtonFormField<int>(
-                                    isExpanded: true,
-                                    validator: (value) {
-                                      if (value == null)
-                                        return "Không để trống hạng cân";
-                                      return null;
-                                    },
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 3,
-                                        child: Text("Dưới 3 kg"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 6,
-                                        child: Text("3-6 kg"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 9,
-                                        child: Text("Trên 6 kg"),
-                                      ),
-                                    ],
-                                    onChanged: (int? value) {
-                                      controller.catWeightRank = value!;
-                                    },
-                                    value: null,
-                                    hint: const Text("---"),
-                                    decoration: const InputDecoration(
-                                      errorMaxLines: 2,
-                                      labelText: "Hạng cân",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: TextFormField(
-                                    controller: controller.catSpeciesController,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty)
-                                        return null;
-                                      if (!RegExp(r'^[\p{L}\s]{1,30}$',
-                                              unicode: true)
-                                          .hasMatch(value)) {
-                                        return "Giống mèo không đúng định dạng";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                      labelText: "Giống mèo",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: DropdownButtonFormField<int>(
-                                    isExpanded: true,
-                                    validator: (value) {
-                                      if (value == null)
-                                        return "Không để trống tình trạng tiêm phòng";
-                                      return null;
-                                    },
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 0,
-                                        child: Text("Chưa tiêm"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 1,
-                                        child: Text("Đã tiêm vaccine dại"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 2,
-                                        child: Text("Đã tiêm vaccine tổng hợp"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 3,
-                                        child:
-                                            Text("Đã tiêm cả hai loại vaccine"),
-                                      ),
-                                    ],
-                                    onChanged: (int? value) {
-                                      controller.catVaccination = value!;
-                                    },
-                                    value: null,
-                                    hint: const Text("---"),
-                                    decoration: const InputDecoration(
-                                      errorMaxLines: 2,
-                                      labelText: "Tình trạng tiêm phòng",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: TextFormField(
-                                    controller: controller.catWeightController,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty)
-                                        return null;
-                                      if (!RegExp(r'^[1-9]\d*(\.\d+){0,1}$',
-                                              unicode: true)
-                                          .hasMatch(value)) {
-                                        return "Cân nặng mèo không đúng định dạng";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                      suffix: Text("kg"),
-                                      labelText: "Cân nặng",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: TextFormField(
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty)
-                                        return "Không để trống tuổi mèo";
-                                      if (!RegExp(r'[1-9]\d*').hasMatch(value))
-                                        return "Tuổi mèo không đúng định dạng";
-                                      return null;
-                                    },
-                                    controller: controller.catAgeController,
-                                    decoration: const InputDecoration(
-                                      errorMaxLines: 2,
-                                      labelText: "Tuổi",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 16),
-                                  child: DropdownButtonFormField<String>(
-                                    isExpanded: true,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: "Đực",
-                                        child: Text("Đực"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Cái",
-                                        child: Text("Cái"),
-                                      ),
-                                    ],
-                                    onChanged: (String? value) {
-                                      controller.catGender = value!;
-                                    },
-                                    value: null,
-                                    hint: const Text("---"),
-                                    decoration: const InputDecoration(
-                                      labelText: "Giới tính",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: FormField<Uint8List>(
-                              initialValue: null,
-                              builder: (state) {
-                                return Column(
-                                  children: [
-                                    InputDecorator(
-                                      decoration: InputDecoration(
-                                        labelText: "Ảnh",
-                                        errorText: state.errorText,
-                                        constraints:
-                                            const BoxConstraints.tightFor(
-                                                width: 210, height: 210),
-                                        border: const OutlineInputBorder(),
-                                      ),
-                                      child: state.value == null
-                                          ? const SizedBox(
-                                              width: 200, height: 200)
-                                          : Image.memory(
-                                              state.value!,
-                                              width: 200,
-                                              height: 200,
-                                              fit: BoxFit.scaleDown,
+                    ),
+                    Step(
+                      state: (state.currentStep == 1)
+                          ? StepState.editing
+                          : StepState.indexed,
+                      isActive: state.currentStep >= 1,
+                      title: const Text("Nhập thông tin mèo"),
+                      content: BlocBuilder<BookingPageBloc, BookingState>(
+                          buildWhen: (previous, current) =>
+                              previous.step2State != current.step2State,
+                          builder: (context, state) {
+                            return Form(
+                              key: state.step2State.formKey2,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 10,
+                                                        horizontal: 16),
+                                                child: TextFormField(
+                                                  validator: (value) {
+                                                    if (value == null ||
+                                                        value.isEmpty)
+                                                      return "Không để trống tên mèo";
+                                                    if (!RegExp(
+                                                            r'^[\p{L}\s]{1,50}$',
+                                                            unicode: true)
+                                                        .hasMatch(value)) {
+                                                      return "Tên mèo không đúng định dạng";
+                                                    }
+                                                    return null;
+                                                  },
+                                                  controller:
+                                                      _catNameController,
+                                                  decoration:
+                                                      const InputDecoration(
+                                                    labelText: "Tên mèo",
+                                                    border:
+                                                        OutlineInputBorder(),
+                                                  ),
+                                                )),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child:
+                                                  DropdownButtonFormField<int>(
+                                                isExpanded: true,
+                                                validator: (value) {
+                                                  if (value == null)
+                                                    return "Không để trống tình trạng thiến";
+                                                  return null;
+                                                },
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: 0,
+                                                    child: Text("Chưa thiến"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 1,
+                                                    child: Text("Đã thiến"),
+                                                  ),
+                                                ],
+                                                onChanged: (int? value) {},
+                                                value: null,
+                                                hint: const Text("---"),
+                                                decoration:
+                                                    const InputDecoration(
+                                                  errorMaxLines: 2,
+                                                  labelText: "Tình trạng thiến",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
                                             ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                isExpanded: true,
+                                                validator: (value) {
+                                                  if (value == null) {
+                                                    return "Không để trống hạng cân";
+                                                  }
+                                                  return null;
+                                                },
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: "< 3kg",
+                                                    child: Text("Dưới 3 kg"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: "3-6kg",
+                                                    child: Text("3-6 kg"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: "> 6kg",
+                                                    child: Text("Trên 6 kg"),
+                                                  ),
+                                                ],
+                                                onChanged: (String? value) {},
+                                                value: null,
+                                                hint: const Text("---"),
+                                                decoration:
+                                                    const InputDecoration(
+                                                  errorMaxLines: 2,
+                                                  labelText: "Hạng cân",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: TextFormField(
+                                                controller:
+                                                    _catSpeciesController,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty)
+                                                    return null;
+                                                  if (!RegExp(
+                                                          r'^[\p{L}\s]{1,30}$',
+                                                          unicode: true)
+                                                      .hasMatch(value)) {
+                                                    return "Giống mèo không đúng định dạng";
+                                                  }
+                                                  return null;
+                                                },
+                                                decoration:
+                                                    const InputDecoration(
+                                                  labelText: "Giống mèo",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child:
+                                                  DropdownButtonFormField<int>(
+                                                isExpanded: true,
+                                                validator: (value) {
+                                                  if (value == null) {
+                                                    return "Không để trống tình trạng tiêm phòng";
+                                                  }
+                                                  return null;
+                                                },
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: 0,
+                                                    child: Text("Chưa tiêm"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 1,
+                                                    child: Text(
+                                                        "Đã tiêm vaccine dại"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 2,
+                                                    child: Text(
+                                                        "Đã tiêm vaccine tổng hợp"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 3,
+                                                    child: Text(
+                                                        "Đã tiêm cả hai loại vaccine"),
+                                                  ),
+                                                ],
+                                                onChanged: (int? value) {},
+                                                value: null,
+                                                hint: const Text("---"),
+                                                decoration:
+                                                    const InputDecoration(
+                                                  errorMaxLines: 2,
+                                                  labelText:
+                                                      "Tình trạng tiêm phòng",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: TextFormField(
+                                                controller:
+                                                    _catWeightController,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty)
+                                                    return null;
+                                                  if (!RegExp(
+                                                          r'^[1-9]\d*(\.\d+){0,1}$',
+                                                          unicode: true)
+                                                      .hasMatch(value)) {
+                                                    return "Cân nặng mèo không đúng định dạng";
+                                                  }
+                                                  return null;
+                                                },
+                                                decoration:
+                                                    const InputDecoration(
+                                                  suffix: Text("kg"),
+                                                  labelText: "Cân nặng",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: TextFormField(
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty)
+                                                    return "Không để trống tuổi mèo";
+                                                  if (!RegExp(r'[1-9]\d*')
+                                                      .hasMatch(value))
+                                                    return "Tuổi mèo không đúng định dạng";
+                                                  return null;
+                                                },
+                                                controller: _catAgeController,
+                                                decoration:
+                                                    const InputDecoration(
+                                                  errorMaxLines: 2,
+                                                  labelText: "Tuổi",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                isExpanded: true,
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: "Đực",
+                                                    child: Text("Đực"),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: "Cái",
+                                                    child: Text("Cái"),
+                                                  ),
+                                                ],
+                                                onChanged: (String? value) {},
+                                                value: null,
+                                                hint: const Text("---"),
+                                                decoration:
+                                                    const InputDecoration(
+                                                  labelText: "Giới tính",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10, horizontal: 16),
+                                        child: FormField<Uint8List>(
+                                          initialValue: null,
+                                          builder: (state) {
+                                            return Column(
+                                              children: [
+                                                InputDecorator(
+                                                  decoration: InputDecoration(
+                                                    labelText: "Ảnh",
+                                                    errorText: state.errorText,
+                                                    constraints:
+                                                        const BoxConstraints
+                                                                .tightFor(
+                                                            width: 210,
+                                                            height: 210),
+                                                    border:
+                                                        const OutlineInputBorder(),
+                                                  ),
+                                                  child: state.value == null
+                                                      ? const SizedBox(
+                                                          width: 200,
+                                                          height: 200)
+                                                      : Image.memory(
+                                                          state.value!,
+                                                          width: 200,
+                                                          height: 200,
+                                                          fit: BoxFit.scaleDown,
+                                                        ),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () => context
+                                                      .read<BookingPageBloc>()
+                                                      .add(ImagePickEvent()),
+                                                  child: const Text("Chọn ảnh"),
+                                                )
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Flexible(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 16),
+                                          child: TextFormField(
+                                            keyboardType:
+                                                TextInputType.multiline,
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty)
+                                                return "Không để trống thể trạng";
+                                              if (!RegExp(r'^[^]{1,150}$',
+                                                      unicode: true,
+                                                      multiLine: true)
+                                                  .hasMatch(value)) {
+                                                return "Thể trạng không đúng định dạng";
+                                              }
+                                              return null;
+                                            },
+                                            controller:
+                                                _catPhysicalConditionController,
+                                            maxLines: null,
+                                            decoration: const InputDecoration(
+                                              labelText: "Thể trạng",
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 16),
+                                          child: TextFormField(
+                                            keyboardType:
+                                                TextInputType.multiline,
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) return null;
+                                              if (!RegExp(r'^[^]{1,150}$',
+                                                      unicode: true,
+                                                      multiLine: true)
+                                                  .hasMatch(value)) {
+                                                return "Đặc điểm hình thái không đúng định dạng";
+                                              }
+                                              return null;
+                                            },
+                                            controller:
+                                                _catAppearanceController,
+                                            maxLines: null,
+                                            decoration: const InputDecoration(
+                                              labelText: "Đặc điểm hình thái",
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            );
+                          }),
+                    ),
+                    Step(
+                      state: (state.currentStep == 2)
+                          ? StepState.editing
+                          : StepState.indexed,
+                      isActive: state.currentStep >= 2,
+                      title: const Text("Nhập thông tin đặt phòng và dịch vụ"),
+                      content: BlocBuilder<BookingPageBloc, BookingState>(
+                        buildWhen: (previous, current) =>
+                            previous.step3State != previous.step3State,
+                        builder: (context, state) => Form(
+                          key: state.step3State.formKey3,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    flex: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: DropdownButtonFormField<String>(
+                                        isExpanded: true,
+                                        items: List.generate(
+                                            internalStorage
+                                                .read("roomGroupsList")
+                                                .length, (index) {
+                                          RoomGroup roomGroup = internalStorage
+                                              .read("roomGroupsList")[index];
+                                          return DropdownMenuItem(
+                                              value: roomGroup.room.id,
+                                              child: Text(roomGroup.room.id));
+                                        }),
+                                        onChanged: (String? value) {},
+                                        validator: (value) {
+                                          if (value == null)
+                                            return "Không để trống mã phòng";
+                                          return null;
+                                        },
+                                        value: null,
+                                        hint: const Text("---"),
+                                        decoration: const InputDecoration(
+                                          errorMaxLines: 3,
+                                          labelText: "Mã phòng",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () async => state.didChange(
-                                          await controller.getPhotos()),
-                                      child: const Text("Chọn ảnh"),
-                                    )
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                keyboardType: TextInputType.multiline,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return "Không để trống thể trạng";
-                                  if (!RegExp(r'^[^]{1,150}$',
-                                          unicode: true, multiLine: true)
-                                      .hasMatch(value)) {
-                                    return "Thể trạng không đúng định dạng";
-                                  }
-                                  return null;
-                                },
-                                controller:
-                                    controller.catPhysicalConditionController,
-                                maxLines: null,
-                                decoration: const InputDecoration(
-                                  labelText: "Thể trạng",
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                keyboardType: TextInputType.multiline,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return null;
-                                  if (!RegExp(r'^[^]{1,150}$',
-                                          unicode: true, multiLine: true)
-                                      .hasMatch(value)) {
-                                    return "Đặc điểm hình thái không đúng định dạng";
-                                  }
-                                  return null;
-                                },
-                                controller: controller.catAppearanceController,
-                                maxLines: null,
-                                decoration: const InputDecoration(
-                                  labelText: "Đặc điểm hình thái",
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Step(
-                state: (controller.currentStep == 2)
-                    ? StepState.editing
-                    : StepState.indexed,
-                isActive: controller.currentStep >= 2,
-                title: const Text("Nhập thông tin đặt phòng và dịch vụ"),
-                content: Form(
-                  key: controller.formKey3,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DropdownButtonFormField<String>(
-                                isExpanded: true,
-                                items: List.generate(
-                                    internalStorage
-                                        .read("roomGroupsList")
-                                        .length, (index) {
-                                  RoomGroup roomGroup = internalStorage
-                                      .read("roomGroupsList")[index];
-                                  return DropdownMenuItem(
-                                      value: roomGroup.room.id,
-                                      child: Text(roomGroup.room.id));
-                                }),
-                                onChanged: (String? value) {
-                                  if (value == null) return;
-                                  controller.subRoomNum = 1;
-                                  controller.roomID = value;
-                                },
-                                validator: (value) {
-                                  if (value == null)
-                                    return "Không để trống mã phòng";
-                                  return null;
-                                },
-                                value: null,
-                                hint: const Text("---"),
-                                decoration: const InputDecoration(
-                                  errorMaxLines: 3,
-                                  labelText: "Mã phòng",
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DropdownButtonFormField<int>(
-                                isExpanded: true,
-                                items: (controller.roomID == "")
-                                    ? null
-                                    : List.generate(
-                                        internalStorage
-                                            .read("roomGroupsList")
-                                            .firstWhere((element) =>
-                                                element.room.id ==
-                                                controller.roomID)
-                                            .room
-                                            .total,
-                                        (index) => DropdownMenuItem(
+                                  ),
+                                  Flexible(
+                                    flex: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: DropdownButtonFormField<int>(
+                                        isExpanded: true,
+                                        items: null,
+                                        onChanged: (int? value) {},
+                                        validator: (value) {
+                                          if (value == null)
+                                            return "Không để trống mã phòng con";
+                                          return null;
+                                        },
+                                        value: null,
+                                        hint: const Text("---"),
+                                        decoration: const InputDecoration(
+                                          errorMaxLines: 3,
+                                          labelText: "Mã phòng con",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    flex: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: DropdownButtonFormField<int>(
+                                        isExpanded: true,
+                                        items: List.generate(
+                                          Get.find<InternalStorage>()
+                                              .read("servicesList")
+                                              .length,
+                                          (index) => DropdownMenuItem(
                                             value: index + 1,
-                                            child: Text("${index + 1}"))),
-                                onChanged: (controller.roomID == -1)
-                                    ? null
-                                    : (int? value) {
-                                        controller.subRoomNum = value!;
-                                      },
-                                validator: (value) {
-                                  if (value == null)
-                                    return "Không để trống mã phòng con";
-                                  return null;
-                                },
-                                value: (controller.roomID == "")
-                                    ? null
-                                    : controller.subRoomNum,
-                                hint: const Text("---"),
-                                decoration: const InputDecoration(
-                                  errorMaxLines: 3,
-                                  labelText: "Mã phòng con",
-                                  border: OutlineInputBorder(),
-                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text("${index + 1}"),
+                                                const SizedBox(width: 10),
+                                                const Tooltip(
+                                                    message:
+                                                        "Chi tiết:\nĐề xuất\nGiá thành:",
+                                                    child: FaIcon(
+                                                        FontAwesomeIcons
+                                                            .circleInfo))
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        onChanged: (int? value) {},
+                                        validator: (value) {
+                                          if (value == null)
+                                            return "Không để trống hạng ăn";
+                                          return null;
+                                        },
+                                        value: null,
+                                        hint: const Text("---"),
+                                        decoration: const InputDecoration(
+                                          errorMaxLines: 2,
+                                          labelText: "Hạng ăn",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: TextFormField(),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: TextFormField(),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                          Flexible(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DropdownButtonFormField<int>(
-                                isExpanded: true,
-                                items: List.generate(
-                                  Get.find<InternalStorage>()
-                                      .read("servicesList")
-                                      .length,
-                                  (index) => DropdownMenuItem(
-                                    value: index + 1,
-                                    child: Row(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: TextFormField(
+                                        keyboardType: TextInputType.multiline,
+                                        controller: _orderAttentionController,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty)
+                                            return null;
+                                          if (!RegExp(r'^[^]{1,200}$',
+                                                  unicode: true,
+                                                  multiLine: true)
+                                              .hasMatch(value)) {
+                                            return "Lưu ý không đúng định dạng";
+                                          }
+                                          return null;
+                                        },
+                                        maxLines: null,
+                                        decoration: const InputDecoration(
+                                          labelText: "Lưu ý",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: TextFormField(
+                                        keyboardType: TextInputType.multiline,
+                                        controller: _orderNoteController,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty)
+                                            return null;
+                                          if (!RegExp(r'^[^]{1,200}$',
+                                                  unicode: true,
+                                                  multiLine: true)
+                                              .hasMatch(value)) {
+                                            return "Ghi chú không đúng định dạng";
+                                          }
+                                          return null;
+                                        },
+                                        maxLines: null,
+                                        decoration: const InputDecoration(
+                                          labelText: "Ghi chú",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              FormField(
+                                builder: (formState) => Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: InputDecorator(
+                                    decoration: const InputDecoration(
+                                      labelText: "Danh sách dịch vụ",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text("${index + 1}"),
-                                        const SizedBox(width: 10),
-                                        const Tooltip(
-                                            message:
-                                                "Chi tiết:\nĐề xuất\nGiá thành:",
-                                            child: FaIcon(
-                                                FontAwesomeIcons.circleInfo))
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: List.generate(
+                                              state
+                                                  .step3State.numberOfAdditions,
+                                              (index1) => TextFormField()),
+                                        ),
+                                        ElevatedButton(
+                                            onPressed: () {},
+                                            child: const Text("Thêm dịch vụ"))
                                       ],
                                     ),
                                   ),
                                 ),
-                                onChanged: (int? value) {
-                                  controller.eatingRank = value!;
-                                },
-                                validator: (value) {
-                                  if (value == null)
-                                    return "Không để trống hạng ăn";
-                                  return null;
-                                },
-                                value: null,
-                                hint: const Text("---"),
-                                decoration: const InputDecoration(
-                                  errorMaxLines: 2,
-                                  labelText: "Hạng ăn",
-                                  border: OutlineInputBorder(),
-                                ),
                               ),
-                            ),
-                          ),
-                          Flexible(
-                            flex: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DateTimePicker(
-                                controller: controller.orderCheckInController,
-                                titleOfTextField: "Thời gian check-in",
-                                validator: (value) {
-                                  if (controller
-                                      .orderCheckInController.text.isEmpty) {
-                                    return "Không để trống thời gian check-in";
-                                  }
-                                  if (controller.orderCheckIn
-                                      .isBefore(DateTime.now())) {
-                                    return "Không thể check-in trong quá khứ";
-                                  }
-                                  if (controller.orderCheckOutController.text
-                                      .isNotEmpty) {
-                                    if (!controller.orderCheckOut
-                                        .isAfter(controller.orderCheckIn)) {
-                                      return "Thời gian check-in phải trước thời gian check-out";
-                                    }
-                                  }
-                                  return null;
-                                },
-                                isOutSerIn: 1,
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            flex: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: DateTimePicker(
-                                controller: controller.orderCheckOutController,
-                                titleOfTextField: "Thời gian check-out",
-                                validator: (value) {
-                                  if (controller
-                                      .orderCheckOutController.text.isEmpty) {
-                                    return "Không để trống thời gian check-out";
-                                  }
-                                  if (controller
-                                      .orderCheckInController.text.isNotEmpty) {
-                                    if (!controller.orderCheckIn
-                                        .isBefore(controller.orderCheckOut)) {
-                                      return "Thời gian check-out phải sau thời gian check-in";
-                                    }
-                                  }
-                                  return null;
-                                },
-                                isOutSerIn: -1,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                keyboardType: TextInputType.multiline,
-                                controller: controller.orderAttentionController,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return null;
-                                  if (!RegExp(r'^[^]{1,200}$',
-                                          unicode: true, multiLine: true)
-                                      .hasMatch(value)) {
-                                    return "Lưu ý không đúng định dạng";
-                                  }
-                                  return null;
-                                },
-                                maxLines: null,
-                                decoration: const InputDecoration(
-                                  labelText: "Lưu ý",
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                keyboardType: TextInputType.multiline,
-                                controller: controller.orderNoteController,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return null;
-                                  if (!RegExp(r'^[^]{1,200}$',
-                                          unicode: true, multiLine: true)
-                                      .hasMatch(value)) {
-                                    return "Ghi chú không đúng định dạng";
-                                  }
-                                  return null;
-                                },
-                                maxLines: null,
-                                decoration: const InputDecoration(
-                                  labelText: "Ghi chú",
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      FormField(
-                        builder: (state) => Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: "Danh sách dịch vụ",
-                              border: OutlineInputBorder(),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: List.generate(
-                                    controller.numberOfAdditions,
-                                    (index1) => ServiceInput(
-                                        controller: controller, index1: index1),
-                                  ),
-                                ),
-                                ElevatedButton(
-                                    onPressed: () {
-                                      controller.additionsList.add(-1);
-                                      controller.additionTimeController
-                                          .add(null);
-                                      controller.additionTimeList.add(null);
-                                      controller.additionQuantityController
-                                          .add(null);
-                                      controller.additionDistanceController
-                                          .add(null);
-                                      controller.numberOfAdditions =
-                                          controller.numberOfAdditions + 1;
-                                    },
-                                    child: const Text("Thêm dịch vụ"))
-                              ],
-                            ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      );
-    });
+            );
+          }),
+    );
   }
 }
+
+/*
 
 class ServiceInput extends StatelessWidget {
   final BookingPageController controller;
@@ -1060,3 +1075,4 @@ class DateTimePicker extends StatelessWidget {
     );
   }
 }
+*/

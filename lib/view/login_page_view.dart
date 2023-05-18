@@ -116,14 +116,10 @@ class LoginPage extends StatelessWidget {
                                       child: ElevatedButton(
                                         onPressed: () {
                                           {
-                                            print(DateTime.now()
-                                                .millisecondsSinceEpoch);
                                             context.read<LoginPageBloc>().add(
                                                 SubmitButtonPressedEvent(
                                                     _usernameController.text,
                                                     _passwordController.text));
-                                            print(DateTime.now()
-                                                .millisecondsSinceEpoch);
                                           }
                                         },
                                         child: const Text("Đăng nhập"),
@@ -152,31 +148,30 @@ class UsernameInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LoginPageBloc, LoginState>(
-        buildWhen: (previous, current) => previous.username != current.username,
-        builder: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: TextFormField(
-              controller: usernameController,
-              validator: (value) {
-                if (value == null) return "Không để trống tài khoản";
-                if (value.isEmpty) return "Không để trống tài khoản";
-                if (!RegExp(r"^\w{5,}$").hasMatch(value)) {
-                  return "Tài khoản chỉ chứa chữ cái hoặc số và dài hơn 5 ký tự";
-                }
-                return null;
-              },
-              decoration: const InputDecoration(
-                labelText: "Tài khoản",
-                labelStyle: TextStyle(color: Colors.black87),
-                errorMaxLines: 2,
-                floatingLabelStyle: TextStyle(color: Colors.blue),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          );
-        });
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      child: TextFormField(
+        controller: usernameController,
+        validator: (value) {
+          if (value == null) return "Không để trống tài khoản";
+          if (value.isEmpty) return "Không để trống tài khoản";
+          if (!RegExp(r"^\w{5,}$").hasMatch(value)) {
+            return "Tài khoản chỉ chứa chữ cái hoặc số và dài hơn 5 ký tự";
+          }
+          return null;
+        },
+        onChanged: (value) => context
+            .read<LoginPageBloc>()
+            .add(UsernameChangedEvent(usernameController.text)),
+        decoration: const InputDecoration(
+          labelText: "Tài khoản",
+          labelStyle: TextStyle(color: Colors.black87),
+          errorMaxLines: 2,
+          floatingLabelStyle: TextStyle(color: Colors.blue),
+          border: OutlineInputBorder(),
+        ),
+      ),
+    );
   }
 }
 
@@ -187,30 +182,29 @@ class PasswordInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LoginPageBloc, LoginState>(
-        buildWhen: (previous, current) => previous.password != current.password,
-        builder: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: TextFormField(
-              controller: passwordController,
-              obscureText: true,
-              validator: (value) {
-                if (value == null) return "Không để trống mật khẩu";
-                if (value.isEmpty) return "Không để trống mật khẩu";
-                if (!RegExp(r"^\w{8,}$").hasMatch(value)) {
-                  return "Mật khẩu chỉ chứa chữ cái số và dài hơn 8 ký tự";
-                }
-                return null;
-              },
-              decoration: const InputDecoration(
-                labelText: "Mật khẩu",
-                labelStyle: TextStyle(color: Colors.black87),
-                floatingLabelStyle: TextStyle(color: Colors.blue),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          );
-        });
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      child: TextFormField(
+        controller: passwordController,
+        obscureText: true,
+        validator: (value) {
+          if (value == null) return "Không để trống mật khẩu";
+          if (value.isEmpty) return "Không để trống mật khẩu";
+          if (!RegExp(r"^\w{8,}$").hasMatch(value)) {
+            return "Mật khẩu chỉ chứa chữ cái số và dài hơn 8 ký tự";
+          }
+          return null;
+        },
+        onChanged: (value) => context
+            .read<LoginPageBloc>()
+            .add(PasswordChangedEvent(passwordController.text)),
+        decoration: const InputDecoration(
+          labelText: "Mật khẩu",
+          labelStyle: TextStyle(color: Colors.black87),
+          floatingLabelStyle: TextStyle(color: Colors.blue),
+          border: OutlineInputBorder(),
+        ),
+      ),
+    );
   }
 }

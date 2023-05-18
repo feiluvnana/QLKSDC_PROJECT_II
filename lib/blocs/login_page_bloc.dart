@@ -3,9 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project_ii/data/providers/authentication_provider.dart';
-import 'package:rxdart/rxdart.dart';
 
 abstract class LoginPageEvent {}
+
+class UsernameChangedEvent extends LoginPageEvent {
+  final String username;
+
+  UsernameChangedEvent(this.username);
+}
+
+class PasswordChangedEvent extends LoginPageEvent {
+  final String password;
+
+  PasswordChangedEvent(this.password);
+}
 
 class SubmitButtonPressedEvent extends LoginPageEvent {
   final String username, password;
@@ -52,13 +63,17 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
             formKey: GlobalKey<FormState>(),
             username: "",
             password: "")) {
+    on<UsernameChangedEvent>(
+        (event, emit) => emit(state.copyWith(username: event.username)));
+    on<PasswordChangedEvent>(
+        (event, emit) => emit(state.copyWith(password: event.password)));
     on<SubmitButtonPressedEvent>((event, emit) async {
       if (state.formKey.currentState?.validate() != true) {
         return;
       }
       emit(state.copyWith(state: AuthenticationState.authenticating));
       if (await AuthenticationProvider.authenticate(
-          username: state.username, password: state.password)) {
+          username: event.username, password: event.password)) {
         emit(state.copyWith(state: AuthenticationState.authenticated));
       } else {
         emit(state.copyWith(state: AuthenticationState.unauthenticated));
