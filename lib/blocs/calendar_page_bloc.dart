@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_ii/data/providers/room_group_data_provider.dart';
+import '../data/enums/RenderState.dart';
 
 abstract class CalendarPageEvent {}
 
@@ -17,8 +18,6 @@ class GuestListDayChangedEvent extends CalendarPageEvent {
 class RenderCompletedEvent extends CalendarPageEvent {}
 
 class DataNeededEvent extends CalendarPageEvent {}
-
-enum RenderState { rendering, completed, waiting }
 
 class CalendarState extends Equatable {
   final DateTime currentMonth, today;

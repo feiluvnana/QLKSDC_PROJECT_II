@@ -347,7 +347,7 @@ class CatInfo extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.catAppearance ?? ""),
+                    child: Text(order.cat.appearance ?? ""),
                   )
                 ],
               )
