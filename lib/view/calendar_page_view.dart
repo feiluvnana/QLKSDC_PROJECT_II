@@ -8,7 +8,7 @@ import '../data/enums/RenderState.dart';
 import '../model/RoomGroupModel.dart';
 import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
-import '../utils/ExcelGenerator.dart';
+import '../data/generators/excel_generator.dart';
 
 class CalendarPage extends StatelessWidget with ExcelGenerator {
   const CalendarPage({super.key});
@@ -193,22 +193,22 @@ class BookingInfo extends StatelessWidget {
             primary: true,
             child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: List.generate(roomGroup.length,
-                    (index1) => DisplayTable(index1: index1))),
+                children: List.generate(
+                    roomGroup.length, (rid) => DisplayTable(rid: rid))),
           );
         });
   }
 }
 
 class DisplayTable extends StatelessWidget {
-  final int index1;
+  final int rid;
 
-  const DisplayTable({super.key, required this.index1});
+  const DisplayTable({super.key, required this.rid});
 
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
+        Get.find<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
@@ -229,18 +229,18 @@ class DisplayTable extends StatelessWidget {
               itemCount: days * roomGroup.room.total,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: days),
-              itemBuilder: (context, index2) {
-                return (getDisplayValue(days, index1, index2).first ==
-                        getDisplayValue(days, index1, index2).second)
+              itemBuilder: (context, index) {
+                return (getDisplayValue(days, rid, index).first ==
+                        getDisplayValue(days, rid, index).second)
                     ? Cell(
-                        index1: index1,
-                        index2: index2,
-                        value: getDisplayValue(
+                        rid: rid,
+                        index: index,
+                        oid: getDisplayValue(
                                 DateUtils.getDaysInMonth(
                                     bloc.state.currentMonth.year,
                                     bloc.state.currentMonth.month),
-                                index1,
-                                index2)
+                                rid,
+                                index)
                             .first)
                     : Row(
                         mainAxisSize: MainAxisSize.min,
@@ -248,18 +248,16 @@ class DisplayTable extends StatelessWidget {
                           Flexible(
                             flex: 1,
                             child: HalfCell(
-                                index1: index1,
-                                index2: index2,
-                                value: getDisplayValue(days, index1, index2)
-                                    .first),
+                                rid: rid,
+                                index: index,
+                                oid: getDisplayValue(days, rid, index).first),
                           ),
                           Flexible(
                             flex: 1,
                             child: HalfCell(
-                                index1: index1,
-                                index2: index2,
-                                value: getDisplayValue(days, index1, index2)
-                                    .second),
+                                rid: rid,
+                                index: index,
+                                oid: getDisplayValue(days, rid, index).second),
                           ),
                         ],
                       );
@@ -271,65 +269,64 @@ class DisplayTable extends StatelessWidget {
     );
   }
 
-  Pair getDisplayValue(int days, int index1, int index2) {
+  Pair getDisplayValue(int days, int rid, int index) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
-    return roomGroup.displayArray[index2 ~/ days][index2 % days];
+        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+    return roomGroup.displayArray[index ~/ days][index % days];
   }
 }
 
 class Cell extends StatelessWidget {
-  final int index1;
-  final int index2;
-  final int value;
+  final int rid;
+  final int index;
+  final int oid;
 
   const Cell(
-      {super.key,
-      required this.index1,
-      required this.index2,
-      required this.value});
+      {super.key, required this.rid, required this.index, required this.oid});
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
+        Get.find<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
-    return (value == -1)
+    return (oid == -1)
         ? Container(
             margin: const EdgeInsets.all(1),
             decoration: BoxDecoration(
                 color: (isBeforeToday(bloc.state.currentMonth, bloc.state.today,
-                        index2 % days + 1))
+                        index % days + 1))
                     ? Colors.grey[400]
                     : Colors.grey[200]),
             alignment: Alignment.bottomRight,
             child: Text(
-              "${index2 % days + 1}",
+              "${index % days + 1}",
               style: const TextStyle(fontSize: 10),
             ),
           )
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
-            onTap: () async {
-              await Get.toNamed("/info?ridx=$index1&bidx=$value");
+            onTap: () {
+              context
+                  .read<CalendarPageBloc>()
+                  .add(GotoInformationPageEvent(oid, rid, context));
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
-                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[value].getBookingInfoToString()}",
+                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
               child: Container(
-                margin: (isTheBeginningOfABooking(days, index1, index2, value))
+                margin: (isTheBeginningOfABooking(days, rid, index, oid))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)
-                    : (isTheEndOfABooking(days, index1, index2, value))
+                    : (isTheEndOfABooking(days, rid, index, oid))
                         ? const EdgeInsets.only(right: 1, top: 1, bottom: 1)
                         : const EdgeInsets.only(top: 1, bottom: 1),
                 decoration: const BoxDecoration(color: Color(0xff89b4f7)),
                 alignment: Alignment.bottomLeft,
-                child: (isSuitableForText(days, index1, index2, value))
+                child: (isSuitableForText(days, rid, index, oid))
                     ? FittedBox(
                         child: Text(
-                            "${roomGroup.ordersList[value].cat.name}\n${getNumberOfNights(index1, index2, value)}"))
+                            "${roomGroup.ordersList[oid].cat.name}\n${getNumberOfNights(rid, index, oid)}"))
                     : const Text(""),
               ),
             ),
@@ -340,36 +337,36 @@ class Cell extends StatelessWidget {
     return DateTime(currentMonth.year, currentMonth.month, day).isBefore(today);
   }
 
-  Pair getDisplayValue(int days, int index1, int index2) {
+  Pair getDisplayValue(int days, int rid, int index) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
-    return roomGroup.displayArray[index2 ~/ days][index2 % days];
+        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+    return roomGroup.displayArray[index ~/ days][index % days];
   }
 
-  bool isTheEndOfABooking(int days, int index1, int index2, int value) {
-    if (index2 % days == days - 1) return true;
-    if (value != getDisplayValue(days, index1, index2 + 1).first) {
+  bool isTheEndOfABooking(int days, int rid, int index, int oid) {
+    if (index % days == days - 1) return true;
+    if (oid != getDisplayValue(days, rid, index + 1).first) {
       return true;
     }
     return false;
   }
 
-  bool isTheBeginningOfABooking(int days, int index1, int index2, int value) {
-    if (index2 % days == 0) {
+  bool isTheBeginningOfABooking(int days, int rid, int index, int oid) {
+    if (index % days == 0) {
       return true;
     }
-    if (value != getDisplayValue(days, index1, index2 - 1).second) {
+    if (oid != getDisplayValue(days, rid, index - 1).second) {
       return true;
     }
     return false;
   }
 
-  bool isSuitableForText(int days, int index1, int index2, int value) {
-    if (index2 % days == 0) {
+  bool isSuitableForText(int days, int rid, int index, int oid) {
+    if (index % days == 0) {
       return true;
     }
-    if (value != getDisplayValue(days, index1, index2 - 1).first ||
-        value != getDisplayValue(days, index1, index2 - 1).second) {
+    if (oid != getDisplayValue(days, rid, index - 1).first ||
+        oid != getDisplayValue(days, rid, index - 1).second) {
       return true;
     }
     return false;
@@ -387,49 +384,48 @@ class Cell extends StatelessWidget {
 }
 
 class HalfCell extends StatelessWidget {
-  final int index1;
-  final int index2;
-  final int value;
+  final int rid;
+  final int index;
+  final int oid;
 
   const HalfCell(
-      {super.key,
-      required this.index1,
-      required this.index2,
-      required this.value});
+      {super.key, required this.rid, required this.index, required this.oid});
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
+        Get.find<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
-    return (value == -1)
+    return (oid == -1)
         ? Container(
             margin: const EdgeInsets.all(1),
             decoration: BoxDecoration(
                 color: (isBeforeToday(bloc.state.currentMonth, bloc.state.today,
-                        index2 % days + 1))
+                        index % days + 1))
                     ? Colors.grey[400]
                     : Colors.grey[200]),
             alignment: Alignment.bottomRight,
             child: Text(
-              "${index2 % days + 1}",
+              "${index % days + 1}",
               style: const TextStyle(fontSize: 10),
             ),
           )
         : InkWell(
             mouseCursor: MaterialStateMouseCursor.clickable,
-            onTap: () async {
-              await Get.toNamed("/info?ridx=$index1&bidx=$value");
+            onTap: () {
+              context
+                  .read<CalendarPageBloc>()
+                  .add(GotoInformationPageEvent(rid, index, context));
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
-                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[value].getBookingInfoToString()}",
+                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
               child: Container(
-                margin: (isTheBeginningOfABooking(days, index1, index2, value))
+                margin: (isTheBeginningOfABooking(days, rid, index, oid))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)
-                    : (isTheEndOfABooking(days, index1, index2, value))
+                    : (isTheEndOfABooking(days, rid, index, oid))
                         ? const EdgeInsets.only(right: 1, top: 1, bottom: 1)
                         : const EdgeInsets.only(top: 1, bottom: 1),
                 decoration: const BoxDecoration(color: Color(0xff89b4f7)),

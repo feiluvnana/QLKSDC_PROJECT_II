@@ -1,14 +1,110 @@
 import 'dart:convert';
-
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart' hide Transition;
 import 'package:get_storage/get_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../model/OrderModel.dart';
 import '../model/AdditionModel.dart';
+import '../model/RoomGroupModel.dart';
 import '../model/RoomModel.dart';
 import '../model/ServiceModel.dart';
 import '../utils/InternalStorage.dart';
+
+abstract class InformationPageEvent {}
+
+class ToggleModifyOwnerEvent extends InformationPageEvent {}
+
+class ToggleModifyCatEvent extends InformationPageEvent {}
+
+class ToggleModifyOrderEvent extends InformationPageEvent {}
+
+class ToggleModifyAdditionEvent extends InformationPageEvent {}
+
+class ModifyOwnerEvent extends InformationPageEvent {}
+
+class ModifyCatEvent extends InformationPageEvent {}
+
+class ModifyOrderEvent extends InformationPageEvent {}
+
+class ModifyAdditionEvent extends InformationPageEvent {}
+
+class SaveChangesEvent extends InformationPageEvent {}
+
+class CancelOrderEvent extends InformationPageEvent {}
+
+class CheckoutEvent extends InformationPageEvent {}
+
+class GotoHomePage extends InformationPageEvent {
+  final BuildContext context;
+
+  GotoHomePage(this.context);
+}
+
+class InformationState extends Equatable {
+  final GlobalKey<FormState> formKey1, formKey2, formKey3, formKey4;
+  final bool isEditing1, isEditing2, isEditing3, isEditing4;
+  final Order modifiedOrder, order;
+
+  const InformationState(
+      this.formKey1, this.formKey2, this.formKey3, this.formKey4,
+      {required this.isEditing1,
+      required this.isEditing2,
+      required this.isEditing3,
+      required this.isEditing4,
+      required this.modifiedOrder,
+      required this.order});
+
+  InformationState copyWith({
+    bool? isEditing1,
+    bool? isEditing2,
+    bool? isEditing3,
+    bool? isEditing4,
+    Order? order,
+  }) {
+    return InformationState(formKey1, formKey2, formKey3, formKey4,
+        isEditing1: isEditing1 ?? this.isEditing1,
+        isEditing2: isEditing2 ?? this.isEditing2,
+        isEditing3: isEditing3 ?? this.isEditing3,
+        isEditing4: isEditing4 ?? this.isEditing4,
+        modifiedOrder: order ?? modifiedOrder,
+        order: this.order);
+  }
+
+  @override
+  List<Object?> get props =>
+      [modifiedOrder, isEditing1, isEditing2, isEditing3, isEditing4];
+}
+
+class InformationPageBloc extends Bloc<InformationPageEvent, InformationState> {
+  final int ridx, oidx;
+  InformationPageBloc(this.ridx, this.oidx)
+      : super(InformationState(GlobalKey<FormState>(), GlobalKey<FormState>(),
+            GlobalKey<FormState>(), GlobalKey<FormState>(),
+            isEditing1: false,
+            isEditing2: false,
+            isEditing3: false,
+            isEditing4: false,
+            modifiedOrder: (Get.find<InternalStorage>()
+                    .read("roomGroupsList")[ridx] as RoomGroup)
+                .ordersList[oidx],
+            order: (Get.find<InternalStorage>().read("roomGroupsList")[ridx]
+                    as RoomGroup)
+                .ordersList[oidx])) {
+    on<ToggleModifyCatEvent>(
+        (event, emit) => emit(state.copyWith(isEditing1: !(state.isEditing1))));
+    on<GotoHomePage>((event, emit) => event.context.go("/home"));
+  }
+
+  @override
+  void onTransition(
+      Transition<InformationPageEvent, InformationState> transition) {
+    super.onTransition(transition);
+    print("[InformationPageBloc] $transition");
+  }
+}
 
 class InformationPageController extends GetxController {
   final GlobalKey<FormState> formKey1 = GlobalKey();
@@ -142,9 +238,9 @@ class InformationPageController extends GetxController {
     update(["form2"]);
   }
 
-  Future<String> cancelBooking({required int bidx, required int ridx}) async {
+  Future<String> cancelBooking({required int oidx, required int ridx}) async {
     Order order = (Get.find<InternalStorage>().read("roomGroupsList")[ridx])
-        .ordersList[bidx];
+        .ordersList[oidx];
     if (order.checkIn.isBefore(DateTime.now())) {
       return "Không thể huỷ đặt phòng do đã check-in.";
     }
@@ -152,17 +248,16 @@ class InformationPageController extends GetxController {
         "http://localhost/php-crash/cancelBooking.php",
         FormData({
           "sessionID": GetStorage().read("sessionID"),
-          "bookingID": order.id
         }));
     return "Huỷ đặt phòng thành công";
   }
 
   Future<Map<String, bool>> saveChanges(
-      {required int bidx, required int ridx}) async {
+      {required int oidx, required int ridx}) async {
     if (formKey1.currentState?.validate() != true) return {"validation": false};
     if (formKey1.currentState?.validate() != true) return {"validation": false};
     Order order = (Get.find<InternalStorage>().read("roomGroupsList")[ridx])
-        .ordersList[bidx];
+        .ordersList[oidx];
     //form1:
     bool form1Result = true;
     if (_initForm1) {
@@ -177,7 +272,6 @@ class InformationPageController extends GetxController {
                 "eatingRank": modifiedEatingRank,
                 "checkIn": modifiedCheckInDate.toString(),
                 "checkOut": modifiedCheckOutDate.toString(),
-                "orderID": order.id
               }))
           .then((res) {
         if (res.body == null) return false;
@@ -194,7 +288,6 @@ class InformationPageController extends GetxController {
               FormData({
                 "sessionID": GetStorage().read("sessionID"),
                 "addition": 1,
-                "orderID": order.id,
                 "additionsList": jsonEncode(
                     List.generate(modifiedNumberOfAdditions, (index) {
                   List<Service> servicesList =

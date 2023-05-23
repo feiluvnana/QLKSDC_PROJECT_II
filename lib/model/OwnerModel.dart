@@ -1,19 +1,17 @@
 class Owner {
-  final int id;
   final String name, gender, tel;
 
   Owner.fromJson(Map<String, dynamic> json)
-      : id = json["ownerID"],
-        gender = json["ownerGender"],
-        name = json["ownerName"],
-        tel = json["ownerTel"];
+      : gender = json["owner_gender"],
+        name = json["owner_name"],
+        tel = json["owner_tel"];
+
+  Owner.empty()
+      : gender = "",
+        name = "",
+        tel = "";
 
   Map<String, dynamic> toJson() {
-    return {
-      "ownerID": id,
-      "ownerTel": tel,
-      "ownerName": name,
-      "ownerGender": gender
-    };
+    return {"ownerTel": tel, "ownerName": name, "ownerGender": gender};
   }
 }

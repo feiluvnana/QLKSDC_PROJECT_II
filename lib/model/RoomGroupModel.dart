@@ -3,9 +3,9 @@ import 'OrderModel.dart';
 import 'RoomModel.dart';
 
 class RoomGroup {
-  late Room room;
-  late List<Order> ordersList;
-  late List<List<Pair>> displayArray;
+  Room room;
+  List<Order> ordersList;
+  List<List<Pair>> displayArray;
 
   RoomGroup(
       {required this.room,

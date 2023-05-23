@@ -1,6 +1,11 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project_ii/data/providers/room_group_data_provider.dart';
+import 'package:get/get.dart' hide Transition;
+import 'package:go_router/go_router.dart';
+import 'package:project_ii/data/providers/backend_data_provider.dart';
+import 'package:project_ii/data/providers/service_data_provider.dart';
+import 'package:project_ii/utils/InternalStorage.dart';
 import '../data/enums/RenderState.dart';
 
 abstract class CalendarPageEvent {}
@@ -18,6 +23,13 @@ class GuestListDayChangedEvent extends CalendarPageEvent {
 class RenderCompletedEvent extends CalendarPageEvent {}
 
 class DataNeededEvent extends CalendarPageEvent {}
+
+class GotoInformationPageEvent extends CalendarPageEvent {
+  final int oidx, ridx;
+  final BuildContext context;
+
+  GotoInformationPageEvent(this.oidx, this.ridx, this.context);
+}
 
 class CalendarState extends Equatable {
   final DateTime currentMonth, today;
@@ -63,7 +75,7 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
         newMonth =
             DateTime(state.currentMonth.year, state.currentMonth.month + 1);
       }
-      emit(state.copyWith(currentMonth: newMonth));
+      emit(state.copyWith(currentMonth: newMonth, state: RenderState.waiting));
     });
     on<MonthDecreasedEvent>((event, emit) {
       if (state.state != RenderState.completed) return;
@@ -74,7 +86,7 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
         newMonth =
             DateTime(state.currentMonth.year, state.currentMonth.month - 1);
       }
-      emit(state.copyWith(currentMonth: newMonth));
+      emit(state.copyWith(currentMonth: newMonth, state: RenderState.waiting));
     });
     on<GuestListDayChangedEvent>((event, emit) {
       if (state.state != RenderState.completed) return;
@@ -84,10 +96,17 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       (event, emit) => emit(state.copyWith(state: RenderState.completed)),
     );
     on<DataNeededEvent>((event, emit) async {
-      await RoomGroupDataProvider(
+      await BackendDataProvider(
               currentMonth: state.currentMonth, today: state.today)
           .getRoomGroups();
       emit(state.copyWith(state: RenderState.rendering));
+    });
+    on<GotoInformationPageEvent>((event, emit) async {
+      print("fired");
+      if (Get.find<InternalStorage>().read("servicesList") == null) {
+        await ServiceDataProvider.getServices();
+      }
+      event.context.go("/info?rid=${event.ridx}&oid=${event.oidx}");
     });
   }
 

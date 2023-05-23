@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project_ii/view/BookingPageView.dart';
+import 'package:project_ii/view/booking_page_view.dart';
 import 'package:project_ii/view/calendar_page_view.dart';
 import 'package:project_ii/view/RoomPageView.dart';
 
@@ -19,7 +19,7 @@ class HomeState extends Equatable {
   static int calendar = 0, booking = 1, room = 2, service = 3, history = 4;
   static List<Widget Function(BuildContext)> builderCalls = [
     (context) => const CalendarPage(),
-    (context) => BookingPage(),
+    (context) => const BookingPage(),
     (context) => const RoomPage(),
     (context) => const Text("service"),
     (context) => const Text("history")

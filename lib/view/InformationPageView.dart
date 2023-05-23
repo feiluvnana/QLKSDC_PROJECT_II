@@ -1,3 +1,4 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
@@ -6,219 +7,201 @@ import 'package:project_ii/blocs/InformationPageController.dart';
 import 'package:project_ii/model/OrderModel.dart';
 import 'package:project_ii/model/RoomModel.dart';
 import '../model/RoomGroupModel.dart';
-import '../model/ServiceModel.dart';
 import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
-import '../utils/ExcelGenerator.dart';
+import '../data/generators/excel_generator.dart';
+import '../utils/reusables/image_picker.dart';
 
 class InformationPage extends StatelessWidget with ExcelGenerator {
-  const InformationPage({super.key});
+  final int ridx, oidx;
+  const InformationPage({super.key, required this.ridx, required this.oidx});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        primary: true,
-        child: Padding(
-          padding: EdgeInsets.only(
-              left: 90, right: MediaQuery.of(context).size.width / 10 * 3),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                    onPressed: () => Get.offNamed("/home"),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        FaIcon(FontAwesomeIcons.arrowLeft, size: 14),
-                        Text(" Quay lại")
-                      ],
-                    )),
-              ),
-              const SizedBox(height: 10),
-              const CatInfo(),
-              const SizedBox(height: 50),
-              const OwnerInfo(),
-              const SizedBox(height: 50),
-              const BookingInfo(),
-              const SizedBox(height: 50),
-              const ServiceInfo(),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xffff964f),
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () {},
+    return BlocProvider<InformationPageBloc>(
+      create: (context) => InformationPageBloc(ridx, oidx),
+      child: Scaffold(
+        body: SingleChildScrollView(
+          primary: true,
+          child: Padding(
+            padding: EdgeInsets.only(
+                left: 90, right: MediaQuery.of(context).size.width / 10 * 3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Builder(builder: (_) {
+                    return ElevatedButton(
+                        onPressed: () =>
+                            _.read<InformationPageBloc>().add(GotoHomePage(_)),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            FaIcon(FontAwesomeIcons.print, size: 14),
-                            Text(" In thông tin")
+                            FaIcon(FontAwesomeIcons.arrowLeft, size: 14),
+                            Text(" Quay lại")
                           ],
+                        ));
+                  }),
+                ),
+                const SizedBox(height: 10),
+                const CatInfo(),
+                const SizedBox(height: 50),
+                const OwnerInfo(),
+                const SizedBox(height: 50),
+                BookingInfo(ridx: ridx, oidx: oidx),
+                const SizedBox(height: 50),
+                ServiceInfo(ridx: ridx, oidx: oidx),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.black,
+                          ),
+                          onPressed: () {
+                            Get.find<InformationPageController>()
+                                .saveChanges(oidx: oidx, ridx: ridx)
+                                .then((response) async {
+                              if (response["validation"] == false) return;
+                              if (response["form1Init"] == true &&
+                                  response["form2Init"] == true) {
+                                await Get.defaultDialog(
+                                    title: "Thông báo",
+                                    content: Text(
+                                        "${response["form1"] == true ? "Lưu thay đổi thông tin đặt phòng thành công" : "Lưu thay đổi thông tin đặt phòng thất bại"}\n${response["form2"] == true ? "Lưu thay đổi thông tin dịch vụ thành công" : "Lưu thay đổi thông tin dịch vụ thất bại"}"));
+                                Get.offNamed("/home");
+                              } else if (response["form1Init"] == true &&
+                                  response["form2Init"] == false) {
+                                await Get.defaultDialog(
+                                    title: "Thông báo",
+                                    content: Text(response["form1"] == true
+                                        ? "Lưu thay đổi thông tin đặt phòng thành công"
+                                        : "Lưu thay đổi thông tin đặt phòng thất bại"));
+                                Get.offNamed("/home");
+                              } else if (response["form1Init"] == false &&
+                                  response["form2Init"] == true) {
+                                await Get.defaultDialog(
+                                    title: "Thông báo",
+                                    content: Text(response["form2"] == true
+                                        ? "Lưu thay đổi thông tin dịch vụ thành công"
+                                        : "Lưu thay đổi thông tin dịch vụ thất bại"));
+                                Get.offNamed("/home");
+                              } else if (response["form1Init"] == true &&
+                                  response["form2Init"] == true) {}
+                            });
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
+                              Text(" Lưu thay đổi")
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Flexible(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () {
-                          Get.find<InformationPageController>()
-                              .saveChanges(
-                                  bidx: int.parse(Get.parameters["bidx"]!),
-                                  ridx: int.parse(Get.parameters["ridx"]!))
-                              .then((response) async {
-                            if (response["validation"] == false) return;
-                            if (response["form1Init"] == true &&
-                                response["form2Init"] == true) {
-                              await Get.defaultDialog(
-                                  title: "Thông báo",
-                                  content: Text(
-                                      "${response["form1"] == true ? "Lưu thay đổi thông tin đặt phòng thành công" : "Lưu thay đổi thông tin đặt phòng thất bại"}\n${response["form2"] == true ? "Lưu thay đổi thông tin dịch vụ thành công" : "Lưu thay đổi thông tin dịch vụ thất bại"}"));
-                              Get.offNamed("/home");
-                            } else if (response["form1Init"] == true &&
-                                response["form2Init"] == false) {
-                              await Get.defaultDialog(
-                                  title: "Thông báo",
-                                  content: Text(response["form1"] == true
-                                      ? "Lưu thay đổi thông tin đặt phòng thành công"
-                                      : "Lưu thay đổi thông tin đặt phòng thất bại"));
-                              Get.offNamed("/home");
-                            } else if (response["form1Init"] == false &&
-                                response["form2Init"] == true) {
-                              await Get.defaultDialog(
-                                  title: "Thông báo",
-                                  content: Text(response["form2"] == true
-                                      ? "Lưu thay đổi thông tin dịch vụ thành công"
-                                      : "Lưu thay đổi thông tin dịch vụ thất bại"));
-                              Get.offNamed("/home");
-                            } else if (response["form1Init"] == true &&
-                                response["form2Init"] == true) {}
-                          });
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
-                            Text(" Lưu thay đổi")
-                          ],
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xfffaf884),
+                            foregroundColor: Colors.black,
+                          ),
+                          onPressed: () {
+                            createBill(oidx: oidx, ridx: ridx);
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              FaIcon(FontAwesomeIcons.moneyBill, size: 14),
+                              Text(" Check-out")
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Flexible(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xfffaf884),
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () {
-                          createBill(
-                              bidx: int.parse(Get.parameters["bidx"]!),
-                              ridx: int.parse(Get.parameters["ridx"]!));
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            FaIcon(FontAwesomeIcons.moneyBill, size: 14),
-                            Text(" Check-out")
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xffff6961),
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () => {
-                          Get.defaultDialog<bool>(
-                            title: "Cảnh Báo",
-                            content: const Text(
-                                "Hành động này không thể đảo ngược. Xác nhận tiếp tục?"),
-                            confirm: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.black,
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xffff6961),
+                            foregroundColor: Colors.black,
+                          ),
+                          onPressed: () => {
+                            Get.defaultDialog<bool>(
+                              title: "Cảnh Báo",
+                              content: const Text(
+                                  "Hành động này không thể đảo ngược. Xác nhận tiếp tục?"),
+                              confirm: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.black,
+                                ),
+                                onPressed: () => Get.back(result: true),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    FaIcon(FontAwesomeIcons.check, size: 14),
+                                    Text(" Xác nhận")
+                                  ],
+                                ),
                               ),
-                              onPressed: () => Get.back(result: true),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  FaIcon(FontAwesomeIcons.check, size: 14),
-                                  Text(" Xác nhận")
-                                ],
+                              cancel: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xffff6961),
+                                  foregroundColor: Colors.black,
+                                ),
+                                onPressed: () => Get.back(result: false),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    FaIcon(FontAwesomeIcons.x, size: 14),
+                                    Text(" Hủy")
+                                  ],
+                                ),
                               ),
-                            ),
-                            cancel: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xffff6961),
-                                foregroundColor: Colors.black,
-                              ),
-                              onPressed: () => Get.back(result: false),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  FaIcon(FontAwesomeIcons.x, size: 14),
-                                  Text(" Hủy")
-                                ],
-                              ),
-                            ),
-                          ).then((isConfirmed) {
-                            if (isConfirmed == true) {
-                              Get.find<InformationPageController>()
-                                  .cancelBooking(
-                                      bidx: int.parse(Get.parameters["bidx"]!),
-                                      ridx: int.parse(Get.parameters["ridx"]!))
-                                  .then((response) async {
-                                if (response == "accepted") {
-                                  await Get.defaultDialog(
-                                      title: "Thông báo",
-                                      content: const Text(
-                                          "Huỷ đặt phòng thành công"));
-                                  Get.offNamed("/home");
-                                } else {
-                                  await Get.defaultDialog(
-                                      title: "Thông báo",
-                                      content:
-                                          const Text("Huỷ đặt phòng thất bại"));
-                                }
-                              });
-                            }
-                          })
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            FaIcon(FontAwesomeIcons.ban, size: 14),
-                            Text(" Hủy đặt phòng")
-                          ],
+                            ).then((isConfirmed) {
+                              if (isConfirmed == true) {
+                                Get.find<InformationPageController>()
+                                    .cancelBooking(oidx: oidx, ridx: ridx)
+                                    .then((response) async {
+                                  if (response == "accepted") {
+                                    await Get.defaultDialog(
+                                        title: "Thông báo",
+                                        content: const Text(
+                                            "Huỷ đặt phòng thành công"));
+                                    Get.offNamed("/home");
+                                  } else {
+                                    await Get.defaultDialog(
+                                        title: "Thông báo",
+                                        content: const Text(
+                                            "Huỷ đặt phòng thất bại"));
+                                  }
+                                });
+                              }
+                            })
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              FaIcon(FontAwesomeIcons.ban, size: 14),
+                              Text(" Hủy đặt phòng")
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -231,130 +214,267 @@ class CatInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Order order = (Get.find<InternalStorage>()
-                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
-            as RoomGroup)
-        .ordersList[int.parse(Get.parameters["bidx"]!)];
-    Widget thisPageCatImage = (order.cat.image == null)
-        ? const Placeholder(color: Color(0xff68b6ef))
-        : order.cat.image!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          "Thông tin mèo",
-          style: TextStyle(
-            color: Color(0xff3d426b),
-            fontSize: 28,
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xff68b6ef), width: 1)),
-          child: Table(
-            columnWidths: const {
-              0: FixedColumnWidth(120),
-              1: FixedColumnWidth(800)
-            },
-            border: const TableBorder(
-                verticalInside: BorderSide(
-                    width: 1,
-                    color: Color(0xff68b6ef),
-                    style: BorderStyle.solid)),
+    return BlocBuilder<InformationPageBloc, InformationState>(
+      buildWhen: (previous, current) =>
+          previous.isEditing1 != current.isEditing1,
+      builder: (context, state) {
+        return Form(
+          key: state.formKey1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TableRow(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text("Tên mèo"),
+                  const Text(
+                    "Thông tin mèo ",
+                    style: TextStyle(
+                      color: Color(0xff3d426b),
+                      fontSize: 28,
+                    ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.name),
-                  )
+                  InkWell(
+                    onTap: () => context
+                        .read<InformationPageBloc>()
+                        .add(ToggleModifyCatEvent()),
+                    child: FaIcon(
+                        (state.isEditing1)
+                            ? FontAwesomeIcons.xmark
+                            : FontAwesomeIcons.penToSquare,
+                        size: 28,
+                        color: const Color(0xff68b6ef)),
+                  ),
                 ],
               ),
-              TableRow(
-                  decoration: const BoxDecoration(color: Color(0xffE3F2FD)),
+              Container(
+                decoration: BoxDecoration(
+                    border:
+                        Border.all(color: const Color(0xff68b6ef), width: 1)),
+                child: Table(
+                  columnWidths: const {
+                    0: FlexColumnWidth(3),
+                    1: FlexColumnWidth(20)
+                  },
+                  border: const TableBorder(
+                      verticalInside: BorderSide(
+                          width: 1,
+                          color: Color(0xff68b6ef),
+                          style: BorderStyle.solid)),
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text("Ảnh"),
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text("Tên mèo"),
+                        ),
+                        (state.isEditing1)
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TextFormField(
+                                    initialValue: state.modifiedOrder.cat.name,
+                                    onSaved: (value) {},
+                                    validator: (value) => null,
+                                    decoration: const InputDecoration(
+                                        labelText: "Tên mèo",
+                                        border: OutlineInputBorder())),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(state.order.cat.name),
+                              )
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SizedBox(
-                          height: 400, width: 720, child: thisPageCatImage),
+                    TableRow(
+                        decoration:
+                            const BoxDecoration(color: Color(0xffE3F2FD)),
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("Ảnh"),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: (state.isEditing1)
+                                  ? ImagePicker(
+                                      width: 700,
+                                      height: 420,
+                                      initialWidget: (state.order.cat.image !=
+                                              null)
+                                          ? Image.memory(state.order.cat.image!,
+                                              fit: BoxFit.scaleDown)
+                                          : null)
+                                  : SizedBox(
+                                      width: 700,
+                                      height: 420,
+                                      child: (state.order.cat.image != null)
+                                          ? Image.memory(state.order.cat.image!,
+                                              fit: BoxFit.scaleDown)
+                                          : const Placeholder(
+                                              color: Color(0xff68b6ef)))),
+                        ]),
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Giới tính"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: "Đực",
+                                      child: Text("Đực"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Cái",
+                                      child: Text("Cái"),
+                                    ),
+                                  ],
+                                  onChanged: (String? value) {},
+                                  value: state.modifiedOrder.cat.gender,
+                                  hint: const Text("---"),
+                                  decoration: const InputDecoration(
+                                    labelText: "Giới tính",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.gender ?? ""),
+                        )
+                      ],
                     ),
-                  ]),
-              TableRow(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Giới tính"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.gender ?? ""),
-                  )
-                ],
-              ),
-              TableRow(
-                decoration: const BoxDecoration(color: Color(0xffE3F2FD)),
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Tuổi"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.age.toString()),
-                  )
-                ],
-              ),
-              TableRow(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Thể trạng"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.physicalCondition),
-                  )
-                ],
-              ),
-              TableRow(
-                decoration: const BoxDecoration(color: Color(0xffE3F2FD)),
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Giống"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.species ?? ""),
-                  )
-                ],
-              ),
-              TableRow(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Đặc điểm nhận dạng"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.appearance ?? ""),
-                  )
-                ],
+                    TableRow(
+                      decoration: const BoxDecoration(color: Color(0xffE3F2FD)),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Tuổi"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? TextFormField(
+                                  initialValue:
+                                      state.modifiedOrder.cat.age.toString(),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty)
+                                      return "Không để trống tuổi mèo";
+                                    if (!RegExp(r'[1-9]\d*').hasMatch(value))
+                                      return "Tuổi mèo không đúng định dạng";
+                                    return null;
+                                  },
+                                  decoration: const InputDecoration(
+                                    errorMaxLines: 2,
+                                    labelText: "Tuổi",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.age.toString()),
+                        )
+                      ],
+                    ),
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Thể trạng"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? TextFormField(
+                                  keyboardType: TextInputType.multiline,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty)
+                                      return "Không để trống thể trạng";
+                                    if (!RegExp(r'^[^]{1,150}$',
+                                            unicode: true, multiLine: true)
+                                        .hasMatch(value)) {
+                                      return "Thể trạng không đúng định dạng";
+                                    }
+                                    return null;
+                                  },
+                                  maxLines: null,
+                                  decoration: const InputDecoration(
+                                    labelText: "Thể trạng",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.physicalCondition),
+                        )
+                      ],
+                    ),
+                    TableRow(
+                      decoration: const BoxDecoration(color: Color(0xffE3F2FD)),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Giống"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? TextFormField(
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty)
+                                      return null;
+                                    if (!RegExp(r'^[\p{L}\s]{1,30}$',
+                                            unicode: true)
+                                        .hasMatch(value)) {
+                                      return "Giống mèo không đúng định dạng";
+                                    }
+                                    return null;
+                                  },
+                                  decoration: const InputDecoration(
+                                    labelText: "Giống mèo",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.species ?? ""),
+                        )
+                      ],
+                    ),
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Đặc điểm nhận dạng"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? TextFormField(
+                                  keyboardType: TextInputType.multiline,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty)
+                                      return null;
+                                    if (!RegExp(r'^[^]{1,150}$',
+                                            unicode: true, multiLine: true)
+                                        .hasMatch(value)) {
+                                      return "Đặc điểm hình thái không đúng định dạng";
+                                    }
+                                    return null;
+                                  },
+                                  maxLines: null,
+                                  decoration: const InputDecoration(
+                                    labelText: "Đặc điểm hình thái",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.appearance ?? ""),
+                        )
+                      ],
+                    )
+                  ],
+                ),
               )
             ],
           ),
-        )
-      ],
+        );
+      },
     );
   }
 }
@@ -364,80 +484,100 @@ class OwnerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Order order = (Get.find<InternalStorage>()
-                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
-            as RoomGroup)
-        .ordersList[int.parse(Get.parameters["bidx"]!)];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          "Thông tin chủ",
-          style: TextStyle(
-            color: Color(0xff3d426b),
-            fontSize: 28,
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xff68b6ef), width: 1)),
-          child: Table(
-            columnWidths: const {
-              0: FixedColumnWidth(120),
-              1: FixedColumnWidth(800)
-            },
-            border: const TableBorder(
-                verticalInside: BorderSide(
-                    width: 1,
-                    color: Color(0xff68b6ef),
-                    style: BorderStyle.solid)),
+    return BlocBuilder<InformationPageBloc, InformationState>(
+      builder: (context, state) {
+        return Form(
+          key: state.formKey2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TableRow(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text("Tên chủ"),
+                  const Text(
+                    "Thông tin chủ ",
+                    style: TextStyle(
+                      color: Color(0xff3d426b),
+                      fontSize: 28,
+                    ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text((order.cat.owner.gender == "Nam")
-                        ? "(Anh) ${order.cat.owner.name}"
-                        : "(Chị) ${order.cat.owner.name}"),
-                  )
+                  InkWell(
+                    onTap: () => context
+                        .read<InformationPageBloc>()
+                        .add(ToggleModifyOwnerEvent()),
+                    child: FaIcon(
+                        (state.isEditing1)
+                            ? FontAwesomeIcons.xmark
+                            : FontAwesomeIcons.penToSquare,
+                        size: 28,
+                        color: const Color(0xff68b6ef)),
+                  ),
                 ],
               ),
-              TableRow(
-                decoration: const BoxDecoration(color: Color(0xffe3f2fd)),
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("Số điện thoại"),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(order.cat.owner.tel),
-                  )
-                ],
-              ),
+              Container(
+                decoration: BoxDecoration(
+                    border:
+                        Border.all(color: const Color(0xff68b6ef), width: 1)),
+                child: Table(
+                  columnWidths: const {
+                    0: FlexColumnWidth(3),
+                    1: FlexColumnWidth(20)
+                  },
+                  border: const TableBorder(
+                      verticalInside: BorderSide(
+                          width: 1,
+                          color: Color(0xff68b6ef),
+                          style: BorderStyle.solid)),
+                  children: [
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text("Tên chủ"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text((state.order.cat.owner.gender == "Nam")
+                              ? "(Anh) ${state.order.cat.owner.name}"
+                              : "(Chị) ${state.order.cat.owner.name}"),
+                        )
+                      ],
+                    ),
+                    TableRow(
+                      decoration: const BoxDecoration(color: Color(0xffe3f2fd)),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Số điện thoại"),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(state.order.cat.owner.tel),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
-        )
-      ],
+        );
+      },
     );
   }
 }
 
 class BookingInfo extends StatelessWidget {
-  const BookingInfo({super.key});
+  final int ridx, oidx;
+  const BookingInfo({super.key, required this.ridx, required this.oidx});
 
   @override
   Widget build(BuildContext context) {
     List<RoomGroup> roomGroupsList =
         Get.find<InternalStorage>().read("roomGroupsList");
-    Order order = roomGroupsList[int.parse(Get.parameters["ridx"]!)]
-        .ordersList[int.parse(Get.parameters["bidx"]!)];
-    Room roomData = roomGroupsList[int.parse(Get.parameters["ridx"]!)].room;
+    Order order = roomGroupsList[ridx].ordersList[oidx];
+    Room roomData = roomGroupsList[ridx].room;
     return GetBuilder<InformationPageController>(
         id: "form1",
         builder: (controller) {
@@ -476,8 +616,8 @@ class BookingInfo extends StatelessWidget {
                           Border.all(color: const Color(0xff68b6ef), width: 1)),
                   child: Table(
                     columnWidths: const {
-                      0: FixedColumnWidth(120),
-                      1: FixedColumnWidth(800)
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(20)
                     },
                     border: const TableBorder(
                         verticalInside: BorderSide(
@@ -612,20 +752,7 @@ class BookingInfo extends StatelessWidget {
                                         4,
                                         (index) => DropdownMenuItem(
                                           value: index + 1,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text("${index + 1}"),
-                                              const SizedBox(width: 10),
-                                              const Tooltip(
-                                                  message:
-                                                      "Chi tiết:\nĐề xuất\nGiá thành:",
-                                                  child: FaIcon(
-                                                      FontAwesomeIcons
-                                                          .circleInfo,
-                                                      size: 14))
-                                            ],
-                                          ),
+                                          child: Text("${index + 1}"),
                                         ),
                                       ),
                                       onChanged: (!order.checkIn
@@ -801,15 +928,15 @@ class BookingInfo extends StatelessWidget {
 }
 
 class ServiceInfo extends StatelessWidget {
-  const ServiceInfo({super.key});
+  final int ridx, oidx;
+  const ServiceInfo({super.key, required this.ridx, required this.oidx});
 
   @override
   Widget build(BuildContext context) {
     List<RoomGroup> roomGroupsList =
         Get.find<InternalStorage>().read("roomGroupsList");
-    Order order = roomGroupsList[int.parse(Get.parameters["ridx"]!)]
-        .ordersList[int.parse(Get.parameters["bidx"]!)];
-    Room room = roomGroupsList[int.parse(Get.parameters["ridx"]!)].room;
+    Order order = roomGroupsList[ridx].ordersList[oidx];
+    Room room = roomGroupsList[ridx].room;
     return GetBuilder<InformationPageController>(
         id: "form2",
         builder: (controller) {
@@ -845,8 +972,8 @@ class ServiceInfo extends StatelessWidget {
                         Border.all(color: const Color(0xff68b6ef), width: 1)),
                 child: Table(
                   columnWidths: const {
-                    0: FixedColumnWidth(120),
-                    1: FixedColumnWidth(800)
+                    0: FlexColumnWidth(3),
+                    1: FlexColumnWidth(20)
                   },
                   border: const TableBorder(
                       verticalInside: BorderSide(
@@ -940,7 +1067,9 @@ class ServiceInfo extends StatelessWidget {
                                 : Form(
                                     key: controller.formKey2,
                                     child: ServiceModifier(
-                                        controller: controller)),
+                                        controller: controller,
+                                        ridx: ridx,
+                                        oidx: oidx)),
                           ),
                         )
                       ],
@@ -955,9 +1084,14 @@ class ServiceInfo extends StatelessWidget {
 }
 
 class ServiceModifier extends StatelessWidget {
+  final int ridx, oidx;
   final InformationPageController controller;
 
-  const ServiceModifier({super.key, required this.controller});
+  const ServiceModifier(
+      {super.key,
+      required this.controller,
+      required this.ridx,
+      required this.oidx});
   @override
   Widget build(BuildContext context) {
     return FormField(
@@ -976,8 +1110,11 @@ class ServiceModifier extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(
                   controller.modifiedNumberOfAdditions,
-                  (index1) =>
-                      ServiceInput(controller: controller, index1: index1),
+                  (index1) => ServiceInput(
+                      controller: controller,
+                      index1: index1,
+                      ridx: ridx,
+                      oidx: oidx),
                 ),
               ),
               ElevatedButton(
@@ -1002,16 +1139,20 @@ class ServiceModifier extends StatelessWidget {
 class ServiceInput extends StatelessWidget {
   final InformationPageController controller;
   final int index1;
+  final int ridx, oidx;
 
   const ServiceInput(
-      {super.key, required this.controller, required this.index1});
+      {super.key,
+      required this.controller,
+      required this.index1,
+      required this.ridx,
+      required this.oidx});
 
   @override
   Widget build(BuildContext context) {
-    Order order = (Get.find<InternalStorage>()
-                .read("roomGroupsList")[int.parse(Get.parameters["ridx"]!)]
-            as RoomGroup)
-        .ordersList[int.parse(Get.parameters["bidx"]!)];
+    Order order =
+        (Get.find<InternalStorage>().read("roomGroupsList")[ridx] as RoomGroup)
+            .ordersList[oidx];
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -1,17 +1,19 @@
+import 'dart:convert';
 import 'CatModel.dart';
 import 'AdditionModel.dart';
+import 'RoomModel.dart';
 
 class Order {
   final DateTime date, checkIn, checkOut;
+  final Room room;
   final Cat cat;
   final String inCharge;
   final String? note, attention;
-  final int subRoomNum, id, eatingRank;
+  final int subRoomNum, eatingRank;
   final List<Addition>? additionsList;
 
-  Order.fromJson(Map<String, dynamic> json)
-      : id = json["order_id"],
-        date = DateTime.parse(json["order_date"]),
+  Order.fromJson(Map<String, dynamic> json, this.room, this.cat)
+      : date = DateTime.parse(json["order_date"]),
         checkIn = DateTime.parse(json["order_checkin"]),
         checkOut = DateTime.parse(json["order_checkout"]),
         attention = json["order_attention"],
@@ -19,27 +21,51 @@ class Order {
         inCharge = json["order_incharge"],
         subRoomNum = json["order_subroom_num"],
         eatingRank = json["order_eating_rank"],
-        cat = Cat.fromJson({
-          "catID": json["cat_id"],
-          "catName": json["cat_name"],
-          "catImage": json["cat_image"],
-          "catAge": json["cat_age"],
-          "catSterilization": json["cat_sterilization"],
-          "catVaccination": json["cat_vaccination"],
-          "catPhysicalCondition": json["cat_physical_condition"],
-          "catGender": json["cat_gender"],
-          "catSpecies": json["cat_species"],
-          "catAppearance": json["cat_appearance"],
-          "catWeightRank": json["cat_weight_rank"],
-          "catWeight": json["cat_weight"],
-          "owner": {
-            "ownerName": json["owner_name"],
-            "ownerGender": json["owner_gender"],
-            "ownerTel": json["owner_tel"],
-            "ownerID": json["owner_id"],
-          }
-        }),
         additionsList = json["additionsList"];
+
+  Order.empty()
+      : date = DateTime.now(),
+        checkIn = DateTime.now(),
+        checkOut = DateTime.now(),
+        attention = null,
+        note = null,
+        inCharge = "",
+        subRoomNum = -1,
+        eatingRank = -1,
+        cat = Cat.empty(),
+        room = Room.empty(),
+        additionsList = null;
+
+  Map<String, dynamic> toJson(int cid) {
+    return {
+      "catID": cid,
+      "roomID": room.id,
+      "subRoomNum": subRoomNum,
+      "checkIn": checkIn.toString(),
+      "checkOut": checkOut.toString(),
+      "attention": attention,
+      "note": note,
+      "eatingRank": eatingRank,
+      "additionsList": (additionsList == null)
+          ? null
+          : jsonEncode(List.generate(additionsList?.length ?? 0, (index) {
+              additionsList?[index].time == checkIn;
+              additionsList?[index].time == checkOut;
+              return {
+                "serviceID": additionsList?[index].serviceID,
+                "additionTime": (additionsList?[index].time == null)
+                    ? null
+                    : additionsList?[index].time.toString(),
+                "additionQuantity": (additionsList?[index].quantity == null)
+                    ? null
+                    : additionsList?[index].quantity,
+                "additionDistance": (additionsList?[index].distance == null)
+                    ? null
+                    : additionsList?[index].distance,
+              };
+            }))
+    };
+  }
 
   String getBookingInfoToString() {
     return "Mèo: ${cat.name}\nCheck-in: \nCheck-out: \nGhi chú: $note\nLễ tân tiếp nhận: $inCharge\nNgày đặt phòng: ";

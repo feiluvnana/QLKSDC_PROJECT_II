@@ -45,7 +45,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
                 selectedIndex: state.selectedIndex,
-                extended: true,
+                extended: MediaQuery.of(context).size.width > 800,
                 trailing: ElevatedButton(
                     onPressed: () async {
                       await GetConnect().post(

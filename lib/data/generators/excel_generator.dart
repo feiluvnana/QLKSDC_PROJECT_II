@@ -1,16 +1,14 @@
 import 'dart:convert';
 import 'dart:html';
-import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
-import '../model/OrderModel.dart';
-import '../model/AdditionModel.dart';
-import '../model/RoomGroupModel.dart';
-import '../model/RoomModel.dart';
-import '../utils/InternalStorage.dart';
+import '../../model/OrderModel.dart';
+import '../../model/AdditionModel.dart';
+import '../../model/RoomGroupModel.dart';
+import '../../model/RoomModel.dart';
+import '../../utils/InternalStorage.dart';
 
 mixin ExcelGenerator {
   Future<void> createGuestList(int day, month, year) async {
@@ -268,7 +266,7 @@ mixin ExcelGenerator {
     return str;
   }
 
-  Future<void> createBill({required int bidx, required int ridx}) async {
+  Future<void> createBill({required int oidx, required int ridx}) async {
     final Workbook wb = Workbook();
     final Worksheet ws = wb.worksheets[0];
     ws.pageSetup
@@ -370,7 +368,7 @@ mixin ExcelGenerator {
       ..cellStyle = titleStyle;
 
     Order order = (Get.find<InternalStorage>().read("roomGroupsList")[ridx])
-        .ordersList[bidx];
+        .ordersList[oidx];
     Room room = Get.find<InternalStorage>().read("roomGroupsList")[ridx].room;
     ws.getRangeByName("B7:G7")
       ..merge()
@@ -379,8 +377,7 @@ mixin ExcelGenerator {
       ..cellStyle = infoStyle;
     ws.getRangeByName("B8:G8")
       ..merge()
-      ..setText(
-          "Số hoá đơn: ${DateFormat("ddMMyy").format(DateTime.now())}${order.id}")
+      ..setText("Số hoá đơn: ${DateFormat("ddMMyy").format(DateTime.now())}")
       ..cellStyle = infoStyle;
     ws.getRangeByName("B9:G9")
       ..merge()

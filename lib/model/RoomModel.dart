@@ -11,6 +11,12 @@ class Room {
         price = json["room_price"],
         total = json["room_total"];
 
+  Room.empty()
+      : id = "",
+        type = "",
+        price = 0,
+        total = 0;
+
   String getRoomDataToString() {
     return "Mã phòng: $id\nGía phòng: ${price.toPrecision(0)}VNĐ";
   }

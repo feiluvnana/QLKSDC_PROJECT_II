@@ -37,26 +37,12 @@ class LoginPage extends StatelessWidget {
         create: (context) => LoginPageBloc(),
         child: FutureBuilder(
             future: Future.wait([
-              precacheImage(const AssetImage("images/logo.png"), context),
               precacheImage(
                   const AssetImage("images/loginBackground.jpg"), context)
             ]),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return Center(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset("images/logo.png"),
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                      const Text('Đang tải...'),
-                    ],
-                  ),
-                );
+                return const SizedBox();
               }
               return BlocConsumer<LoginPageBloc, LoginState>(
                   listenWhen: (previous, current) =>
@@ -74,6 +60,7 @@ class LoginPage extends StatelessWidget {
                     }
                   },
                   builder: (context, state) {
+                    print("login");
                     return Container(
                       decoration: const BoxDecoration(
                         image: DecorationImage(

@@ -1,41 +1,23 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import '../blocs/BookingPageController.dart';
+import '../blocs/booking_page_bloc.dart';
 import '../data/enums/RenderState.dart';
 import '../model/RoomGroupModel.dart';
-import '../utils/GoogleMaps.dart';
+import '../model/ServiceModel.dart';
+import '../utils/reusables/date_time_picker.dart';
 import '../utils/InternalStorage.dart';
+import '../utils/reusables/image_picker.dart';
+import '../utils/reusables/location_picker.dart';
+import '../utils/reusables/service_chooser.dart';
 
 class BookingPage extends StatelessWidget {
-  final _ownerNameController = TextEditingController();
-
-  final _ownerTelController = TextEditingController();
-
-  final _catNameController = TextEditingController();
-
-  final _catSpeciesController = TextEditingController();
-
-  final _catWeightController = TextEditingController();
-
-  final _catAgeController = TextEditingController();
-
-  final _catPhysicalConditionController = TextEditingController();
-
-  final _catAppearanceController = TextEditingController();
-
-  final _orderAttentionController = TextEditingController();
-
-  final _orderNoteController = TextEditingController();
-
-  BookingPage({super.key});
+  const BookingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    print("big");
     var internalStorage = Get.find<InternalStorage>();
     return BlocProvider(
       create: (_) => BookingPageBloc(),
@@ -59,10 +41,10 @@ class BookingPage extends StatelessWidget {
                 ],
               );
             }
-            Future.delayed(
-                const Duration(milliseconds: 100),
-                () => BlocProvider.of<BookingPageBloc>(context)
-                    .add(CompleteRenderEvent()));
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              BlocProvider.of<BookingPageBloc>(context)
+                  .add(CompleteRenderEvent());
+            });
             return Align(
               alignment: Alignment.topCenter,
               child: SizedBox(
@@ -106,9 +88,7 @@ class BookingPage extends StatelessWidget {
                           : StepState.indexed,
                       isActive: state.currentStep >= 0,
                       title: const Text("Nhập thông tin khách hàng"),
-                      content: Form1(
-                          ownerNameController: _ownerNameController,
-                          ownerTelController: _ownerTelController),
+                      content: const Form1(),
                     ),
                     Step(
                       state: (state.currentStep == 1)
@@ -116,14 +96,7 @@ class BookingPage extends StatelessWidget {
                           : StepState.indexed,
                       isActive: state.currentStep >= 1,
                       title: const Text("Nhập thông tin mèo"),
-                      content: Form2(
-                          catNameController: _catNameController,
-                          catSpeciesController: _catSpeciesController,
-                          catWeightController: _catWeightController,
-                          catAgeController: _catAgeController,
-                          catPhysicalConditionController:
-                              _catPhysicalConditionController,
-                          catAppearanceController: _catAppearanceController),
+                      content: const Form2(),
                     ),
                     Step(
                       state: (state.currentStep == 2)
@@ -131,10 +104,7 @@ class BookingPage extends StatelessWidget {
                           : StepState.indexed,
                       isActive: state.currentStep >= 2,
                       title: const Text("Nhập thông tin đặt phòng và dịch vụ"),
-                      content: Form3(
-                          internalStorage: internalStorage,
-                          orderAttentionController: _orderAttentionController,
-                          orderNoteController: _orderNoteController),
+                      content: Form3(internalStorage: internalStorage),
                     ),
                   ],
                 ),
@@ -149,21 +119,17 @@ class Form3 extends StatelessWidget {
   const Form3({
     super.key,
     required this.internalStorage,
-    required TextEditingController orderAttentionController,
-    required TextEditingController orderNoteController,
-  })  : _orderAttentionController = orderAttentionController,
-        _orderNoteController = orderNoteController;
+  });
 
   final InternalStorage internalStorage;
-  final TextEditingController _orderAttentionController;
-  final TextEditingController _orderNoteController;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BookingPageBloc, BookingState>(
       buildWhen: (previous, current) =>
-          previous.renderState != current.renderState,
+          current.currentStep == 2 && previous.step3State != current.step3State,
       builder: (context, state) {
+        print(3);
         return Form(
           key: state.step3State.formKey3,
           child: Column(
@@ -187,7 +153,13 @@ class Form3 extends StatelessWidget {
                               value: roomGroup.room.id,
                               child: Text(roomGroup.room.id));
                         }),
-                        onChanged: (String? value) {},
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            context.read<BookingPageBloc>().add(
+                                ChangeStep3StateEvent(
+                                    roomID: value, subRoomNum: 1));
+                          }
+                        },
                         validator: (value) {
                           if (value == null) return "Không để trống mã phòng";
                           return null;
@@ -209,14 +181,28 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: DropdownButtonFormField<int>(
                         isExpanded: true,
-                        items: null,
-                        onChanged: (int? value) {},
+                        items: state.step3State.order.subRoomNum == -1
+                            ? null
+                            : List.generate(
+                                state.step3State.order.room.total,
+                                (index) => DropdownMenuItem(
+                                    value: index + 1,
+                                    child: Text("${index + 1}"))),
+                        onChanged: (value) {},
+                        onSaved: (value) {
+                          print("fired $value");
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(subRoomNum: value));
+                        },
                         validator: (value) {
                           if (value == null)
                             return "Không để trống mã phòng con";
                           return null;
                         },
-                        value: null,
+                        value: (state.step3State.order.subRoomNum == -1)
+                            ? null
+                            : state.step3State.order.subRoomNum,
                         hint: const Text("---"),
                         decoration: const InputDecoration(
                           errorMaxLines: 3,
@@ -239,19 +225,15 @@ class Form3 extends StatelessWidget {
                               .length,
                           (index) => DropdownMenuItem(
                             value: index + 1,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("${index + 1}"),
-                                const SizedBox(width: 10),
-                                const Tooltip(
-                                    message: "Chi tiết:\nĐề xuất\nGiá thành:",
-                                    child: FaIcon(FontAwesomeIcons.circleInfo))
-                              ],
-                            ),
+                            child: Text("${index + 1}"),
                           ),
                         ),
                         onChanged: (int? value) {},
+                        onSaved: (int? value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(eatingRank: value));
+                        },
                         validator: (value) {
                           if (value == null) return "Không để trống hạng ăn";
                           return null;
@@ -271,7 +253,14 @@ class Form3 extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
-                      child: TextFormField(),
+                      child: DateTimePicker(
+                        title: "Thời gian check-in",
+                        onSaved: (value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(checkIn: value));
+                        },
+                      ),
                     ),
                   ),
                   Flexible(
@@ -279,7 +268,14 @@ class Form3 extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
-                      child: TextFormField(),
+                      child: DateTimePicker(
+                        title: "Thời gian check-out",
+                        onSaved: (value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(checkIn: value));
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -294,7 +290,6 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
                         keyboardType: TextInputType.multiline,
-                        controller: _orderAttentionController,
                         validator: (value) {
                           if (value == null || value.isEmpty) return null;
                           if (!RegExp(r'^[^]{1,200}$',
@@ -303,6 +298,11 @@ class Form3 extends StatelessWidget {
                             return "Lưu ý không đúng định dạng";
                           }
                           return null;
+                        },
+                        onSaved: (value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(attention: value));
                         },
                         maxLines: null,
                         decoration: const InputDecoration(
@@ -318,7 +318,6 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
                         keyboardType: TextInputType.multiline,
-                        controller: _orderNoteController,
                         validator: (value) {
                           if (value == null || value.isEmpty) return null;
                           if (!RegExp(r'^[^]{1,200}$',
@@ -327,6 +326,11 @@ class Form3 extends StatelessWidget {
                             return "Ghi chú không đúng định dạng";
                           }
                           return null;
+                        },
+                        onSaved: (value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep3StateEvent(note: value));
                         },
                         maxLines: null,
                         decoration: const InputDecoration(
@@ -338,30 +342,8 @@ class Form3 extends StatelessWidget {
                   ),
                 ],
               ),
-              FormField(
-                builder: (formState) => Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: "Danh sách dịch vụ",
-                      border: OutlineInputBorder(),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                              state.step3State.numberOfAdditions,
-                              (index1) => TextFormField()),
-                        ),
-                        ElevatedButton(
-                            onPressed: () {}, child: const Text("Thêm dịch vụ"))
-                      ],
-                    ),
-                  ),
-                ),
+              AdditionChooser(
+                initialValue: state.step3State.order.additionsList,
               ),
             ],
           ),
@@ -372,34 +354,14 @@ class Form3 extends StatelessWidget {
 }
 
 class Form2 extends StatelessWidget {
-  const Form2({
-    super.key,
-    required TextEditingController catNameController,
-    required TextEditingController catSpeciesController,
-    required TextEditingController catWeightController,
-    required TextEditingController catAgeController,
-    required TextEditingController catPhysicalConditionController,
-    required TextEditingController catAppearanceController,
-  })  : _catNameController = catNameController,
-        _catSpeciesController = catSpeciesController,
-        _catWeightController = catWeightController,
-        _catAgeController = catAgeController,
-        _catPhysicalConditionController = catPhysicalConditionController,
-        _catAppearanceController = catAppearanceController;
-
-  final TextEditingController _catNameController;
-  final TextEditingController _catSpeciesController;
-  final TextEditingController _catWeightController;
-  final TextEditingController _catAgeController;
-  final TextEditingController _catPhysicalConditionController;
-  final TextEditingController _catAppearanceController;
+  const Form2({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BookingPageBloc, BookingState>(
-        buildWhen: (previous, current) =>
-            previous.renderState != current.renderState,
+        buildWhen: (previous, current) => current.currentStep == 1,
         builder: (context, state) {
+          print(2);
           return Form(
             key: state.step2State.formKey2,
             child: Column(
@@ -428,7 +390,6 @@ class Form2 extends StatelessWidget {
                                   }
                                   return null;
                                 },
-                                controller: _catNameController,
                                 decoration: const InputDecoration(
                                   labelText: "Tên mèo",
                                   border: OutlineInputBorder(),
@@ -511,7 +472,6 @@ class Form2 extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              controller: _catSpeciesController,
                               validator: (value) {
                                 if (value == null || value.isEmpty) return null;
                                 if (!RegExp(r'^[\p{L}\s]{1,30}$', unicode: true)
@@ -569,7 +529,6 @@ class Form2 extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              controller: _catWeightController,
                               validator: (value) {
                                 if (value == null || value.isEmpty) return null;
                                 if (!RegExp(r'^[1-9]\d*(\.\d+){0,1}$',
@@ -605,7 +564,6 @@ class Form2 extends StatelessWidget {
                                   return "Tuổi mèo không đúng định dạng";
                                 return null;
                               },
-                              controller: _catAgeController,
                               decoration: const InputDecoration(
                                 errorMaxLines: 2,
                                 labelText: "Tuổi",
@@ -643,38 +601,14 @@ class Form2 extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
-                      child: FormField<Uint8List>(
-                        initialValue: null,
-                        builder: (state) {
-                          return Column(
-                            children: [
-                              InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: "Ảnh",
-                                  errorText: state.errorText,
-                                  constraints: const BoxConstraints.tightFor(
-                                      width: 210, height: 210),
-                                  border: const OutlineInputBorder(),
-                                ),
-                                child: state.value == null
-                                    ? const SizedBox(width: 200, height: 200)
-                                    : Image.memory(
-                                        state.value!,
-                                        width: 200,
-                                        height: 200,
-                                        fit: BoxFit.scaleDown,
-                                      ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => context
-                                    .read<BookingPageBloc>()
-                                    .add(PickImageEvent()),
-                                child: const Text("Chọn ảnh"),
-                              )
-                            ],
-                          );
-                        },
-                      ),
+                      child: ImagePicker(
+                          width: 200,
+                          height: 200,
+                          onSaved: (bytes) {
+                            context
+                                .read<BookingPageBloc>()
+                                .add(PickImageEvent(bytes));
+                          }),
                     ),
                   ],
                 ),
@@ -698,7 +632,6 @@ class Form2 extends StatelessWidget {
                             }
                             return null;
                           },
-                          controller: _catPhysicalConditionController,
                           maxLines: null,
                           decoration: const InputDecoration(
                             labelText: "Thể trạng",
@@ -722,7 +655,6 @@ class Form2 extends StatelessWidget {
                             }
                             return null;
                           },
-                          controller: _catAppearanceController,
                           maxLines: null,
                           decoration: const InputDecoration(
                             labelText: "Đặc điểm hình thái",
@@ -741,22 +673,14 @@ class Form2 extends StatelessWidget {
 }
 
 class Form1 extends StatelessWidget {
-  const Form1({
-    super.key,
-    required TextEditingController ownerNameController,
-    required TextEditingController ownerTelController,
-  })  : _ownerNameController = ownerNameController,
-        _ownerTelController = ownerTelController;
-
-  final TextEditingController _ownerNameController;
-  final TextEditingController _ownerTelController;
+  const Form1({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BookingPageBloc, BookingState>(
-      buildWhen: (previous, current) =>
-          previous.renderState != current.renderState,
+      buildWhen: (previous, current) => current.currentStep == 0,
       builder: (context, state) {
+        print(1);
         return Form(
           key: state.step1State.formKey1,
           child: Column(
@@ -771,11 +695,6 @@ class Form1 extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
-                        controller: _ownerNameController,
-                        onChanged: (value) => context
-                            .read<BookingPageBloc>()
-                            .add(ChangeStep1StateEvent(
-                                name: _ownerNameController.text)),
                         validator: (value) {
                           if (value == null || value.isEmpty)
                             return "Không để trống tên";
@@ -784,6 +703,11 @@ class Form1 extends StatelessWidget {
                             return "Tên không đúng định dạng";
                           }
                           return null;
+                        },
+                        onSaved: (value) {
+                          context
+                              .read<BookingPageBloc>()
+                              .add(ChangeStep1StateEvent(name: value));
                         },
                         decoration: const InputDecoration(
                           labelText: "Tên khách hàng",
@@ -815,12 +739,13 @@ class Form1 extends StatelessWidget {
                             child: Text("Nữ"),
                           ),
                         ],
-                        onChanged: (String? value) {
+                        value: null,
+                        onChanged: (value) {},
+                        onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
                               .add(ChangeStep1StateEvent(gender: value));
                         },
-                        value: null,
                         hint: const Text("---"),
                         decoration: const InputDecoration(
                           labelText: "Giới tính",
@@ -844,9 +769,11 @@ class Form1 extends StatelessWidget {
                     }
                     return null;
                   },
-                  controller: _ownerTelController,
-                  onChanged: (value) => context.read<BookingPageBloc>().add(
-                      ChangeStep1StateEvent(name: _ownerTelController.text)),
+                  onSaved: (value) {
+                    context
+                        .read<BookingPageBloc>()
+                        .add(ChangeStep1StateEvent(tel: value));
+                  },
                   decoration: const InputDecoration(
                     labelText: "Số điện thoại",
                     border: OutlineInputBorder(),
@@ -1091,4 +1018,164 @@ class DateTimePicker extends StatelessWidget {
     );
   }
 }
+
+FormField(
+                builder: (formState) => Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: "Danh sách dịch vụ",
+                      border: OutlineInputBorder(),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(
+                              state.step3State.order.additionsList?.length ?? 0,
+                              (index) {
+                            List<Service> servicesList =
+                                Get.find<InternalStorage>()
+                                    .read("servicesList");
+                            return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10, horizontal: 16),
+                                      child: DropdownButtonFormField<int>(
+                                        items: List.generate(
+                                            servicesList.length,
+                                            (index) => DropdownMenuItem(
+                                                value: servicesList[index].id,
+                                                child: Text(
+                                                    servicesList[index].name))),
+                                        onChanged: (value) {
+                                          if (value == null) return;
+                                          context.read<BookingPageBloc>().add(
+                                              ChooseAdditionTypeEvent(
+                                                  value,
+                                                  index,
+                                                  servicesList
+                                                      .firstWhere((element) =>
+                                                          element.id == value)
+                                                      .name,
+                                                  servicesList
+                                                      .firstWhere((element) =>
+                                                          element.id == value)
+                                                      .price));
+                                        },
+                                        value: state
+                                                    .step3State
+                                                    .order
+                                                    .additionsList?[index]
+                                                    .serviceID ==
+                                                -1
+                                            ? null
+                                            : state
+                                                .step3State
+                                                .order
+                                                .additionsList?[index]
+                                                .serviceID,
+                                        decoration: const InputDecoration(
+                                            errorMaxLines: 2,
+                                            labelText: "Loại dịch vụ",
+                                            border: OutlineInputBorder()),
+                                      ),
+                                    ),
+                                  ),
+                                  (servicesList
+                                              .firstWhereOrNull((element) =>
+                                                  element.id ==
+                                                  state
+                                                      .step3State
+                                                      .order
+                                                      .additionsList?[index]
+                                                      .serviceID)
+                                              ?.distanceNeed ??
+                                          false)
+                                      ? Flexible(
+                                          child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 16),
+                                          child: LocationPicker(
+                                            onReturn: (value) {},
+                                          ),
+                                        ))
+                                      : Flexible(flex: 0, child: Container()),
+                                  (servicesList
+                                              .firstWhereOrNull((element) =>
+                                                  element.id ==
+                                                  state
+                                                      .step3State
+                                                      .order
+                                                      .additionsList?[index]
+                                                      .serviceID)
+                                              ?.timeNeed ??
+                                          false)
+                                      ? Flexible(
+                                          child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16),
+                                              child: DateTimePicker(
+                                                title: "Thời gian",
+                                                onChanged: (value) {},
+                                              )))
+                                      : Flexible(flex: 0, child: Container()),
+                                  (servicesList
+                                              .firstWhereOrNull((element) =>
+                                                  element.id ==
+                                                  state
+                                                      .step3State
+                                                      .order
+                                                      .additionsList?[index]
+                                                      .serviceID)
+                                              ?.quantityNeed ??
+                                          false)
+                                      ? Flexible(
+                                          child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 16),
+                                          child: TextFormField(
+                                            decoration: const InputDecoration(
+                                                label: Text("quantity")),
+                                          ),
+                                        ))
+                                      : Flexible(flex: 0, child: Container()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 16),
+                                    child: ElevatedButton(
+                                        onPressed: () {
+                                          context
+                                              .read<BookingPageBloc>()
+                                              .add(DeleteAdditionEvent(index));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xffff6961),
+                                          foregroundColor: Colors.black,
+                                        ),
+                                        child: const Text("Xoá dịch vụ")),
+                                  )
+                                ]);
+                          }),
+                        ),
+                        ElevatedButton(
+                            onPressed: () {
+                              context
+                                  .read<BookingPageBloc>()
+                                  .add(AddAdditionEvent());
+                            },
+                            child: const Text("Thêm dịch vụ"))
+                      ],
+                    ),
+                  ),
+                ),
+              )
 */

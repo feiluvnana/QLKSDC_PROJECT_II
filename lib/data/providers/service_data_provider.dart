@@ -7,7 +7,7 @@ import '../../model/ServiceModel.dart';
 import '../../utils/InternalStorage.dart';
 
 class ServiceDataProvider {
-  Future<void> getServices() async {
+  static Future<void> getServices() async {
     List<dynamic> resList = await GetConnect()
         .post(
       "http://localhost/php-crash/getService.php",

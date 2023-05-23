@@ -1,1 +1,1 @@
-enum RenderState { rendering, completed, waiting }
+enum RenderState { rendering, completed, waiting, hidden }

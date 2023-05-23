@@ -15,4 +15,11 @@ class Addition {
         time = json["addition_time"] == null
             ? null
             : DateTime.parse(json["addition_time"]);
+  Addition.empty()
+      : serviceID = -1,
+        serviceName = "",
+        servicePrice = 0,
+        distance = null,
+        time = null,
+        quantity = null;
 }

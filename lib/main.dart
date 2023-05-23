@@ -41,10 +41,14 @@ class ProjectII extends StatelessWidget {
             (GetStorage().read("sessionID") == null) ? "/login" : null),
     GoRoute(
         path: "/info",
-        builder: (context, state) => Title(
-            color: const Color(0xff68b6ef),
-            title: "Thông tin",
-            child: const InformationPage()),
+        builder: (context, state) {
+          return Title(
+              color: const Color(0xff68b6ef),
+              title: "Thông tin",
+              child: InformationPage(
+                  ridx: int.parse(state.queryParameters["rid"]!),
+                  oidx: int.parse(state.queryParameters["oid"]!)));
+        },
         redirect: (context, state) =>
             (Get.find<InternalStorage>().read("roomGroupsList") == null ||
                     Get.find<InternalStorage>().read("servicesList") == null)
