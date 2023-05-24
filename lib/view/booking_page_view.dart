@@ -94,7 +94,7 @@ class BookingPage extends StatelessWidget {
                           : StepState.indexed,
                       isActive: state.currentStep >= 1,
                       title: const Text("Nhập thông tin mèo"),
-                      content: const Form2(),
+                      content: Form2(internalStorage: internalStorage),
                     ),
                     Step(
                       state: (state.currentStep == 2)
@@ -243,7 +243,11 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: DateTimePicker(
                         title: "Thời gian check-in",
-                        onSaved: (value) {
+                        validator: Validators(
+                                checkIn: state.step3State.order.checkIn,
+                                checkOut: state.step3State.order.checkOut)
+                            .checkInValidator,
+                        onChanged: (value) {
                           context
                               .read<BookingPageBloc>()
                               .add(ChangeStep3StateEvent(checkIn: value));
@@ -258,10 +262,14 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: DateTimePicker(
                         title: "Thời gian check-out",
-                        onSaved: (value) {
+                        validator: Validators(
+                                checkIn: state.step3State.order.checkIn,
+                                checkOut: state.step3State.order.checkOut)
+                            .checkOutValidator,
+                        onChanged: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(checkIn: value));
+                              .add(ChangeStep3StateEvent(checkOut: value));
                         },
                       ),
                     ),
@@ -278,15 +286,7 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
                         keyboardType: TextInputType.multiline,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return null;
-                          if (!RegExp(r'^[^]{1,200}$',
-                                  unicode: true, multiLine: true)
-                              .hasMatch(value)) {
-                            return "Lưu ý không đúng định dạng";
-                          }
-                          return null;
-                        },
+                        validator: Validators().multilineTextCanNullValidator,
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
@@ -306,15 +306,7 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
                         keyboardType: TextInputType.multiline,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return null;
-                          if (!RegExp(r'^[^]{1,200}$',
-                                  unicode: true, multiLine: true)
-                              .hasMatch(value)) {
-                            return "Ghi chú không đúng định dạng";
-                          }
-                          return null;
-                        },
+                        validator: Validators().multilineTextCanNullValidator,
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
@@ -331,8 +323,12 @@ class Form3 extends StatelessWidget {
                 ],
               ),
               AdditionChooser(
-                initialValue: state.step3State.order.additionsList,
-              ),
+                  initialValue: state.step3State.order.additionsList,
+                  onSaved: (value) {
+                    context
+                        .read<BookingPageBloc>()
+                        .add(ChangeStep3StateEvent(additionsList: value));
+                  }),
             ],
           ),
         );
@@ -342,7 +338,9 @@ class Form3 extends StatelessWidget {
 }
 
 class Form2 extends StatelessWidget {
-  const Form2({super.key});
+  const Form2({super.key, required this.internalStorage});
+
+  final InternalStorage internalStorage;
 
   @override
   Widget build(BuildContext context) {
@@ -368,16 +366,12 @@ class Form2 extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
                               child: TextFormField(
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return "Không để trống tên mèo";
-                                  if (!RegExp(r'^[\p{L}\s]{1,50}$',
-                                          unicode: true)
-                                      .hasMatch(value)) {
-                                    return "Tên mèo không đúng định dạng";
-                                  }
-                                  return null;
+                                onSaved: (value) {
+                                  context
+                                      .read<BookingPageBloc>()
+                                      .add(ChangeStep2StateEvent(name: value));
                                 },
+                                validator: Validators().nameValidator,
                                 decoration: const InputDecoration(
                                   labelText: "Tên mèo",
                                   border: OutlineInputBorder(),
@@ -388,11 +382,7 @@ class Form2 extends StatelessWidget {
                                 vertical: 10, horizontal: 16),
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
-                              validator: (value) {
-                                if (value == null)
-                                  return "Không để trống tình trạng thiến";
-                                return null;
-                              },
+                              validator: Validators().notNullValidator,
                               items: const [
                                 DropdownMenuItem(
                                   value: 0,
@@ -403,7 +393,12 @@ class Form2 extends StatelessWidget {
                                   child: Text("Đã thiến"),
                                 ),
                               ],
-                              onChanged: (int? value) {},
+                              onChanged: (value) {},
+                              onSaved: (value) {
+                                context.read<BookingPageBloc>().add(
+                                    ChangeStep2StateEvent(
+                                        sterilization: value));
+                              },
                               value: null,
                               hint: const Text("---"),
                               decoration: const InputDecoration(
@@ -418,27 +413,25 @@ class Form2 extends StatelessWidget {
                                 vertical: 10, horizontal: 16),
                             child: DropdownButtonFormField<String>(
                               isExpanded: true,
-                              validator: (value) {
-                                if (value == null) {
-                                  return "Không để trống hạng cân";
-                                }
-                                return null;
-                              },
+                              validator: Validators().notNullValidator,
                               items: const [
                                 DropdownMenuItem(
                                   value: "< 3kg",
-                                  child: Text("Dưới 3 kg"),
+                                  child: Text("< 3kg"),
                                 ),
                                 DropdownMenuItem(
                                   value: "3-6kg",
-                                  child: Text("3-6 kg"),
+                                  child: Text("3-6kg"),
                                 ),
                                 DropdownMenuItem(
                                   value: "> 6kg",
-                                  child: Text("Trên 6 kg"),
+                                  child: Text("> 6kg"),
                                 ),
                               ],
-                              onChanged: (String? value) {},
+                              onChanged: (String? value) {
+                                context.read<BookingPageBloc>().add(
+                                    ChangeStep2StateEvent(weightRank: value));
+                              },
                               value: null,
                               hint: const Text("---"),
                               decoration: const InputDecoration(
@@ -460,13 +453,11 @@ class Form2 extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return null;
-                                if (!RegExp(r'^[\p{L}\s]{1,30}$', unicode: true)
-                                    .hasMatch(value)) {
-                                  return "Giống mèo không đúng định dạng";
-                                }
-                                return null;
+                              validator: Validators().speciesValidator,
+                              onSaved: (value) {
+                                context
+                                    .read<BookingPageBloc>()
+                                    .add(ChangeStep2StateEvent(species: value));
                               },
                               decoration: const InputDecoration(
                                 labelText: "Giống mèo",
@@ -479,12 +470,7 @@ class Form2 extends StatelessWidget {
                                 vertical: 10, horizontal: 16),
                             child: DropdownButtonFormField<int>(
                               isExpanded: true,
-                              validator: (value) {
-                                if (value == null) {
-                                  return "Không để trống tình trạng tiêm phòng";
-                                }
-                                return null;
-                              },
+                              validator: Validators().notNullValidator,
                               items: const [
                                 DropdownMenuItem(
                                   value: 0,
@@ -504,6 +490,10 @@ class Form2 extends StatelessWidget {
                                 ),
                               ],
                               onChanged: (int? value) {},
+                              onSaved: (value) {
+                                context.read<BookingPageBloc>().add(
+                                    ChangeStep2StateEvent(vaccination: value));
+                              },
                               value: null,
                               hint: const Text("---"),
                               decoration: const InputDecoration(
@@ -517,14 +507,15 @@ class Form2 extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return null;
-                                if (!RegExp(r'^[1-9]\d*(\.\d+){0,1}$',
-                                        unicode: true)
-                                    .hasMatch(value)) {
-                                  return "Cân nặng mèo không đúng định dạng";
-                                }
-                                return null;
+                              validator: Validators(
+                                      weightRank:
+                                          state.step2State.cat.weightRank)
+                                  .weightValidator,
+                              onSaved: (value) {
+                                context.read<BookingPageBloc>().add(
+                                    ChangeStep2StateEvent(
+                                        weight: double.tryParse(
+                                            value ?? "invalid")));
                               },
                               decoration: const InputDecoration(
                                 suffix: Text("kg"),
@@ -545,13 +536,12 @@ class Form2 extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              validator: (value) {
-                                if (value == null || value.isEmpty)
-                                  return "Không để trống tuổi mèo";
-                                if (!RegExp(r'[1-9]\d*').hasMatch(value))
-                                  return "Tuổi mèo không đúng định dạng";
-                                return null;
+                              onSaved: (value) {
+                                context.read<BookingPageBloc>().add(
+                                    ChangeStep2StateEvent(
+                                        age: int.tryParse(value ?? "invalid")));
                               },
+                              validator: Validators().ageValidator,
                               decoration: const InputDecoration(
                                 errorMaxLines: 2,
                                 labelText: "Tuổi",
@@ -574,6 +564,11 @@ class Form2 extends StatelessWidget {
                                   child: Text("Cái"),
                                 ),
                               ],
+                              onSaved: (value) {
+                                context
+                                    .read<BookingPageBloc>()
+                                    .add(ChangeStep2StateEvent(gender: value));
+                              },
                               onChanged: (String? value) {},
                               value: null,
                               hint: const Text("---"),
@@ -610,17 +605,14 @@ class Form2 extends StatelessWidget {
                             vertical: 10, horizontal: 16),
                         child: TextFormField(
                           keyboardType: TextInputType.multiline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty)
-                              return "Không để trống thể trạng";
-                            if (!RegExp(r'^[^]{1,150}$',
-                                    unicode: true, multiLine: true)
-                                .hasMatch(value)) {
-                              return "Thể trạng không đúng định dạng";
-                            }
-                            return null;
-                          },
+                          validator:
+                              Validators().multilineTextCanNotNullValidator,
                           maxLines: null,
+                          onSaved: (value) {
+                            context.read<BookingPageBloc>().add(
+                                ChangeStep2StateEvent(
+                                    physicalCondition: value));
+                          },
                           decoration: const InputDecoration(
                             labelText: "Thể trạng",
                             border: OutlineInputBorder(),
@@ -634,16 +626,13 @@ class Form2 extends StatelessWidget {
                             vertical: 10, horizontal: 16),
                         child: TextFormField(
                           keyboardType: TextInputType.multiline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) return null;
-                            if (!RegExp(r'^[^]{1,150}$',
-                                    unicode: true, multiLine: true)
-                                .hasMatch(value)) {
-                              return "Đặc điểm hình thái không đúng định dạng";
-                            }
-                            return null;
-                          },
+                          validator: Validators().multilineTextCanNullValidator,
                           maxLines: null,
+                          onSaved: (value) {
+                            context
+                                .read<BookingPageBloc>()
+                                .add(ChangeStep2StateEvent(appearance: value));
+                          },
                           decoration: const InputDecoration(
                             labelText: "Đặc điểm hình thái",
                             border: OutlineInputBorder(),
@@ -683,15 +672,7 @@ class Form1 extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
                       child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return "Không để trống tên";
-                          if (!RegExp(r'^[\p{L}\s]{1,50}$', unicode: true)
-                              .hasMatch(value)) {
-                            return "Tên không đúng định dạng";
-                          }
-                          return null;
-                        },
+                        validator: Validators().nameValidator,
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
@@ -711,12 +692,7 @@ class Form1 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
-                        validator: (value) {
-                          if (value == null) {
-                            return "Không để trống giới tính";
-                          }
-                          return null;
-                        },
+                        validator: Validators().notNullValidator,
                         items: const [
                           DropdownMenuItem(
                             value: "Nam",
@@ -748,15 +724,7 @@ class Form1 extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 child: TextFormField(
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Không để trống số điện thoại";
-                    }
-                    if (!RegExp(r'^0\d{9}$').hasMatch(value)) {
-                      return "Số điện thoại không đúng định dạng";
-                    }
-                    return null;
-                  },
+                  validator: Validators().telValidator,
                   onSaved: (value) {
                     context
                         .read<BookingPageBloc>()
@@ -775,395 +743,3 @@ class Form1 extends StatelessWidget {
     );
   }
 }
-
-/*
-
-class ServiceInput extends StatelessWidget {
-  final BookingPageController controller;
-  final int index1;
-
-  const ServiceInput(
-      {super.key, required this.controller, required this.index1});
-
-  @override
-  Widget build(BuildContext context) {
-    print("ServiceInput $index1 build");
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          flex: 1,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: DropdownButtonFormField<int>(
-              isExpanded: true,
-              items: List.generate(
-                Get.find<InternalStorage>().read("servicesList").length,
-                (index2) => DropdownMenuItem(
-                  value: index2 + 1,
-                  child: Text(Get.find<InternalStorage>()
-                      .read("servicesList")[index2]
-                      .name),
-                ),
-              ),
-              onChanged: (int? value) {
-                controller.additionsList[index1] = value!;
-                controller.createServiceController(value - 1, index1);
-              },
-              validator: (value) {
-                if (value == null) return "Không để trống loại dịch vụ";
-                return null;
-              },
-              value: (controller.additionsList[index1] == -1)
-                  ? null
-                  : controller.additionsList[index1],
-              hint: const Text("---"),
-              decoration: const InputDecoration(
-                labelText: "Loại dịch vụ",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-        ),
-        (controller.additionTimeController[index1] == null)
-            ? Flexible(flex: 0, child: Container())
-            : Flexible(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  child: DateTimePicker(
-                      controller: controller.additionTimeController[index1]!,
-                      titleOfTextField: "Thời gian",
-                      validator: (value) {
-                        if (controller.additionTimeList[index1] == null)
-                          return "Không để trống thời gian";
-                        if (controller.orderCheckInController.text.isNotEmpty &&
-                            controller
-                                .orderCheckOutController.text.isNotEmpty) {
-                          if (controller.additionTimeList[index1]!
-                                  .isAfter(controller.orderCheckOut) ||
-                              controller.additionTimeList[index1]!
-                                  .isBefore(controller.orderCheckIn)) {
-                            return "Thời gian phải nằm trong khoảng check-in và check-out";
-                          }
-                        }
-                        return null;
-                      },
-                      isOutSerIn: 0,
-                      index1: index1),
-                ),
-              ),
-        (controller.additionQuantityController[index1] == null)
-            ? Flexible(flex: 0, child: Container())
-            : ServiceValue(
-                controller: controller.additionQuantityController[index1]!,
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return "Không để trống số lượng";
-                  if (!RegExp(r'^[1-9]\d*').hasMatch(value))
-                    return "Số lượng không đúng định dạng";
-                  return null;
-                },
-                label: "Số lượng"),
-        (controller.additionDistanceController[index1] == null)
-            ? Flexible(flex: 0, child: Container())
-            : Flexible(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  child: TextFormField(
-                    controller: controller.additionDistanceController[index1]!,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                        labelText: "Thông tin vị trí",
-                        border: const OutlineInputBorder(),
-                        suffix: InkWell(
-                            onTap: () async {
-                              await Get.to(() => const MyApp())?.then((value) {
-                                controller.additionDistanceController[index1]
-                                        ?.text =
-                                    "(${value["distance"].toStringAsPrecision(2)}km) ${value["address"]}";
-                              });
-                            },
-                            child: const FaIcon(FontAwesomeIcons.map))),
-                  ),
-                ),
-              ),
-        Flexible(
-            child: ElevatedButton(
-                onPressed: () {
-                  controller.additionsList.removeAt(index1);
-                  controller.additionTimeController.removeAt(index1);
-                  controller.additionQuantityController.removeAt(index1);
-                  controller.additionDistanceController.removeAt(index1);
-                  controller.additionTimeList.removeAt(index1);
-                  controller.numberOfAdditions =
-                      controller.numberOfAdditions - 1;
-                },
-                child: const Text("Xóa dịch vụ"))),
-      ],
-    );
-  }
-}
-
-class ServiceValue extends StatelessWidget {
-  final TextEditingController controller;
-  final String? Function(String?) validator;
-  final String label;
-  final void Function()? onTap;
-
-  const ServiceValue(
-      {super.key,
-      required this.controller,
-      required this.validator,
-      required this.label,
-      this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    print("ServiceValue build");
-    return Flexible(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-        child: TextFormField(
-          controller: controller,
-          validator: validator,
-          onTap: onTap,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DateTimePicker extends StatelessWidget {
-  final TextEditingController controller;
-  final String titleOfTextField;
-  final String? Function(String?)? validator;
-  final int isOutSerIn;
-  final int? index1;
-
-  const DateTimePicker(
-      {super.key,
-      required this.controller,
-      required this.titleOfTextField,
-      this.validator,
-      required this.isOutSerIn,
-      this.index1});
-
-  @override
-  Widget build(BuildContext context) {
-    print("DateTimePicker $index1 build");
-    return InkWell(
-      mouseCursor: MaterialStateMouseCursor.clickable,
-      onTap: () async {
-        var date = (await showDatePicker(
-          locale: const Locale("vi", "VN"),
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2023),
-          lastDate: DateTime(2030),
-          helpText: "Chọn ngày",
-          cancelText: "Hủy",
-          confirmText: "Xác nhận",
-        ));
-        if (date == null) return;
-        var time = (await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.now(),
-          helpText: "Chọn giờ",
-          cancelText: "Hủy",
-          confirmText: "Xác nhận",
-        ));
-        if (time == null) return;
-        date =
-            DateTime(date.year, date.month, date.day, time.hour, time.minute);
-        if (isOutSerIn > 0) {
-          Get.find<BookingPageController>().orderCheckIn = date;
-        } else if (isOutSerIn < 0) {
-          Get.find<BookingPageController>().orderCheckOut = date;
-        } else {
-          Get.find<BookingPageController>().additionTimeList[index1!] = date;
-        }
-        if (context.mounted) {
-          controller.text = DateFormat('dd/MM/yyyy HH:mm').format(date);
-        }
-      },
-      child: IgnorePointer(
-        child: TextFormField(
-          controller: controller,
-          validator: validator,
-          decoration: InputDecoration(
-            errorMaxLines: 2,
-            labelText: titleOfTextField,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-FormField(
-                builder: (formState) => Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: "Danh sách dịch vụ",
-                      border: OutlineInputBorder(),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                              state.step3State.order.additionsList?.length ?? 0,
-                              (index) {
-                            List<Service> servicesList =
-                                Get.find<InternalStorage>()
-                                    .read("servicesList");
-                            return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 16),
-                                      child: DropdownButtonFormField<int>(
-                                        items: List.generate(
-                                            servicesList.length,
-                                            (index) => DropdownMenuItem(
-                                                value: servicesList[index].id,
-                                                child: Text(
-                                                    servicesList[index].name))),
-                                        onChanged: (value) {
-                                          if (value == null) return;
-                                          context.read<BookingPageBloc>().add(
-                                              ChooseAdditionTypeEvent(
-                                                  value,
-                                                  index,
-                                                  servicesList
-                                                      .firstWhere((element) =>
-                                                          element.id == value)
-                                                      .name,
-                                                  servicesList
-                                                      .firstWhere((element) =>
-                                                          element.id == value)
-                                                      .price));
-                                        },
-                                        value: state
-                                                    .step3State
-                                                    .order
-                                                    .additionsList?[index]
-                                                    .serviceID ==
-                                                -1
-                                            ? null
-                                            : state
-                                                .step3State
-                                                .order
-                                                .additionsList?[index]
-                                                .serviceID,
-                                        decoration: const InputDecoration(
-                                            errorMaxLines: 2,
-                                            labelText: "Loại dịch vụ",
-                                            border: OutlineInputBorder()),
-                                      ),
-                                    ),
-                                  ),
-                                  (servicesList
-                                              .firstWhereOrNull((element) =>
-                                                  element.id ==
-                                                  state
-                                                      .step3State
-                                                      .order
-                                                      .additionsList?[index]
-                                                      .serviceID)
-                                              ?.distanceNeed ??
-                                          false)
-                                      ? Flexible(
-                                          child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10, horizontal: 16),
-                                          child: LocationPicker(
-                                            onReturn: (value) {},
-                                          ),
-                                        ))
-                                      : Flexible(flex: 0, child: Container()),
-                                  (servicesList
-                                              .firstWhereOrNull((element) =>
-                                                  element.id ==
-                                                  state
-                                                      .step3State
-                                                      .order
-                                                      .additionsList?[index]
-                                                      .serviceID)
-                                              ?.timeNeed ??
-                                          false)
-                                      ? Flexible(
-                                          child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 10,
-                                                      horizontal: 16),
-                                              child: DateTimePicker(
-                                                title: "Thời gian",
-                                                onChanged: (value) {},
-                                              )))
-                                      : Flexible(flex: 0, child: Container()),
-                                  (servicesList
-                                              .firstWhereOrNull((element) =>
-                                                  element.id ==
-                                                  state
-                                                      .step3State
-                                                      .order
-                                                      .additionsList?[index]
-                                                      .serviceID)
-                                              ?.quantityNeed ??
-                                          false)
-                                      ? Flexible(
-                                          child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10, horizontal: 16),
-                                          child: TextFormField(
-                                            decoration: const InputDecoration(
-                                                label: Text("quantity")),
-                                          ),
-                                        ))
-                                      : Flexible(flex: 0, child: Container()),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 16),
-                                    child: ElevatedButton(
-                                        onPressed: () {
-                                          context
-                                              .read<BookingPageBloc>()
-                                              .add(DeleteAdditionEvent(index));
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xffff6961),
-                                          foregroundColor: Colors.black,
-                                        ),
-                                        child: const Text("Xoá dịch vụ")),
-                                  )
-                                ]);
-                          }),
-                        ),
-                        ElevatedButton(
-                            onPressed: () {
-                              context
-                                  .read<BookingPageBloc>()
-                                  .add(AddAdditionEvent());
-                            },
-                            child: const Text("Thêm dịch vụ"))
-                      ],
-                    ),
-                  ),
-                ),
-              )
-*/

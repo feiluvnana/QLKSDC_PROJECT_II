@@ -47,7 +47,7 @@ class Order {
       "note": note,
       "eatingRank": eatingRank,
       "additionsList": (additionsList == null)
-          ? null
+          ? []
           : jsonEncode(List.generate(additionsList?.length ?? 0, (index) {
               additionsList?[index].time == checkIn;
               additionsList?[index].time == checkOut;

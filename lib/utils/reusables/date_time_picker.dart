@@ -19,8 +19,8 @@ class DateTimePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return FormField<DateTime>(
       initialValue: initialValue,
-      validator: validator,
       onSaved: onSaved,
+      validator: validator,
       builder: (formState) {
         return InkWell(
           mouseCursor: MaterialStateMouseCursor.clickable,
@@ -49,21 +49,18 @@ class DateTimePicker extends StatelessWidget {
                 date.year, date.month, date.day, time.hour, time.minute);
             if (context.mounted) {
               _exec(date, onChanged);
-              formState.setState(() {
-                formState.setValue(date);
-              });
+              formState.didChange(date);
             }
           },
-          child: InputDecorator(
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                errorMaxLines: 2,
-                labelText: title,
-              ).applyDefaults(Theme.of(context).inputDecorationTheme),
-              child: formState.value == null
-                  ? null
-                  : Text(
-                      DateFormat('dd/MM/yyyy HH:mm').format(formState.value!))),
+          child: _Displayer(
+              validator: (p1) =>
+                  validator == null ? null : validator!(formState.value),
+              title: title,
+              controller: TextEditingController(
+                  text: formState.value == null
+                      ? null
+                      : DateFormat("dd/MM/yyyy HH:mm")
+                          .format(formState.value!))),
         );
       },
     );
@@ -71,5 +68,29 @@ class DateTimePicker extends StatelessWidget {
 
   void _exec(DateTime? value, void Function(DateTime?)? func) {
     if (func != null) func(value);
+  }
+}
+
+class _Displayer extends StatelessWidget {
+  const _Displayer(
+      {required this.validator, required this.title, required this.controller});
+
+  final String? Function(String?)? validator;
+  final String title;
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: TextFormField(
+        validator: validator,
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          errorMaxLines: 2,
+          labelText: title,
+        ),
+        controller: controller,
+      ),
+    );
   }
 }
