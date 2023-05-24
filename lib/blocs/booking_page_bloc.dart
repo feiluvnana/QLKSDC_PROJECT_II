@@ -80,23 +80,6 @@ class ChangeStep3StateEvent extends BookingPageEvent {
 
 class DataSubmittedEvent extends BookingPageEvent {}
 
-class AddAdditionEvent extends BookingPageEvent {}
-
-class ChooseAdditionTypeEvent extends BookingPageEvent {
-  final int serviceID, index;
-  final String serviceName;
-  final double servicePrice;
-
-  ChooseAdditionTypeEvent(
-      this.serviceID, this.index, this.serviceName, this.servicePrice);
-}
-
-class DeleteAdditionEvent extends BookingPageEvent {
-  final int index;
-
-  DeleteAdditionEvent(this.index);
-}
-
 class Step1State extends Equatable {
   final GlobalKey<FormState> formKey1;
   final Owner owner;
@@ -369,46 +352,6 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
       int catID =
           await BookingProvider.sendCatInfo(state.step2State.cat, ownerID);
       print(await BookingProvider.sendOrderInfo(state.step3State.order, catID));
-    });
-    on<AddAdditionEvent>((event, emit) async {
-      var newAdditionsList = state.step3State.order.additionsList == null
-          ? <Addition>[Addition.empty()]
-          : <Addition>[
-              ...state.step3State.order.additionsList!,
-              Addition.empty()
-            ];
-      emit(state.copyWith(
-          step3State: await state.step3State.copyWith(
-        additionsList: newAdditionsList,
-      )));
-    });
-    on<ChooseAdditionTypeEvent>((event, emit) async {
-      var newAdditionsList =
-          List.generate(state.step3State.order.additionsList!.length, (index) {
-        if (index == event.index) {
-          return Addition.fromJson({
-            "service_id": event.serviceID,
-            "service_name": event.serviceName,
-            "service_price": event.servicePrice,
-            "addition_distance": null,
-            "addition_quantity": null,
-            "addition_time": null
-          });
-        }
-        return state.step3State.order.additionsList![index];
-      });
-      emit(state.copyWith(
-          step3State: await state.step3State.copyWith(
-        additionsList: newAdditionsList,
-      )));
-    });
-    on<DeleteAdditionEvent>((event, emit) async {
-      var newAdditionsList = state.step3State.order.additionsList!;
-      newAdditionsList.removeAt(event.index);
-      emit(state.copyWith(
-          step3State: await state.step3State.copyWith(
-        additionsList: newAdditionsList,
-      )));
     });
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_ii/blocs/login_page_bloc.dart';
 
+import '../utils/validators/validators.dart';
+
 class LoginPage extends StatelessWidget {
   final loadingEntry = OverlayEntry(
     builder: (context) => Container(
@@ -139,14 +141,7 @@ class UsernameInput extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: TextFormField(
         controller: usernameController,
-        validator: (value) {
-          if (value == null) return "Không để trống tài khoản";
-          if (value.isEmpty) return "Không để trống tài khoản";
-          if (!RegExp(r"^\w{5,}$").hasMatch(value)) {
-            return "Tài khoản chỉ chứa chữ cái hoặc số và dài hơn 5 ký tự";
-          }
-          return null;
-        },
+        validator: Validators().usernameValidator,
         onChanged: (value) => context
             .read<LoginPageBloc>()
             .add(UsernameChangedEvent(usernameController.text)),
@@ -174,14 +169,7 @@ class PasswordInput extends StatelessWidget {
       child: TextFormField(
         controller: passwordController,
         obscureText: true,
-        validator: (value) {
-          if (value == null) return "Không để trống mật khẩu";
-          if (value.isEmpty) return "Không để trống mật khẩu";
-          if (!RegExp(r"^\w{8,}$").hasMatch(value)) {
-            return "Mật khẩu chỉ chứa chữ cái số và dài hơn 8 ký tự";
-          }
-          return null;
-        },
+        validator: Validators().passwordValidator,
         onChanged: (value) => context
             .read<LoginPageBloc>()
             .add(PasswordChangedEvent(passwordController.text)),

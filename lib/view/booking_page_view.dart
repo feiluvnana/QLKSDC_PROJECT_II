@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,12 +5,11 @@ import 'package:get/get.dart';
 import '../blocs/booking_page_bloc.dart';
 import '../data/enums/RenderState.dart';
 import '../model/RoomGroupModel.dart';
-import '../model/ServiceModel.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/InternalStorage.dart';
 import '../utils/reusables/image_picker.dart';
-import '../utils/reusables/location_picker.dart';
 import '../utils/reusables/service_chooser.dart';
+import '../utils/validators/validators.dart';
 
 class BookingPage extends StatelessWidget {
   const BookingPage({super.key});
@@ -160,10 +158,7 @@ class Form3 extends StatelessWidget {
                                     roomID: value, subRoomNum: 1));
                           }
                         },
-                        validator: (value) {
-                          if (value == null) return "Không để trống mã phòng";
-                          return null;
-                        },
+                        validator: Validators().notNullValidator,
                         value: null,
                         hint: const Text("---"),
                         decoration: const InputDecoration(
@@ -195,11 +190,7 @@ class Form3 extends StatelessWidget {
                               .read<BookingPageBloc>()
                               .add(ChangeStep3StateEvent(subRoomNum: value));
                         },
-                        validator: (value) {
-                          if (value == null)
-                            return "Không để trống mã phòng con";
-                          return null;
-                        },
+                        validator: Validators().notNullValidator,
                         value: (state.step3State.order.subRoomNum == -1)
                             ? null
                             : state.step3State.order.subRoomNum,
@@ -234,10 +225,7 @@ class Form3 extends StatelessWidget {
                               .read<BookingPageBloc>()
                               .add(ChangeStep3StateEvent(eatingRank: value));
                         },
-                        validator: (value) {
-                          if (value == null) return "Không để trống hạng ăn";
-                          return null;
-                        },
+                        validator: Validators().notNullValidator,
                         value: null,
                         hint: const Text("---"),
                         decoration: const InputDecoration(
