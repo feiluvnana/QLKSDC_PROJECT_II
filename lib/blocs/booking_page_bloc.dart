@@ -127,43 +127,25 @@ class Step2State extends Equatable {
       int? catSterilization,
       int? catVaccination,
       Uint8List? catImage,
-      Owner? owner,
-      bool keepNullable = true}) {
-    return (!keepNullable)
-        ? Step2State(
-            formKey2,
-            Cat.fromJson({
-              "cat_weight_rank": catWeightRank ?? cat.weightRank,
-              "cat_name": catName ?? cat.name,
-              "cat_age": catAge ?? cat.age,
-              "cat_physical_condition":
-                  catPhysicalCondition ?? cat.physicalCondition,
-              "cat_sterilization": catSterilization ?? cat.sterilization,
-              "cat_vaccination": catVaccination ?? cat.vaccination,
-              "cat_appearance": cat.appearance,
-              "cat_gender": cat.gender,
-              "cat_image": (catImage == null) ? null : base64Encode(catImage),
-              "cat_species": cat.species,
-              "cat_weight": cat.weight,
-            }, Owner.empty()))
-        : Step2State(
-            formKey2,
-            Cat.fromJson({
-              "cat_weight_rank": catWeightRank ?? cat.weightRank,
-              "cat_name": catName ?? cat.name,
-              "cat_age": catAge ?? cat.age,
-              "cat_physical_condition":
-                  catPhysicalCondition ?? cat.physicalCondition,
-              "cat_sterilization": catSterilization ?? cat.sterilization,
-              "cat_vaccination": catVaccination ?? cat.vaccination,
-              "cat_appearance": catAppearance ?? cat.appearance,
-              "cat_gender": catGender ?? cat.gender,
-              "cat_image": (catImage == null)
-                  ? ((cat.image == null) ? null : base64Encode(cat.image!))
-                  : base64Encode(catImage),
-              "cat_species": catSpecies ?? cat.species,
-              "cat_weight": catWeight ?? cat.weight,
-            }, Owner.empty()));
+      Owner? owner}) {
+    return Step2State(
+        formKey2,
+        Cat.fromJson({
+          "cat_weight_rank": catWeightRank ?? cat.weightRank,
+          "cat_name": catName ?? cat.name,
+          "cat_age": catAge ?? cat.age,
+          "cat_physical_condition":
+              catPhysicalCondition ?? cat.physicalCondition,
+          "cat_sterilization": catSterilization ?? cat.sterilization,
+          "cat_vaccination": catVaccination ?? cat.vaccination,
+          "cat_appearance": catAppearance ?? cat.appearance,
+          "cat_gender": catGender ?? cat.gender,
+          "cat_image": (catImage == null)
+              ? ((cat.image == null) ? null : base64Encode(cat.image!))
+              : base64Encode(catImage),
+          "cat_species": catSpecies ?? cat.species,
+          "cat_weight": catWeight ?? cat.weight,
+        }, Owner.empty()));
   }
 }
 
@@ -183,57 +165,31 @@ class Step3State extends Equatable {
       String? orderNote,
       String? roomID,
       int? subRoomNum,
-      int? eatingRank,
-      bool keepNullable = true}) async {
-    return (!keepNullable)
-        ? Step3State(
-            formKey3,
-            Order.fromJson(
-                {
-                  "order_date": DateTime.now().toString(),
-                  "order_checkin": (orderCheckIn != null)
-                      ? orderCheckIn.toString()
-                      : order.checkIn.toString(),
-                  "order_checkout": (orderCheckOut != null)
-                      ? orderCheckOut.toString()
-                      : order.checkOut.toString(),
-                  "order_incharge": GetStorage().read("name"),
-                  "order_subroom_num": subRoomNum ?? order.subRoomNum,
-                  "order_eating_rank": eatingRank ?? order.eatingRank,
-                  "order_attention": order.attention,
-                  "order_note": order.note,
-                  "additionsList": additionsList ?? order.additionsList
-                },
-                roomID == null
-                    ? order.room
-                    : await BackendDataProvider(
-                            currentMonth: DateTime.now(), today: DateTime.now())
-                        .getRoomFromID(roomID),
-                Cat.empty()))
-        : Step3State(
-            formKey3,
-            Order.fromJson(
-                {
-                  "order_date": DateTime.now().toString(),
-                  "order_checkin": (orderCheckIn != null)
-                      ? orderCheckIn.toString()
-                      : order.checkIn.toString(),
-                  "order_checkout": (orderCheckOut != null)
-                      ? orderCheckOut.toString()
-                      : order.checkOut.toString(),
-                  "order_incharge": GetStorage().read("name"),
-                  "order_subroom_num": subRoomNum ?? order.subRoomNum,
-                  "order_eating_rank": eatingRank ?? order.eatingRank,
-                  "order_attention": orderAttention ?? order.attention,
-                  "order_note": orderNote ?? order.note,
-                  "additionsList": additionsList ?? order.additionsList
-                },
-                roomID == null
-                    ? order.room
-                    : await BackendDataProvider(
-                            currentMonth: DateTime.now(), today: DateTime.now())
-                        .getRoomFromID(roomID),
-                Cat.empty()));
+      int? eatingRank}) async {
+    return Step3State(
+        formKey3,
+        Order.fromJson(
+            {
+              "order_date": DateTime.now().toString(),
+              "order_checkin": (orderCheckIn != null)
+                  ? orderCheckIn.toString()
+                  : order.checkIn.toString(),
+              "order_checkout": (orderCheckOut != null)
+                  ? orderCheckOut.toString()
+                  : order.checkOut.toString(),
+              "order_incharge": GetStorage().read("name"),
+              "order_subroom_num": subRoomNum ?? order.subRoomNum,
+              "order_eating_rank": eatingRank ?? order.eatingRank,
+              "order_attention": orderAttention ?? order.attention,
+              "order_note": orderNote ?? order.note,
+              "additionsList": additionsList ?? order.additionsList
+            },
+            roomID == null
+                ? order.room
+                : await BackendDataProvider(
+                        currentMonth: DateTime.now(), today: DateTime.now())
+                    .getRoomFromID(roomID),
+            Cat.empty()));
   }
 }
 
@@ -361,108 +317,3 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
     print("[BookingPageBloc] $transition");
   }
 }
-
-
-  
-/*
-Future<void> sendDataToDatabase() async {
-    int ownerID = jsonDecode((await GetConnect().post(
-            "http://localhost/php-crash/setOwnerInfo.php",
-            FormData({
-              "sessionID": GetStorage().read("sessionID"),
-              "ownerName": ownerNameController.text,
-              "ownerTel": ownerTelController.text,
-              "ownerGender": ownerGender
-            })))
-        .body)["owner_id"];
-    int catID = jsonDecode((await GetConnect().post(
-            "http://localhost/php-crash/setCatInfo.php",
-            FormData({
-              "sessionID": GetStorage().read("sessionID"),
-              "ownerID": ownerID,
-              "catName": catNameController.text,
-              "catAge": catAgeController.text,
-              "catImage": (catImage == null)
-                  ? null
-                  : base64Encode(catImage as List<int>),
-              "catVaccination": catVaccination,
-              "catSpecies": catSpeciesController.text == ""
-                  ? null
-                  : catSpeciesController.text,
-              "catAppearance": catAppearanceController.text == ""
-                  ? null
-                  : catAppearanceController.text,
-              "catSterilization": catSterilization,
-              "catPhysicalCondition": catPhysicalConditionController.text,
-              "catGender": catGender,
-              "catWeight": catWeightController.text == ""
-                  ? null
-                  : catWeightController.text,
-              "catWeightRank": catWeightRank
-            })))
-        .body)["cat_id"];
-    String status = jsonDecode((await GetConnect().post(
-            "http://localhost/php-crash/setOrderInfo.php",
-            FormData({
-              "sessionID": GetStorage().read("sessionID"),
-              "catID": catID,
-              "roomID": roomID,
-              "subRoomNum": subRoomNum,
-              "checkIn": orderCheckIn.toString(),
-              "checkOut": orderCheckOut.toString(),
-              "attention": orderAttentionController.text,
-              "note": orderNoteController.text,
-              "eatingRank": eatingRank,
-              "inCharge": GetStorage().read("name"),
-              "additionsList":
-                  jsonEncode(List.generate(numberOfAdditions, (index) {
-                List<Service> servicesList =
-                    Get.find<InternalStorage>().read("servicesList");
-                if (servicesList
-                        .firstWhere(
-                            (element) => element.id == additionsList[index])
-                        .name ==
-                    "Đón mèo") {
-                  additionTimeList[index] = orderCheckIn;
-                }
-                if (servicesList
-                        .firstWhere(
-                            (element) => element.id == additionsList[index])
-                        .name ==
-                    "Trả mèo") {
-                  additionTimeList[index] = orderCheckOut;
-                }
-                return {
-                  "serviceID": servicesList
-                      .firstWhere(
-                          (element) => element.id == additionsList[index])
-                      .id,
-                  "additionTime": (additionTimeList[index] == null)
-                      ? null
-                      : additionTimeList[index].toString(),
-                  "additionQuantity":
-                      (additionQuantityController[index] == null)
-                          ? null
-                          : additionQuantityController[index]?.text,
-                  "additionDistance":
-                      (additionDistanceController[index] == null)
-                          ? null
-                          : additionDistanceController[index]?.text,
-                };
-              }))
-            })))
-        .body)["status"];
-    await Get.defaultDialog(
-      barrierDismissible: true,
-      title: "Thông báo",
-      content: Text((status != "successed")
-          ? "Đặt phòng thất bại do có thể đã có khách đặt"
-          : "Đặt phòng thành công"),
-    ).then((value) => _isSubmitClicked = false);
-    if (status == "successed") {
-      await RoomGroupDataProvider(
-              currentMonth: DateTime.now(), today: DateTime.now())
-          .getRoomGroups();
-    }
-  }
-  */

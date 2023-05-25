@@ -54,4 +54,16 @@ class Cat {
       "catWeight": weight,
     };
   }
+
+  String sterText() {
+    if (sterilization == 0) return "Chưa thiến";
+    return "Đã thiến";
+  }
+
+  String vaccText() {
+    if (vaccination == 0) return "Chưa tiêm";
+    if (vaccination == 1) return "Đã tiêm vaccine dại";
+    if (vaccination == 2) return "Đã tiêm vaccine tổng hợp";
+    return "Đã tiêm cả hai loại vaccine";
+  }
 }

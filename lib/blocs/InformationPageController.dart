@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,8 +7,11 @@ import 'package:get/get.dart' hide Transition;
 import 'package:get_storage/get_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../data/providers/backend_data_provider.dart';
+import '../model/CatModel.dart';
 import '../model/OrderModel.dart';
 import '../model/AdditionModel.dart';
+import '../model/OwnerModel.dart';
 import '../model/RoomGroupModel.dart';
 import '../model/RoomModel.dart';
 import '../model/ServiceModel.dart';
@@ -21,15 +25,38 @@ class ToggleModifyCatEvent extends InformationPageEvent {}
 
 class ToggleModifyOrderEvent extends InformationPageEvent {}
 
-class ToggleModifyAdditionEvent extends InformationPageEvent {}
+class ModifyOwnerEvent extends InformationPageEvent {
+  final String? name, tel, gender;
 
-class ModifyOwnerEvent extends InformationPageEvent {}
+  ModifyOwnerEvent({this.name, this.tel, this.gender});
+}
 
-class ModifyCatEvent extends InformationPageEvent {}
+class ModifyCatEvent extends InformationPageEvent {
+  final String? weightRank,
+      name,
+      species,
+      physicalCondition,
+      appearance,
+      gender;
+  final Uint8List? image;
+  final int? age, sterilization, vaccination;
+  final double? weight;
+
+  ModifyCatEvent(
+      {this.weightRank,
+      this.name,
+      this.species,
+      this.physicalCondition,
+      this.appearance,
+      this.gender,
+      this.image,
+      this.age,
+      this.sterilization,
+      this.vaccination,
+      this.weight});
+}
 
 class ModifyOrderEvent extends InformationPageEvent {}
-
-class ModifyAdditionEvent extends InformationPageEvent {}
 
 class SaveChangesEvent extends InformationPageEvent {}
 
@@ -73,6 +100,82 @@ class InformationState extends Equatable {
         order: this.order);
   }
 
+  Future<Order> modifyOrder(
+      {List<Addition>? additionsList,
+      DateTime? orderCheckIn,
+      DateTime? orderCheckOut,
+      String? orderAttention,
+      String? orderNote,
+      String? roomID,
+      int? subRoomNum,
+      int? eatingRank,
+      Cat? cat}) async {
+    return Order.fromJson(
+        {
+          "order_date": DateTime.now().toString(),
+          "order_checkin": (orderCheckIn != null)
+              ? orderCheckIn.toString()
+              : modifiedOrder.checkIn.toString(),
+          "order_checkout": (orderCheckOut != null)
+              ? orderCheckOut.toString()
+              : modifiedOrder.checkOut.toString(),
+          "order_incharge": GetStorage().read("name"),
+          "order_subroom_num": subRoomNum ?? modifiedOrder.subRoomNum,
+          "order_eating_rank": eatingRank ?? modifiedOrder.eatingRank,
+          "order_attention": orderAttention ?? modifiedOrder.attention,
+          "order_note": orderNote ?? modifiedOrder.note,
+          "additionsList": additionsList ?? modifiedOrder.additionsList
+        },
+        roomID == null
+            ? modifiedOrder.room
+            : await BackendDataProvider(
+                    currentMonth: DateTime.now(), today: DateTime.now())
+                .getRoomFromID(roomID),
+        cat ?? order.cat);
+  }
+
+  Cat modifyCat(
+      {String? catName,
+      String? catWeightRank,
+      int? catAge,
+      String? catPhysicalCondition,
+      double? catWeight,
+      String? catGender,
+      String? catAppearance,
+      String? catSpecies,
+      int? catSterilization,
+      int? catVaccination,
+      Uint8List? catImage,
+      Owner? owner}) {
+    return Cat.fromJson({
+      "cat_weight_rank": catWeightRank ?? modifiedOrder.cat.weightRank,
+      "cat_name": catName ?? modifiedOrder.cat.name,
+      "cat_age": catAge ?? modifiedOrder.cat.age,
+      "cat_physical_condition":
+          catPhysicalCondition ?? modifiedOrder.cat.physicalCondition,
+      "cat_sterilization": catSterilization ?? modifiedOrder.cat.sterilization,
+      "cat_vaccination": catVaccination ?? modifiedOrder.cat.vaccination,
+      "cat_appearance": catAppearance ?? modifiedOrder.cat.appearance,
+      "cat_gender": catGender ?? modifiedOrder.cat.gender,
+      "cat_image": (catImage == null)
+          ? ((modifiedOrder.cat.image == null)
+              ? null
+              : base64Encode(modifiedOrder.cat.image!))
+          : base64Encode(catImage),
+      "cat_species": catSpecies ?? modifiedOrder.cat.species,
+      "cat_weight": catWeight ?? modifiedOrder.cat.weight,
+    }, owner ?? modifiedOrder.cat.owner);
+  }
+
+  Owner modifyOwner(
+      {String? ownerName, String? ownerGender, String? ownerTel}) {
+    return Owner.fromJson({
+      "owner_name": ownerName ?? modifiedOrder.cat.owner.name,
+      "owner_gender": ownerGender ?? modifiedOrder.cat.owner.gender,
+      "owner_tel": ownerTel ?? modifiedOrder.cat.owner.tel
+    });
+  }
+
   @override
   List<Object?> get props =>
       [modifiedOrder, isEditing1, isEditing2, isEditing3, isEditing4];
@@ -95,7 +198,30 @@ class InformationPageBloc extends Bloc<InformationPageEvent, InformationState> {
                 .ordersList[oidx])) {
     on<ToggleModifyCatEvent>(
         (event, emit) => emit(state.copyWith(isEditing1: !(state.isEditing1))));
+    on<ToggleModifyOwnerEvent>(
+        (event, emit) => emit(state.copyWith(isEditing2: !(state.isEditing2))));
+    on<ModifyCatEvent>(
+      (event, emit) async {
+        emit(state.copyWith(
+            order: await state.modifyOrder(
+                cat: state.modifyCat(
+                    catAge: event.age,
+                    catAppearance: event.appearance,
+                    catGender: event.gender,
+                    catImage: event.image,
+                    catName: event.name,
+                    catPhysicalCondition: event.physicalCondition,
+                    catSpecies: event.species,
+                    catSterilization: event.sterilization,
+                    catVaccination: event.vaccination,
+                    catWeight: event.weight,
+                    catWeightRank: event.weightRank))));
+      },
+    );
     on<GotoHomePage>((event, emit) => event.context.go("/home"));
+    on<SaveChangesEvent>((event, emit) {});
+    on<CancelOrderEvent>((event, emit) {});
+    on<CheckoutEvent>((event, emit) {});
   }
 
   @override

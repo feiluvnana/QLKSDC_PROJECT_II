@@ -11,6 +11,7 @@ import '../utils/GoogleMaps.dart';
 import '../utils/InternalStorage.dart';
 import '../data/generators/excel_generator.dart';
 import '../utils/reusables/image_picker.dart';
+import '../utils/validators/validators.dart';
 
 class InformationPage extends StatelessWidget with ExcelGenerator {
   final int ridx, oidx;
@@ -25,7 +26,8 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
           primary: true,
           child: Padding(
             padding: EdgeInsets.only(
-                left: 90, right: MediaQuery.of(context).size.width / 10 * 3),
+                left: MediaQuery.of(context).size.width / 20,
+                right: MediaQuery.of(context).size.width / 10 * 3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -58,145 +60,78 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.black,
+                      child: Builder(builder: (_) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.black,
+                            ),
+                            onPressed: () {
+                              _
+                                  .read<InformationPageBloc>()
+                                  .add(SaveChangesEvent());
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
+                                Text(" Lưu thay đổi")
+                              ],
+                            ),
                           ),
-                          onPressed: () {
-                            Get.find<InformationPageController>()
-                                .saveChanges(oidx: oidx, ridx: ridx)
-                                .then((response) async {
-                              if (response["validation"] == false) return;
-                              if (response["form1Init"] == true &&
-                                  response["form2Init"] == true) {
-                                await Get.defaultDialog(
-                                    title: "Thông báo",
-                                    content: Text(
-                                        "${response["form1"] == true ? "Lưu thay đổi thông tin đặt phòng thành công" : "Lưu thay đổi thông tin đặt phòng thất bại"}\n${response["form2"] == true ? "Lưu thay đổi thông tin dịch vụ thành công" : "Lưu thay đổi thông tin dịch vụ thất bại"}"));
-                                Get.offNamed("/home");
-                              } else if (response["form1Init"] == true &&
-                                  response["form2Init"] == false) {
-                                await Get.defaultDialog(
-                                    title: "Thông báo",
-                                    content: Text(response["form1"] == true
-                                        ? "Lưu thay đổi thông tin đặt phòng thành công"
-                                        : "Lưu thay đổi thông tin đặt phòng thất bại"));
-                                Get.offNamed("/home");
-                              } else if (response["form1Init"] == false &&
-                                  response["form2Init"] == true) {
-                                await Get.defaultDialog(
-                                    title: "Thông báo",
-                                    content: Text(response["form2"] == true
-                                        ? "Lưu thay đổi thông tin dịch vụ thành công"
-                                        : "Lưu thay đổi thông tin dịch vụ thất bại"));
-                                Get.offNamed("/home");
-                              } else if (response["form1Init"] == true &&
-                                  response["form2Init"] == true) {}
-                            });
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
-                              Text(" Lưu thay đổi")
-                            ],
-                          ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                     Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xfffaf884),
-                            foregroundColor: Colors.black,
+                      child: Builder(builder: (_) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xfffaf884),
+                              foregroundColor: Colors.black,
+                            ),
+                            onPressed: () {
+                              _
+                                  .read<InformationPageBloc>()
+                                  .add(CheckoutEvent());
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                FaIcon(FontAwesomeIcons.moneyBill, size: 14),
+                                Text(" Check-out")
+                              ],
+                            ),
                           ),
-                          onPressed: () {
-                            createBill(oidx: oidx, ridx: ridx);
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              FaIcon(FontAwesomeIcons.moneyBill, size: 14),
-                              Text(" Check-out")
-                            ],
-                          ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                     Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffff6961),
-                            foregroundColor: Colors.black,
+                      child: Builder(builder: (_) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xffff6961),
+                              foregroundColor: Colors.black,
+                            ),
+                            onPressed: () {
+                              _
+                                  .read<InformationPageBloc>()
+                                  .add(SaveChangesEvent());
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                FaIcon(FontAwesomeIcons.ban, size: 14),
+                                Text(" Hủy đặt phòng")
+                              ],
+                            ),
                           ),
-                          onPressed: () => {
-                            Get.defaultDialog<bool>(
-                              title: "Cảnh Báo",
-                              content: const Text(
-                                  "Hành động này không thể đảo ngược. Xác nhận tiếp tục?"),
-                              confirm: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.black,
-                                ),
-                                onPressed: () => Get.back(result: true),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    FaIcon(FontAwesomeIcons.check, size: 14),
-                                    Text(" Xác nhận")
-                                  ],
-                                ),
-                              ),
-                              cancel: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xffff6961),
-                                  foregroundColor: Colors.black,
-                                ),
-                                onPressed: () => Get.back(result: false),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    FaIcon(FontAwesomeIcons.x, size: 14),
-                                    Text(" Hủy")
-                                  ],
-                                ),
-                              ),
-                            ).then((isConfirmed) {
-                              if (isConfirmed == true) {
-                                Get.find<InformationPageController>()
-                                    .cancelBooking(oidx: oidx, ridx: ridx)
-                                    .then((response) async {
-                                  if (response == "accepted") {
-                                    await Get.defaultDialog(
-                                        title: "Thông báo",
-                                        content: const Text(
-                                            "Huỷ đặt phòng thành công"));
-                                    Get.offNamed("/home");
-                                  } else {
-                                    await Get.defaultDialog(
-                                        title: "Thông báo",
-                                        content: const Text(
-                                            "Huỷ đặt phòng thất bại"));
-                                  }
-                                });
-                              }
-                            })
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              FaIcon(FontAwesomeIcons.ban, size: 14),
-                              Text(" Hủy đặt phòng")
-                            ],
-                          ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -268,21 +203,19 @@ class CatInfo extends StatelessWidget {
                           padding: EdgeInsets.all(8),
                           child: Text("Tên mèo"),
                         ),
-                        (state.isEditing1)
-                            ? Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextFormField(
-                                    initialValue: state.modifiedOrder.cat.name,
-                                    onSaved: (value) {},
-                                    validator: (value) => null,
-                                    decoration: const InputDecoration(
-                                        labelText: "Tên mèo",
-                                        border: OutlineInputBorder())),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(state.order.cat.name),
-                              )
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: (state.isEditing1)
+                              ? TextFormField(
+                                  onSaved: (value) {},
+                                  validator: Validators().nameValidator,
+                                  decoration: const InputDecoration(
+                                    labelText: "Tên mèo",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.name),
+                        )
                       ],
                     ),
                     TableRow(
@@ -299,9 +232,11 @@ class CatInfo extends StatelessWidget {
                                   ? ImagePicker(
                                       width: 700,
                                       height: 420,
-                                      initialWidget: (state.order.cat.image !=
+                                      initialWidget: (state
+                                                  .modifiedOrder.cat.image !=
                                               null)
-                                          ? Image.memory(state.order.cat.image!,
+                                          ? Image.memory(
+                                              state.modifiedOrder.cat.image!,
                                               fit: BoxFit.scaleDown)
                                           : null)
                                   : SizedBox(
@@ -334,8 +269,9 @@ class CatInfo extends StatelessWidget {
                                       child: Text("Cái"),
                                     ),
                                   ],
+                                  onSaved: (value) {},
                                   onChanged: (String? value) {},
-                                  value: state.modifiedOrder.cat.gender,
+                                  value: null,
                                   hint: const Text("---"),
                                   decoration: const InputDecoration(
                                     labelText: "Giới tính",
@@ -357,15 +293,8 @@ class CatInfo extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: (state.isEditing1)
                               ? TextFormField(
-                                  initialValue:
-                                      state.modifiedOrder.cat.age.toString(),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return "Không để trống tuổi mèo";
-                                    if (!RegExp(r'[1-9]\d*').hasMatch(value))
-                                      return "Tuổi mèo không đúng định dạng";
-                                    return null;
-                                  },
+                                  onSaved: (value) {},
+                                  validator: Validators().ageValidator,
                                   decoration: const InputDecoration(
                                     errorMaxLines: 2,
                                     labelText: "Tuổi",
@@ -380,31 +309,108 @@ class CatInfo extends StatelessWidget {
                       children: [
                         const Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text("Thể trạng"),
+                          child: Text("Tình trạng sức khoẻ"),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: (state.isEditing1)
-                              ? TextFormField(
-                                  keyboardType: TextInputType.multiline,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return "Không để trống thể trạng";
-                                    if (!RegExp(r'^[^]{1,150}$',
-                                            unicode: true, multiLine: true)
-                                        .hasMatch(value)) {
-                                      return "Thể trạng không đúng định dạng";
-                                    }
-                                    return null;
-                                  },
-                                  maxLines: null,
-                                  decoration: const InputDecoration(
-                                    labelText: "Thể trạng",
-                                    border: OutlineInputBorder(),
+                        (state.isEditing1)
+                            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.multiline,
+                                      validator: Validators()
+                                          .multilineTextCanNotNullValidator,
+                                      maxLines: null,
+                                      onSaved: (value) {},
+                                      decoration: const InputDecoration(
+                                        labelText: "Thể trạng",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
                                   ),
-                                )
-                              : Text(state.order.cat.physicalCondition),
-                        )
+                                ),
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: DropdownButtonFormField<int>(
+                                      isExpanded: true,
+                                      validator: Validators().notNullValidator,
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: 0,
+                                          child: Text("Chưa tiêm"),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 1,
+                                          child: Text("Đã tiêm vaccine dại"),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 2,
+                                          child:
+                                              Text("Đã tiêm vaccine tổng hợp"),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 3,
+                                          child: Text(
+                                              "Đã tiêm cả hai loại vaccine"),
+                                        ),
+                                      ],
+                                      onChanged: (int? value) {},
+                                      onSaved: (value) {},
+                                      value: null,
+                                      hint: const Text("---"),
+                                      decoration: const InputDecoration(
+                                        errorMaxLines: 2,
+                                        labelText: "Tình trạng tiêm phòng",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Flexible(
+                                    child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: DropdownButtonFormField<int>(
+                                    isExpanded: true,
+                                    validator: Validators().notNullValidator,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 0,
+                                        child: Text("Chưa thiến"),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 1,
+                                        child: Text("Đã thiến"),
+                                      ),
+                                    ],
+                                    onChanged: (value) {},
+                                    onSaved: (value) {},
+                                    value: null,
+                                    hint: const Text("---"),
+                                    decoration: const InputDecoration(
+                                      errorMaxLines: 2,
+                                      labelText: "Tình trạng thiến",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                )),
+                              ])
+                            : Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                          "Thể trạng: \n${state.order.cat.physicalCondition}"),
+                                    ),
+                                    const Spacer(),
+                                    Flexible(
+                                        child: Text(
+                                            "Tình trạng tiêm phòng: ${state.order.cat.vaccText()}\nTình trạng thiến: ${state.order.cat.sterText()}")),
+                                  ],
+                                ),
+                              )
                       ],
                     ),
                     TableRow(
@@ -418,16 +424,8 @@ class CatInfo extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: (state.isEditing1)
                               ? TextFormField(
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return null;
-                                    if (!RegExp(r'^[\p{L}\s]{1,30}$',
-                                            unicode: true)
-                                        .hasMatch(value)) {
-                                      return "Giống mèo không đúng định dạng";
-                                    }
-                                    return null;
-                                  },
+                                  validator: Validators().speciesValidator,
+                                  onSaved: (value) {},
                                   decoration: const InputDecoration(
                                     labelText: "Giống mèo",
                                     border: OutlineInputBorder(),
@@ -441,33 +439,92 @@ class CatInfo extends StatelessWidget {
                       children: [
                         const Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text("Đặc điểm nhận dạng"),
+                          child: Text("Đặc điểm hình thái"),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: (state.isEditing1)
-                              ? TextFormField(
-                                  keyboardType: TextInputType.multiline,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return null;
-                                    if (!RegExp(r'^[^]{1,150}$',
-                                            unicode: true, multiLine: true)
-                                        .hasMatch(value)) {
-                                      return "Đặc điểm hình thái không đúng định dạng";
-                                    }
-                                    return null;
-                                  },
-                                  maxLines: null,
-                                  decoration: const InputDecoration(
-                                    labelText: "Đặc điểm hình thái",
-                                    border: OutlineInputBorder(),
+                        (state.isEditing1)
+                            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.multiline,
+                                      validator: Validators()
+                                          .multilineTextCanNullValidator,
+                                      maxLines: null,
+                                      onSaved: (value) {},
+                                      decoration: const InputDecoration(
+                                        labelText: "Đặc điểm hình thái",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
                                   ),
-                                )
-                              : Text(state.order.cat.appearance ?? ""),
-                        )
+                                ),
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: DropdownButtonFormField<String>(
+                                      isExpanded: true,
+                                      validator: Validators().notNullValidator,
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: "< 3kg",
+                                          child: Text("< 3kg"),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: "3-6kg",
+                                          child: Text("3-6kg"),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: "> 6kg",
+                                          child: Text("> 6kg"),
+                                        ),
+                                      ],
+                                      onChanged: (String? value) {},
+                                      value: null,
+                                      hint: const Text("---"),
+                                      decoration: const InputDecoration(
+                                        errorMaxLines: 2,
+                                        labelText: "Hạng cân",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Flexible(
+                                    child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: TextFormField(
+                                    validator: Validators(
+                                            weightRank: state
+                                                .modifiedOrder.cat.weightRank)
+                                        .weightValidator,
+                                    onSaved: (value) {},
+                                    decoration: const InputDecoration(
+                                      suffix: Text("kg"),
+                                      labelText: "Cân nặng",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                )),
+                              ])
+                            : Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                          "Đặc điểm hình thái: \n${state.order.cat.appearance}"),
+                                    ),
+                                    const Spacer(),
+                                    Flexible(
+                                        child: Text(
+                                            "Cân nặng(kg): ${state.order.cat.weight?.toStringAsPrecision(2) ?? "Không được cung cấp"} (${state.order.cat.weightRank})")),
+                                  ],
+                                ),
+                              )
                       ],
-                    )
+                    ),
                   ],
                 ),
               )
@@ -507,7 +564,7 @@ class OwnerInfo extends StatelessWidget {
                         .read<InformationPageBloc>()
                         .add(ToggleModifyOwnerEvent()),
                     child: FaIcon(
-                        (state.isEditing1)
+                        (state.isEditing2)
                             ? FontAwesomeIcons.xmark
                             : FontAwesomeIcons.penToSquare,
                         size: 28,
@@ -536,12 +593,55 @@ class OwnerInfo extends StatelessWidget {
                           padding: EdgeInsets.all(8),
                           child: Text("Tên chủ"),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Text((state.order.cat.owner.gender == "Nam")
-                              ? "(Anh) ${state.order.cat.owner.name}"
-                              : "(Chị) ${state.order.cat.owner.name}"),
-                        )
+                        (state.isEditing2)
+                            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                                Flexible(
+                                    child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    validator: Validators().notNullValidator,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: "Nam",
+                                        child: Text("Nam"),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: "Nữ",
+                                        child: Text("Nữ"),
+                                      ),
+                                    ],
+                                    value: null,
+                                    onChanged: (value) {},
+                                    onSaved: (value) {},
+                                    hint: const Text("---"),
+                                    decoration: const InputDecoration(
+                                      labelText: "Giới tính",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                )),
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextFormField(
+                                      validator: Validators().nameValidator,
+                                      onSaved: (value) {},
+                                      decoration: const InputDecoration(
+                                        labelText: "Tên khách hàng",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ])
+                            : Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Text((state.order.cat.owner.gender ==
+                                        "Nam")
+                                    ? "(Anh) ${state.order.cat.owner.name}"
+                                    : "(Chị) ${state.order.cat.owner.name}"),
+                              )
                       ],
                     ),
                     TableRow(
@@ -553,7 +653,16 @@ class OwnerInfo extends StatelessWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(state.order.cat.owner.tel),
+                          child: (state.isEditing2)
+                              ? TextFormField(
+                                  validator: Validators().telValidator,
+                                  onSaved: (value) {},
+                                  decoration: const InputDecoration(
+                                    labelText: "Số điện thoại",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                )
+                              : Text(state.order.cat.owner.tel),
                         )
                       ],
                     ),
