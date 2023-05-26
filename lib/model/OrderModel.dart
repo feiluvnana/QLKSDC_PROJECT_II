@@ -36,18 +36,19 @@ class Order {
         room = Room.empty(),
         additionsList = null;
 
-  Map<String, dynamic> toJson(int cid) {
+  Map<String, String> toJson(int cid) {
     return {
-      "catID": cid,
+      "catID": cid.toString(),
       "roomID": room.id,
-      "subRoomNum": subRoomNum,
+      "subRoomNum": subRoomNum.toString(),
+      "date": date.toString(),
       "checkIn": checkIn.toString(),
       "checkOut": checkOut.toString(),
-      "attention": attention,
-      "note": note,
-      "eatingRank": eatingRank,
+      "attention": attention ?? "",
+      "note": note ?? "",
+      "eatingRank": eatingRank.toString(),
       "additionsList": (additionsList == null)
-          ? []
+          ? null.toString()
           : jsonEncode(List.generate(additionsList?.length ?? 0, (index) {
               additionsList?[index].time == checkIn;
               additionsList?[index].time == checkOut;

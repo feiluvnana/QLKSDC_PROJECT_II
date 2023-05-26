@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:project_ii/data/providers/service_data_provider.dart';
+import 'package:project_ii/data/providers/service_related_work_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/enums/RenderState.dart';
-import '../data/providers/backend_data_provider.dart';
-import '../data/providers/booking_provider.dart';
+import '../data/providers/calendar_related_work_provider.dart';
+import '../data/providers/booking_related_work_provider.dart';
 import '../model/AdditionModel.dart';
 import '../model/CatModel.dart';
 import '../model/OwnerModel.dart';
@@ -177,7 +177,8 @@ class Step3State extends Equatable {
               "order_checkout": (orderCheckOut != null)
                   ? orderCheckOut.toString()
                   : order.checkOut.toString(),
-              "order_incharge": GetStorage().read("name"),
+              "order_incharge":
+                  (await SharedPreferences.getInstance()).getString("name"),
               "order_subroom_num": subRoomNum ?? order.subRoomNum,
               "order_eating_rank": eatingRank ?? order.eatingRank,
               "order_attention": orderAttention ?? order.attention,
@@ -186,7 +187,7 @@ class Step3State extends Equatable {
             },
             roomID == null
                 ? order.room
-                : await BackendDataProvider(
+                : await CalendarRelatedWorkProvider(
                         currentMonth: DateTime.now(), today: DateTime.now())
                     .getRoomFromID(roomID),
             Cat.empty()));
@@ -235,7 +236,7 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
             currentStep: 0,
             renderState: RenderState.waiting)) {
     on<RequireDataEvent>((event, emit) async {
-      await ServiceDataProvider.getServices();
+      await ServiceRelatedWorkProvider.getServicesList();
       emit(state.copyWith(renderState: RenderState.rendering));
     });
     on<NextStepEvent>((event, emit) async {
@@ -304,10 +305,12 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
               subRoomNum: event.subRoomNum)));
     });
     on<DataSubmittedEvent>((event, emit) async {
-      int ownerID = await BookingProvider.sendOwnerInfo(state.step1State.owner);
-      int catID =
-          await BookingProvider.sendCatInfo(state.step2State.cat, ownerID);
-      print(await BookingProvider.sendOrderInfo(state.step3State.order, catID));
+      int ownerID = await BookingRelatedWorkProvider.sendOwnerInfo(
+          state.step1State.owner);
+      int catID = await BookingRelatedWorkProvider.sendCatInfo(
+          state.step2State.cat, ownerID);
+      print(await BookingRelatedWorkProvider.sendOrderInfo(
+          state.step3State.order, catID));
     });
   }
 

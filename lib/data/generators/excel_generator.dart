@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:html';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:get/get.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 import '../../model/OrderModel.dart';
 import '../../model/AdditionModel.dart';
 import '../../model/RoomGroupModel.dart';
 import '../../model/RoomModel.dart';
-import '../../utils/InternalStorage.dart';
+import '../dependencies/internal_storage.dart';
 
 mixin ExcelGenerator {
   Future<void> createGuestList(int day, month, year) async {
@@ -66,7 +66,7 @@ mixin ExcelGenerator {
       ..cellStyle = cellStyle;
 
     List<RoomGroup> roomGroupsList =
-        Get.find<InternalStorage>().read("roomGroupsList");
+        GetIt.I<InternalStorage>().read("roomGroupsList");
     int lastRow = 4;
     int currentRow = 4;
     DateTime guestListDate = DateTime(year, month, day);
@@ -367,9 +367,9 @@ mixin ExcelGenerator {
       ..setText("HOÁ ĐƠN THANH TOÁN")
       ..cellStyle = titleStyle;
 
-    Order order = (Get.find<InternalStorage>().read("roomGroupsList")[ridx])
+    Order order = (GetIt.I<InternalStorage>().read("roomGroupsList")[ridx])
         .ordersList[oidx];
-    Room room = Get.find<InternalStorage>().read("roomGroupsList")[ridx].room;
+    Room room = GetIt.I<InternalStorage>().read("roomGroupsList")[ridx].room;
     ws.getRangeByName("B7:G7")
       ..merge()
       ..setText(

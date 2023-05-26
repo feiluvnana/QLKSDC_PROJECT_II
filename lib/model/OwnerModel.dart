@@ -11,7 +11,7 @@ class Owner {
         name = "",
         tel = "";
 
-  Map<String, dynamic> toJson() {
+  Map<String, String> toJson() {
     return {"ownerTel": tel, "ownerName": name, "ownerGender": gender};
   }
 }

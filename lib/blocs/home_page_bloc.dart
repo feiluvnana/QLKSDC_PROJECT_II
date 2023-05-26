@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_ii/view/booking_page_view.dart';
 import 'package:project_ii/view/calendar_page_view.dart';
-import 'package:project_ii/view/RoomPageView.dart';
+import 'package:project_ii/view/room_page_view.dart';
+
+import '../view/service_page_view.dart';
 
 abstract class HomePageEvent {}
 
@@ -16,13 +18,13 @@ class TabChangedEvent extends HomePageEvent {
 class HomeState extends Equatable {
   final List<Widget Function(BuildContext)> builders;
   final int selectedIndex;
-  static int calendar = 0, booking = 1, room = 2, service = 3, history = 4;
   static List<Widget Function(BuildContext)> builderCalls = [
     (context) => const CalendarPage(),
     (context) => const BookingPage(),
     (context) => const RoomPage(),
-    (context) => const Text("service"),
-    (context) => const Text("history")
+    (context) => const ServicePage(),
+    (context) => const Text("statistics"),
+    (context) => const Text("history"),
   ];
 
   @override
@@ -42,6 +44,7 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
   HomePageBloc()
       : super(HomeState(builders: [
           (context) => const CalendarPage(),
+          (context) => Container(),
           (context) => Container(),
           (context) => Container(),
           (context) => Container(),

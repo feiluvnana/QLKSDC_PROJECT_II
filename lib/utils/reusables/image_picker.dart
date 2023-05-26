@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' as ip;
@@ -51,6 +53,7 @@ class ImagePicker extends StatelessWidget {
                     maxHeight: 800);
                 Uint8List? bytes =
                     (file == null) ? null : await file.readAsBytes();
+                _exec(bytes, onChanged);
                 formState.setState(() {
                   formState.setValue(bytes);
                 });

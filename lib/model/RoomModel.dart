@@ -1,5 +1,3 @@
-import 'package:get/get.dart';
-
 class Room {
   final String id, type;
   final double price;
@@ -18,6 +16,6 @@ class Room {
         total = 0;
 
   String getRoomDataToString() {
-    return "Mã phòng: $id\nGía phòng: ${price.toPrecision(0)}VNĐ";
+    return "Mã phòng: $id\nGía phòng: ${price.toInt()}VNĐ";
   }
 }

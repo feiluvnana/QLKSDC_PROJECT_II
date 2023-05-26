@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get.dart';
+import 'package:get_it/get_it.dart';
 import '../blocs/booking_page_bloc.dart';
+import '../data/dependencies/internal_storage.dart';
 import '../data/enums/RenderState.dart';
 import '../model/RoomGroupModel.dart';
 import '../utils/reusables/date_time_picker.dart';
-import '../utils/InternalStorage.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';
 import '../utils/validators/validators.dart';
@@ -16,7 +16,7 @@ class BookingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var internalStorage = Get.find<InternalStorage>();
+    var internalStorage = GetIt.I<InternalStorage>();
     return BlocProvider(
       create: (_) => BookingPageBloc(),
       child: BlocConsumer<BookingPageBloc, BookingState>(
@@ -27,10 +27,10 @@ class BookingPage extends StatelessWidget {
           builder: (context, state) {
             if (state.renderState == RenderState.waiting) {
               BlocProvider.of<BookingPageBloc>(context).add(RequireDataEvent());
-              return Column(
+              return const Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Padding(
                     padding: EdgeInsets.all(16.0),
                     child: CircularProgressIndicator(),
@@ -211,9 +211,7 @@ class Form3 extends StatelessWidget {
                       child: DropdownButtonFormField<int>(
                         isExpanded: true,
                         items: List.generate(
-                          Get.find<InternalStorage>()
-                              .read("servicesList")
-                              .length,
+                          internalStorage.read("servicesList").length,
                           (index) => DropdownMenuItem(
                             value: index + 1,
                             child: Text("${index + 1}"),

@@ -1,15 +1,18 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get_it/get_it.dart';
+import '../../data/dependencies/internal_storage.dart';
 import '../../model/AdditionModel.dart';
-import '/utils/InternalStorage.dart';
 import '../../model/ServiceModel.dart';
 import 'date_time_picker.dart';
 import 'location_picker.dart';
 
 class AdditionChooser extends StatelessWidget {
   final List<Addition>? initialValue;
-  final void Function(List<Addition>?)? onSaved;
-  const AdditionChooser({super.key, this.initialValue, this.onSaved});
+  final void Function(List<Addition>?)? onSaved, onChanged;
+  const AdditionChooser(
+      {super.key, this.initialValue, this.onSaved, this.onChanged});
   @override
   Widget build(BuildContext context) {
     return FormField<List<Addition>>(
@@ -30,7 +33,7 @@ class AdditionChooser extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(formState.value?.length ?? 0, (index) {
                   List<Service> servicesList =
-                      Get.find<InternalStorage>().read("servicesList");
+                      GetIt.I<InternalStorage>().read("servicesList");
                   return Row(mainAxisSize: MainAxisSize.min, children: [
                     Flexible(
                       child: Padding(
@@ -65,6 +68,7 @@ class AdditionChooser extends StatelessWidget {
                                 return formState.value![i];
                               }));
                             });
+                            _exec(formState.value, onChanged);
                           },
                           value: formState.value?[index].serviceID == -1
                               ? null
@@ -77,11 +81,9 @@ class AdditionChooser extends StatelessWidget {
                       ),
                     ),
                     (servicesList
-                                .firstWhereOrNull((element) =>
-                                    element.id ==
-                                    formState.value?[index].serviceID)
-                                ?.distanceNeed ??
-                            false)
+                            .firstWhere((element) =>
+                                element.id == formState.value?[index].serviceID)
+                            .distanceNeed)
                         ? Flexible(
                             child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -106,15 +108,14 @@ class AdditionChooser extends StatelessWidget {
                                       return formState.value![i];
                                     }));
                                   });
+                                  _exec(formState.value, onChanged);
                                 }),
                           ))
                         : Flexible(flex: 0, child: Container()),
                     (servicesList
-                                .firstWhereOrNull((element) =>
-                                    element.id ==
-                                    formState.value?[index].serviceID)
-                                ?.timeNeed ??
-                            false)
+                            .firstWhere((element) =>
+                                element.id == formState.value?[index].serviceID)
+                            .timeNeed)
                         ? Flexible(
                             child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -145,26 +146,24 @@ class AdditionChooser extends StatelessWidget {
                                         return formState.value![i];
                                       }));
                                     });
+                                    _exec(formState.value, onChanged);
                                   },
                                 )))
                         : Flexible(flex: 0, child: Container()),
                     (servicesList
-                                .firstWhereOrNull((element) =>
-                                    element.id ==
-                                    formState.value?[index].serviceID)
-                                ?.quantityNeed ??
-                            false)
+                            .firstWhere((element) =>
+                                element.id == formState.value?[index].serviceID)
+                            .quantityNeed)
                         ? Flexible(
                             child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
-                              initialValue: formState.value![index].quantity ==
+                              initialValue: formState.value?[index].quantity ==
                                       null
                                   ? null
                                   : formState.value![index].quantity.toString(),
                               onChanged: (value) {
-                                if (value == null) return;
                                 var newValue = int.tryParse(value);
                                 formState.setState(() {
                                   formState.setValue(List.generate(
@@ -181,6 +180,7 @@ class AdditionChooser extends StatelessWidget {
                                     return formState.value![i];
                                   }));
                                 });
+                                _exec(formState.value, onChanged);
                               },
                               decoration: const InputDecoration(
                                   label: Text("Số lượng"),
@@ -214,12 +214,14 @@ class AdditionChooser extends StatelessWidget {
                       formState.setState(() {
                         formState.setValue([Addition.empty()]);
                       });
+                      _exec(formState.value, onChanged);
                       return;
                     }
                     formState.setState(() {
                       formState
                           .setValue([...formState.value!, Addition.empty()]);
                     });
+                    _exec(formState.value, onChanged);
                   },
                   child: const Text("Thêm dịch vụ"))
             ],
@@ -227,6 +229,10 @@ class AdditionChooser extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _exec(List<Addition>? value, void Function(List<Addition>?)? func) {
+    if (func != null) func(value);
   }
 
   Map<String, dynamic> _generateJson(int serviceID, String serviceName,

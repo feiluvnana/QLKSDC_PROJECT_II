@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get.dart' hide Transition;
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:project_ii/data/providers/backend_data_provider.dart';
-import 'package:project_ii/data/providers/service_data_provider.dart';
-import 'package:project_ii/utils/InternalStorage.dart';
+import 'package:project_ii/data/providers/calendar_related_work_provider.dart';
+import 'package:project_ii/data/providers/service_related_work_provider.dart';
+import '../data/dependencies/internal_storage.dart';
 import '../data/enums/RenderState.dart';
 
 abstract class CalendarPageEvent {}
@@ -96,16 +96,17 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       (event, emit) => emit(state.copyWith(state: RenderState.completed)),
     );
     on<DataNeededEvent>((event, emit) async {
-      await BackendDataProvider(
+      await CalendarRelatedWorkProvider(
               currentMonth: state.currentMonth, today: state.today)
           .getRoomGroups();
       emit(state.copyWith(state: RenderState.rendering));
     });
     on<GotoInformationPageEvent>((event, emit) async {
       print("fired");
-      if (Get.find<InternalStorage>().read("servicesList") == null) {
-        await ServiceDataProvider.getServices();
+      if (GetIt.I<InternalStorage>().read("servicesList") == null) {
+        await ServiceRelatedWorkProvider.getServicesList();
       }
+      // ignore: use_build_context_synchronously
       event.context.go("/info?rid=${event.ridx}&oid=${event.oidx}");
     });
   }

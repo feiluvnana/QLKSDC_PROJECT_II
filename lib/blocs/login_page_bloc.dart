@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:project_ii/data/providers/authentication_provider.dart';
+import 'package:project_ii/data/providers/login_related_work_provider.dart';
 
 abstract class LoginPageEvent {}
 
@@ -72,7 +72,7 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
         return;
       }
       emit(state.copyWith(state: AuthenticationState.authenticating));
-      if (await AuthenticationProvider.authenticate(
+      if (await LoginRelatedWorkProvider.authenticate(
           username: event.username, password: event.password)) {
         emit(state.copyWith(state: AuthenticationState.authenticated));
       } else {

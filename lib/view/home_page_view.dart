@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project_ii/blocs/home_page_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'package:project_ii/data/dependencies/internal_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -30,7 +32,6 @@ class HomePage extends StatelessWidget {
                   ),
                   NavigationRailDestination(
                     icon: FaIcon(FontAwesomeIcons.paw),
-                    selectedIcon: FaIcon(FontAwesomeIcons.shieldCat),
                     label: Text("Đặt phòng"),
                   ),
                   NavigationRailDestination(
@@ -40,24 +41,35 @@ class HomePage extends StatelessWidget {
                   ),
                   NavigationRailDestination(
                     icon: FaIcon(FontAwesomeIcons.bellConcierge),
-                    selectedIcon: FaIcon(FontAwesomeIcons.bellConcierge),
                     label: Text("Quản lý dịch vụ"),
+                  ),
+                  NavigationRailDestination(
+                    icon: FaIcon(FontAwesomeIcons.moneyBill),
+                    label: Text("Thống kê"),
+                  ),
+                  NavigationRailDestination(
+                    icon: FaIcon(FontAwesomeIcons.clock),
+                    label: Text("Lịch sử"),
                   ),
                 ],
                 selectedIndex: state.selectedIndex,
                 extended: MediaQuery.of(context).size.width > 800,
                 trailing: ElevatedButton(
                     onPressed: () async {
-                      await GetConnect().post(
-                        "http://localhost/php-crash/logout.php",
-                        FormData({"sessionID": GetStorage().read("sessionID")}),
+                      await http.post(
+                        Uri.http("localhost", "php-crash/logout.php"),
+                        body: {
+                          "sessionID":
+                              GetIt.I<InternalStorage>().read("sessionID")
+                        },
                       );
-                      await GetStorage().erase();
+                      await (await SharedPreferences.getInstance()).clear();
+                      // ignore: use_build_context_synchronously
                       context.go("/login");
                     },
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         FaIcon(FontAwesomeIcons.arrowRightFromBracket,
                             size: 14),
                         Text(" Đăng xuất"),
@@ -68,7 +80,7 @@ class HomePage extends StatelessWidget {
                 child: IndexedStack(
                   index: state.selectedIndex,
                   children: List.generate(
-                      5, (index) => Builder(builder: state.builders[index])),
+                      6, (index) => Builder(builder: state.builders[index])),
                 ),
               )
             ],

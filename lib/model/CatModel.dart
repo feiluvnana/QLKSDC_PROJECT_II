@@ -39,19 +39,19 @@ class Cat {
         weight = null,
         owner = Owner.empty();
 
-  Map<String, dynamic> toJson() {
+  Map<String, String> toJson() {
     return {
       "catName": name,
-      "catImage": image != null ? base64Encode(image!) : null,
-      "catAge": age,
-      "catSterilization": sterilization,
-      "catVaccination": vaccination,
+      "catImage": image != null ? base64Encode(image!) : null.toString(),
+      "catAge": age.toString(),
+      "catSterilization": sterilization.toString(),
+      "catVaccination": vaccination.toString(),
       "catPhysicalCondition": physicalCondition,
-      "catGender": gender,
+      "catGender": gender.toString(),
       "catWeightRank": weightRank,
-      "catSpecies": species,
-      "catAppearance": appearance,
-      "catWeight": weight,
+      "catSpecies": species.toString(),
+      "catAppearance": appearance.toString(),
+      "catWeight": weight.toString(),
     };
   }
 

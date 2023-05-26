@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
-import 'package:get/get.dart';
 import '../blocs/calendar_page_bloc.dart';
+import '../data/dependencies/internal_storage.dart';
 import '../data/enums/RenderState.dart';
 import '../model/RoomGroupModel.dart';
-import '../utils/InternalStorage.dart';
 import '../utils/PairUtils.dart';
 import '../data/generators/excel_generator.dart';
 
@@ -68,9 +68,9 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                                     .currentMonth
                                     .year);
                           },
-                          child: Row(
+                          child: const Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
+                              children: [
                                 FaIcon(FontAwesomeIcons.download, size: 14),
                                 Text(" Xuất danh sách")
                               ])),
@@ -169,11 +169,11 @@ class BookingInfo extends StatelessWidget {
         builder: (context, state) {
           if (state.state == RenderState.waiting) {
             BlocProvider.of<CalendarPageBloc>(context).add(DataNeededEvent());
-            return Center(
+            return const Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Padding(
                     padding: EdgeInsets.all(16.0),
                     child: CircularProgressIndicator(),
@@ -188,7 +188,7 @@ class BookingInfo extends StatelessWidget {
               () => BlocProvider.of<CalendarPageBloc>(context)
                   .add(RenderCompletedEvent()));
           List<RoomGroup> roomGroup =
-              Get.find<InternalStorage>().read("roomGroupsList");
+              GetIt.I<InternalStorage>().read("roomGroupsList");
           return SingleChildScrollView(
             primary: true,
             child: Column(
@@ -208,7 +208,7 @@ class DisplayTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
@@ -271,7 +271,7 @@ class DisplayTable extends StatelessWidget {
 
   Pair getDisplayValue(int days, int rid, int index) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[rid];
     return roomGroup.displayArray[index ~/ days][index % days];
   }
 }
@@ -286,7 +286,7 @@ class Cell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
@@ -339,7 +339,7 @@ class Cell extends StatelessWidget {
 
   Pair getDisplayValue(int days, int rid, int index) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[rid];
     return roomGroup.displayArray[index ~/ days][index % days];
   }
 
@@ -374,7 +374,7 @@ class Cell extends StatelessWidget {
 
   int getNumberOfNights(int index1, int index2, int value) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[index1];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[index1];
     DateTime checkOut = roomGroup.ordersList[value].checkOut;
     DateTime checkIn = roomGroup.ordersList[value].checkIn;
     return DateTime(checkOut.year, checkOut.month, checkOut.day)
@@ -393,7 +393,7 @@ class HalfCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     RoomGroup roomGroup =
-        Get.find<InternalStorage>().read("roomGroupsList")[rid];
+        GetIt.I<InternalStorage>().read("roomGroupsList")[rid];
     CalendarPageBloc bloc = BlocProvider.of<CalendarPageBloc>(context);
     int days = DateUtils.getDaysInMonth(
         bloc.state.currentMonth.year, bloc.state.currentMonth.month);
@@ -440,7 +440,7 @@ class HalfCell extends StatelessWidget {
   }
 
   Pair getDisplayValue(int days, int index1, int index2) {
-    return Get.find<InternalStorage>()
+    return GetIt.I<InternalStorage>()
         .read("roomGroupsList")[index1]
         .displayArray[index2 ~/ days][index2 % days];
   }
