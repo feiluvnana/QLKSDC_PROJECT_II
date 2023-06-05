@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import '../blocs/service_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../data/enums/RenderState.dart';
+import '../data/types/render_state.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -37,95 +37,110 @@ class ServicePage extends StatelessWidget {
                 );
               }
               Future.delayed(
-                  const Duration(milliseconds: 100),
+                  Duration.zero,
                   () => BlocProvider.of<ServicePageBloc>(context)
                       .add(CompleteRenderEvent()));
               return Padding(
                   padding: const EdgeInsets.all(20),
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text("STT")),
-                      DataColumn(label: Text("Tên dịch vụ")),
-                      DataColumn(label: Text("Đơn giá")),
-                    ],
-                    rows: List.generate(
-                        GetIt.I<InternalStorage>().read("servicesList").length,
-                        (index) => DataRow(
-                                selected: state.currentIndexes
-                                    .any((element) => element == index),
-                                onSelectChanged: (value) {
-                                  if (value == null) return;
-                                  if (value) {
-                                    context
-                                        .read<ServicePageBloc>()
-                                        .add(ChooseRowEvent(index));
-                                  } else {
-                                    context
-                                        .read<ServicePageBloc>()
-                                        .add(UnchooseRowEvent(index));
-                                  }
-                                },
-                                cells: [
-                                  DataCell(Text(GetIt.I<InternalStorage>()
-                                      .read("servicesList")[index]
-                                      .id
-                                      .toString())),
-                                  DataCell(Text(GetIt.I<InternalStorage>()
-                                      .read("servicesList")[index]
-                                      .name)),
-                                  DataCell(Text(GetIt.I<InternalStorage>()
-                                      .read("servicesList")[index]
-                                      .price
-                                      .toInt()
-                                      .toString())),
-                                ])),
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text("Mã dịch vụ")),
+                        DataColumn(label: Text("Tên dịch vụ")),
+                        DataColumn(label: Text("Đơn giá")),
+                        DataColumn(label: Text("Thông tin cần thiết"))
+                      ],
+                      rows: List.generate(
+                          GetIt.I<InternalStorage>()
+                              .read("servicesList")
+                              .length,
+                          (index) => DataRow(
+                                  selected: state.currentIndexes
+                                      .any((element) => element == index),
+                                  onSelectChanged: (value) {
+                                    if (value == null) return;
+                                    if (value) {
+                                      context
+                                          .read<ServicePageBloc>()
+                                          .add(ChooseRowEvent(index));
+                                    } else {
+                                      context
+                                          .read<ServicePageBloc>()
+                                          .add(UnchooseRowEvent(index));
+                                    }
+                                  },
+                                  cells: [
+                                    DataCell(Text(GetIt.I<InternalStorage>()
+                                        .read("servicesList")[index]
+                                        .id
+                                        .toString())),
+                                    DataCell(Text(GetIt.I<InternalStorage>()
+                                        .read("servicesList")[index]
+                                        .name)),
+                                    DataCell(Text(GetIt.I<InternalStorage>()
+                                        .read("servicesList")[index]
+                                        .price
+                                        .toInt()
+                                        .toString())),
+                                    DataCell(Text(
+                                        "${GetIt.I<InternalStorage>().read("servicesList")[index].distanceNeed ? "Thông tin vị trí\n" : ""}${GetIt.I<InternalStorage>().read("servicesList")[index].timeNeed ? "Thời gian\n" : ""}${GetIt.I<InternalStorage>().read("servicesList")[index].quantityNeed ? "Số lượng\n" : ""}"))
+                                  ])),
+                    ),
                   ));
             }),
           ),
           Expanded(
             child: Container(
               alignment: Alignment.center,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(foregroundColor: Colors.black),
-                    onPressed: () async {},
-                    child: Container(
-                      width: 50,
-                      alignment: Alignment.center,
-                      child: const Text("Thêm"),
+              child: Builder(builder: (_) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.black),
+                      onPressed: () {
+                        _.read<ServicePageBloc>().add(AddServiceEvent(_));
+                      },
+                      child: Container(
+                        width: 50,
+                        alignment: Alignment.center,
+                        child: const Text("Thêm"),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xfffaf884),
-                      foregroundColor: Colors.black,
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xfffaf884),
+                        foregroundColor: Colors.black,
+                      ),
+                      onPressed: () {
+                        _.read<ServicePageBloc>().add(ModifyServiceEvent(_));
+                      },
+                      child: Container(
+                        width: 50,
+                        alignment: Alignment.center,
+                        child: const Text("Sửa"),
+                      ),
                     ),
-                    onPressed: () => {},
-                    child: Container(
-                      width: 50,
-                      alignment: Alignment.center,
-                      child: const Text("Sửa"),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffff6961),
+                        foregroundColor: Colors.black,
+                      ),
+                      onPressed: () {
+                        _.read<ServicePageBloc>().add(DeleteServiceEvent(_));
+                      },
+                      child: Container(
+                        width: 50,
+                        alignment: Alignment.center,
+                        child: const Text("Xóa"),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xffff6961),
-                      foregroundColor: Colors.black,
-                    ),
-                    onPressed: () => {},
-                    child: Container(
-                      width: 50,
-                      alignment: Alignment.center,
-                      child: const Text("Xóa"),
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              }),
             ),
           )
         ],

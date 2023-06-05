@@ -7,6 +7,9 @@ class Validators {
       print("executed");
       if (value == null) return "Không để trống";
       if (checkOut == null) return null;
+      if (value.isBefore(DateTime.now())) {
+        return "Không được check-in trong quá khứ";
+      }
       if (value.isAfter(checkOut!)) return "Phải check-in trước check-out";
       return null;
     };

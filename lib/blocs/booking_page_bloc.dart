@@ -3,19 +3,25 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:project_ii/data/dependencies/internal_storage.dart';
 import 'package:project_ii/data/providers/service_related_work_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../data/enums/RenderState.dart';
+import 'package:project_ii/utils/reusables/notice_dialog.dart';
 import '../data/providers/calendar_related_work_provider.dart';
+import '../data/types/render_state.dart';
 import '../data/providers/booking_related_work_provider.dart';
-import '../model/AdditionModel.dart';
-import '../model/CatModel.dart';
-import '../model/OwnerModel.dart';
-import '../model/OrderModel.dart';
+import '../model/addition_model.dart';
+import '../model/cat_model.dart';
+import '../model/owner_model.dart';
+import '../model/order_model.dart';
 
 abstract class BookingPageEvent {}
 
-class NextStepEvent extends BookingPageEvent {}
+class NextStepEvent extends BookingPageEvent {
+  final BuildContext context;
+
+  NextStepEvent(this.context);
+}
 
 class BackStepEvent extends BookingPageEvent {}
 
@@ -28,6 +34,8 @@ class PickImageEvent extends BookingPageEvent {
 class RequireDataEvent extends BookingPageEvent {}
 
 class CompleteRenderEvent extends BookingPageEvent {}
+
+class RefreshEvent extends BookingPageEvent {}
 
 class ChangeStep1StateEvent extends BookingPageEvent {
   final String? name, tel, gender;
@@ -78,44 +86,79 @@ class ChangeStep3StateEvent extends BookingPageEvent {
       this.subRoomNum});
 }
 
-class DataSubmittedEvent extends BookingPageEvent {}
+class SubmitDataEvent extends BookingPageEvent {
+  final BuildContext context;
 
-class Step1State extends Equatable {
-  final GlobalKey<FormState> formKey1;
-  final Owner owner;
-
-  const Step1State(this.formKey1, this.owner);
-
-  @override
-  List<Object?> get props => [owner];
-
-  Step1State copyWith(
-      {String? ownerName, String? ownerGender, String? ownerTel}) {
-    return Step1State(
-        formKey1,
-        Owner.fromJson({
-          "owner_name": ownerName ?? owner.name,
-          "owner_gender": ownerGender ?? owner.gender,
-          "owner_tel": ownerTel ?? owner.tel
-        }));
-  }
+  SubmitDataEvent(this.context);
 }
 
-class Step2State extends Equatable {
-  final GlobalKey<FormState> formKey2;
-  final Cat cat;
-  /*
-  final String catName, catWeightRank, catAge, catPhysicalCondition;
-  final String? catWeight, catGender, catAppearance, catSpecies;
-  final int catSterilization, catVaccination;
-  final Uint8List? catImage;*/
+class BookingState extends Equatable {
+  final GlobalKey<FormState> formKey1, formKey2, formKey3;
+  final Order order;
+  final RenderState renderState;
+  final int currentStep;
 
-  const Step2State(this.formKey2, this.cat);
+  const BookingState(this.formKey1, this.formKey2, this.formKey3,
+      {required this.order,
+      required this.currentStep,
+      required this.renderState});
 
   @override
-  List<Object?> get props => [cat];
+  List<Object?> get props => [order, currentStep, renderState];
 
-  Step2State copyWith(
+  BookingState copyWith(
+      {Order? order, int? currentStep, RenderState? renderState}) {
+    return BookingState(formKey1, formKey2, formKey3,
+        order: order ?? this.order,
+        currentStep: currentStep ?? this.currentStep,
+        renderState: renderState ?? this.renderState);
+  }
+
+  Order modifyOrder({
+    List<Addition>? additionsList,
+    DateTime? orderCheckIn,
+    DateTime? orderCheckOut,
+    String? orderAttention,
+    String? orderNote,
+    String? roomID,
+    int? subRoomNum,
+    int? eatingRank,
+    Cat? cat,
+  }) {
+    return Order.fromJson(
+      {
+        "date": order.date.toString(),
+        "checkin": (orderCheckIn != null)
+            ? orderCheckIn.toString()
+            : order.checkIn.toString(),
+        "checkout": (orderCheckOut != null)
+            ? orderCheckOut.toString()
+            : order.checkOut.toString(),
+        "incharge": "Nguyễn Tùng Dương",
+        "subroom_num": subRoomNum ?? order.subRoomNum,
+        "eating_rank": eatingRank ?? order.eatingRank,
+        "attention": orderAttention ?? order.attention,
+        "note": orderNote ?? order.note,
+        "bill_num": -1,
+        "is_out": 0,
+        "additions_list": jsonDecode(jsonEncode((additionsList != null)
+            ? List.generate(
+                additionsList.length, (index) => additionsList[index].toJson())
+            : List.generate(order.additionsList?.length ?? 0,
+                (index) => order.additionsList![index].toJson()))),
+        "room": roomID == null
+            ? order.room.toJson()
+            : GetIt.I<InternalStorage>()
+                .read("roomGroupsList")
+                .firstWhere((element) => element.room.id == roomID)
+                .room
+                .toJson(),
+        "cat": cat == null ? order.cat.toJson() : cat.toJson()
+      },
+    );
+  }
+
+  Cat modifyCat(
       {String? catName,
       String? catWeightRank,
       int? catAge,
@@ -128,173 +171,109 @@ class Step2State extends Equatable {
       int? catVaccination,
       Uint8List? catImage,
       Owner? owner}) {
-    return Step2State(
-        formKey2,
-        Cat.fromJson({
-          "cat_weight_rank": catWeightRank ?? cat.weightRank,
-          "cat_name": catName ?? cat.name,
-          "cat_age": catAge ?? cat.age,
-          "cat_physical_condition":
-              catPhysicalCondition ?? cat.physicalCondition,
-          "cat_sterilization": catSterilization ?? cat.sterilization,
-          "cat_vaccination": catVaccination ?? cat.vaccination,
-          "cat_appearance": catAppearance ?? cat.appearance,
-          "cat_gender": catGender ?? cat.gender,
-          "cat_image": (catImage == null)
-              ? ((cat.image == null) ? null : base64Encode(cat.image!))
-              : base64Encode(catImage),
-          "cat_species": catSpecies ?? cat.species,
-          "cat_weight": catWeight ?? cat.weight,
-        }, Owner.empty()));
+    return Cat.fromJson({
+      "weight_rank": catWeightRank ?? order.cat.weightRank,
+      "name": catName ?? order.cat.name,
+      "age": catAge ?? order.cat.age,
+      "physical_condition": catPhysicalCondition ?? order.cat.physicalCondition,
+      "sterilization": catSterilization ?? order.cat.sterilization,
+      "vaccination": catVaccination ?? order.cat.vaccination,
+      "appearance": catAppearance ?? order.cat.appearance,
+      "gender": catGender ?? order.cat.gender,
+      "image": (catImage == null)
+          ? ((order.cat.image == null) ? null : base64Encode(order.cat.image!))
+          : base64Encode(catImage),
+      "species": catSpecies ?? order.cat.species,
+      "weight": catWeight ?? order.cat.weight,
+      "owner": owner == null ? order.cat.owner.toJson() : owner.toJson()
+    });
   }
-}
 
-class Step3State extends Equatable {
-  final GlobalKey<FormState> formKey3;
-  final Order order;
-
-  const Step3State(this.formKey3, this.order);
-
-  @override
-  List<Object?> get props => [order];
-  Future<Step3State> copyWith(
-      {List<Addition>? additionsList,
-      DateTime? orderCheckIn,
-      DateTime? orderCheckOut,
-      String? orderAttention,
-      String? orderNote,
-      String? roomID,
-      int? subRoomNum,
-      int? eatingRank}) async {
-    return Step3State(
-        formKey3,
-        Order.fromJson(
-            {
-              "order_date": DateTime.now().toString(),
-              "order_checkin": (orderCheckIn != null)
-                  ? orderCheckIn.toString()
-                  : order.checkIn.toString(),
-              "order_checkout": (orderCheckOut != null)
-                  ? orderCheckOut.toString()
-                  : order.checkOut.toString(),
-              "order_incharge":
-                  (await SharedPreferences.getInstance()).getString("name"),
-              "order_subroom_num": subRoomNum ?? order.subRoomNum,
-              "order_eating_rank": eatingRank ?? order.eatingRank,
-              "order_attention": orderAttention ?? order.attention,
-              "order_note": orderNote ?? order.note,
-              "additionsList": additionsList ?? order.additionsList
-            },
-            roomID == null
-                ? order.room
-                : await CalendarRelatedWorkProvider(
-                        currentMonth: DateTime.now(), today: DateTime.now())
-                    .getRoomFromID(roomID),
-            Cat.empty()));
-  }
-}
-
-class BookingState extends Equatable {
-  final Step1State step1State;
-  final Step2State step2State;
-  final Step3State step3State;
-  final RenderState renderState;
-  final int currentStep;
-
-  const BookingState(
-      {required this.step1State,
-      required this.step2State,
-      required this.step3State,
-      required this.currentStep,
-      required this.renderState});
-
-  @override
-  List<Object?> get props =>
-      [step1State, step2State, step3State, currentStep, renderState];
-
-  BookingState copyWith(
-      {Step1State? step1State,
-      Step2State? step2State,
-      Step3State? step3State,
-      int? currentStep,
-      RenderState? renderState}) {
-    return BookingState(
-        step1State: step1State ?? this.step1State,
-        step2State: step2State ?? this.step2State,
-        step3State: step3State ?? this.step3State,
-        currentStep: currentStep ?? this.currentStep,
-        renderState: renderState ?? this.renderState);
+  Owner modifyOwner(
+      {String? ownerName, String? ownerGender, String? ownerTel}) {
+    return Owner.fromJson({
+      "name": ownerName ?? order.cat.owner.name,
+      "gender": ownerGender ?? order.cat.owner.gender,
+      "tel": ownerTel ?? order.cat.owner.tel
+    });
   }
 }
 
 class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
   BookingPageBloc()
-      : super(BookingState(
-            step1State: Step1State(GlobalKey<FormState>(), Owner.empty()),
-            step2State: Step2State(GlobalKey<FormState>(), Cat.empty()),
-            step3State: Step3State(GlobalKey<FormState>(), Order.empty()),
+      : super(BookingState(GlobalKey<FormState>(), GlobalKey<FormState>(),
+            GlobalKey<FormState>(),
+            order: Order.empty(),
             currentStep: 0,
             renderState: RenderState.waiting)) {
+    GetIt.I<InternalStorage>().expose("servicesList")?.listen((data) {
+      if (data == null) add(RefreshEvent());
+    });
     on<RequireDataEvent>((event, emit) async {
       await ServiceRelatedWorkProvider.getServicesList();
       emit(state.copyWith(renderState: RenderState.rendering));
     });
     on<NextStepEvent>((event, emit) async {
       if (state.currentStep == 0) {
-        if (state.step1State.formKey1.currentState?.validate() != true) return;
-        state.step1State.formKey1.currentState?.save();
+        if (state.formKey1.currentState?.validate() != true) return;
+        state.formKey1.currentState?.save();
         emit(state.copyWith(currentStep: 1));
       } else if (state.currentStep == 1) {
-        if (state.step2State.formKey2.currentState?.validate() != true) return;
-        state.step2State.formKey2.currentState?.save();
+        if (state.formKey2.currentState?.validate() != true) return;
+        state.formKey2.currentState?.save();
         emit(state.copyWith(currentStep: 2));
       } else if (state.currentStep == 2) {
-        if (state.step3State.formKey3.currentState?.validate() != true) return;
-        state.step3State.formKey3.currentState?.save();
-        add(DataSubmittedEvent());
+        if (state.formKey3.currentState?.validate() != true) return;
+        state.formKey3.currentState?.save();
+        add(SubmitDataEvent(event.context));
       }
     });
     on<BackStepEvent>((event, emit) {
       if (state.currentStep == 1) {
-        state.step2State.formKey2.currentState?.save();
+        state.formKey2.currentState?.save();
         emit(state.copyWith(currentStep: 0));
       } else if (state.currentStep == 2) {
-        state.step3State.formKey3.currentState?.save();
+        state.formKey3.currentState?.save();
         emit(state.copyWith(currentStep: 1));
       }
     });
     on<PickImageEvent>((event, emit) async {
       emit(state.copyWith(
-          step2State: state.step2State.copyWith(catImage: event.bytes)));
+          order:
+              state.modifyOrder(cat: state.modifyCat(catImage: event.bytes))));
     });
     on<CompleteRenderEvent>((event, emit) {
       emit(state.copyWith(renderState: RenderState.completed));
     });
     on<ChangeStep1StateEvent>((event, emit) {
       emit(state.copyWith(
-          step1State: state.step1State.copyWith(
-              ownerName: event.name,
-              ownerGender: event.gender,
-              ownerTel: event.tel)));
+          order: state.modifyOrder(
+              cat: state.modifyCat(
+                  owner: state.modifyOwner(
+                      ownerName: event.name,
+                      ownerGender: event.gender,
+                      ownerTel: event.tel)))));
     });
     on<ChangeStep2StateEvent>((event, emit) {
       emit(state.copyWith(
-          step2State: state.step2State.copyWith(
-              catAge: event.age,
-              catName: event.name,
-              catAppearance: event.appearance,
-              catGender: event.gender,
-              catImage: event.image,
-              catPhysicalCondition: event.physicalCondition,
-              catSpecies: event.species,
-              catSterilization: event.sterilization,
-              catVaccination: event.vaccination,
-              catWeight: event.weight,
-              catWeightRank: event.weightRank)));
+        order: state.modifyOrder(
+            cat: state.modifyCat(
+                catAge: event.age,
+                catName: event.name,
+                catAppearance: event.appearance,
+                catGender: event.gender,
+                catImage: event.image,
+                catPhysicalCondition: event.physicalCondition,
+                catSpecies: event.species,
+                catSterilization: event.sterilization,
+                catVaccination: event.vaccination,
+                catWeight: event.weight,
+                catWeightRank: event.weightRank)),
+      ));
     });
     on<ChangeStep3StateEvent>((event, emit) async {
       emit(state.copyWith(
-          step3State: await state.step3State.copyWith(
+          order: state.modifyOrder(
               additionsList: event.additionsList,
               orderAttention: event.attention,
               orderCheckIn: event.checkIn,
@@ -304,13 +283,27 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
               roomID: event.roomID,
               subRoomNum: event.subRoomNum)));
     });
-    on<DataSubmittedEvent>((event, emit) async {
-      int ownerID = await BookingRelatedWorkProvider.sendOwnerInfo(
-          state.step1State.owner);
-      int catID = await BookingRelatedWorkProvider.sendCatInfo(
-          state.step2State.cat, ownerID);
-      print(await BookingRelatedWorkProvider.sendOrderInfo(
-          state.step3State.order, catID));
+    on<SubmitDataEvent>((event, emit) async {
+      bool isSuccessed = false;
+      await BookingRelatedWorkProvider.sendOrderInfo(state.order)
+          .then((res) async {
+        if (jsonDecode(res.body)["errors"].length == 0) {
+          NoticeDialog.showMessageDialog(event.context,
+              text: "Đặt phòng thành công.");
+          isSuccessed = true;
+        } else {
+          NoticeDialog.showErrDialog(event.context,
+              errList: jsonDecode(res.body)["errors"],
+              firstText: "Đặt phòng thất bại.");
+        }
+      });
+      if (isSuccessed) CalendarRelatedWorkProvider.clearRoomGroupsList();
+    });
+    on<RefreshEvent>((event, emit) {
+      emit(state.copyWith(
+          order: Order.empty(),
+          currentStep: 0,
+          renderState: RenderState.waiting));
     });
   }
 

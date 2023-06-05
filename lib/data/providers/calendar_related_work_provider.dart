@@ -2,14 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../model/AdditionModel.dart';
-import '../../model/CatModel.dart';
-import '../../model/OrderModel.dart';
-import '../../model/OwnerModel.dart';
-import '../../model/RoomGroupModel.dart';
-import '../../model/RoomModel.dart';
-import '../../utils/PairUtils.dart';
+import '../../model/order_model.dart';
+import '../../model/room_group_model.dart';
+import '../../model/room_model.dart';
 import '../dependencies/internal_storage.dart';
+import '../types/pair.dart';
 import 'room_related_work_provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -53,6 +50,15 @@ class CalendarRelatedWorkProvider {
       bool roundedOut = !isInCurrentMonth(ordersList[i].checkOut);
 
       for (int k = startIndex; k <= endIndex; k++) {
+        if (startIndex == endIndex) {
+          if (earlyIn || roundedIn) {
+            list[ordersList[i].subRoomNum - 1][k].first = i;
+          }
+          if (lateOut || roundedOut) {
+            list[ordersList[i].subRoomNum - 1][k].second = i;
+          }
+          continue;
+        }
         if (earlyIn && k == startIndex) {
           list[ordersList[i].subRoomNum - 1][k].first = i;
         }
@@ -75,100 +81,30 @@ class CalendarRelatedWorkProvider {
     return list;
   }
 
-  Future<Room> getRoomFromID(String rid) async {
-    return await http
-        .post(Uri.http("localhost", "php-crash/getRoomFromID.php"), body: {
-      "sessionID":
-          (await SharedPreferences.getInstance()).getString("sessionID"),
-      "roomID": rid,
-    }).then((res) {
-      if (jsonDecode(res.body)["status"] == "successed") {
-        return Room.fromJson(jsonDecode(jsonDecode(res.body)["result"]));
-      }
-      return Room.empty();
-    });
-  }
-
-  Future<Owner> getOwnerFromID(int oid) async {
-    return await http
-        .post(Uri.http("localhost", "php-crash/getOwnerFromID.php"), body: {
-      "sessionID":
-          (await SharedPreferences.getInstance()).getString("sessionID"),
-      "ownerID": oid.toString(),
-    }).then((res) {
-      if (jsonDecode(res.body)["status"] == "successed") {
-        return Owner.fromJson(jsonDecode(jsonDecode(res.body)["result"]));
-      }
-      return Owner.empty();
-    });
-  }
-
-  Future<Cat> getCatFromID(int cid) async {
-    return await http
-        .post(Uri.http("localhost", "php-crash/getCatFromID.php"), body: {
-      "sessionID":
-          (await SharedPreferences.getInstance()).getString("sessionID"),
-      "catID": cid.toString(),
-    }).then((res) async {
-      if (jsonDecode(res.body)["status"] == "successed") {
-        return Cat.fromJson(
-            jsonDecode(jsonDecode(res.body)["result"]),
-            await getOwnerFromID(
-                jsonDecode(jsonDecode(res.body)["result"])["owner_id"]));
-      }
-      return Cat.empty();
-    });
-  }
-
   Future<List<Order>> getOrdersForOneRoom(Room room) async {
     var resList = await http.post(
-      Uri.http("localhost", "php-crash/getOrderInfo.php"),
+      Uri.http("localhost", "php-crash/order.php"),
       body: {
-        "sessionID":
-            (await SharedPreferences.getInstance()).getString("sessionID"),
-        "roomID": room.id,
-        "month": currentMonth.month.toString(),
-        "year": currentMonth.year.toString()
+        "session_id":
+            (await SharedPreferences.getInstance()).getString("session_id"),
+        "data": jsonEncode({
+          "room_id": room.id,
+          "time": jsonEncode(
+              {"month": currentMonth.month, "year": currentMonth.year})
+        })
       },
     ).then((res) {
-      if (jsonDecode(res.body)["status"] == "successed") {
-        return jsonDecode(jsonDecode(res.body)["result"]);
+      if (jsonDecode(res.body)["errors"].isEmpty) {
+        return jsonDecode(jsonDecode(res.body)["results"]);
       }
       return [];
     });
-    List<List<Addition>> additionsListForOneRoom = [];
+
+    List<Order> ans = [];
     for (int i = 0; i < resList.length; i++) {
-      List<dynamic> additionListForOneOrder = await http.post(
-        Uri.http("localhost", "php-crash/getAdditionInfo.php"),
-        body: {
-          "sessionID":
-              (await SharedPreferences.getInstance()).getString("sessionID"),
-          "orderID": resList[i]["order_id"].toString(),
-        },
-      ).then((res) {
-        if (jsonDecode(res.body)["status"] == "successed") {
-          return jsonDecode(jsonDecode(res.body)["result"]);
-        }
-        return [];
-      });
-      List<Addition> list = [];
-      for (var service in additionListForOneOrder) {
-        list.add(Addition.fromJson(service));
-      }
-      additionsListForOneRoom.add(list);
+      ans.add(Order.fromJson(resList[i]));
     }
-    List<Order> ordersListForOneRoom = [];
-    for (int i = 0; i < resList.length; i++) {
-      Cat cat = await getCatFromID(resList[i]["cat_id"]);
-      Room room = await getRoomFromID(resList[i]["room_id"]);
-      ordersListForOneRoom.add(Order.fromJson(
-          {}
-            ..addAll(resList[i])
-            ..addAll({"additionsList": additionsListForOneRoom[i]}),
-          room,
-          cat));
-    }
-    return ordersListForOneRoom;
+    return ans;
   }
 
   Future<void> getRoomGroups() async {
@@ -187,5 +123,9 @@ class CalendarRelatedWorkProvider {
       ]);
     }
     GetIt.I<InternalStorage>().write("roomGroupsList", roomGroupsList);
+  }
+
+  static void clearRoomGroupsList() {
+    GetIt.I<InternalStorage>().remove("roomGroupsList");
   }
 }

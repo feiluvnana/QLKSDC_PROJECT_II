@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import '../blocs/booking_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../data/enums/RenderState.dart';
-import '../model/RoomGroupModel.dart';
+import '../data/types/render_state.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';
@@ -73,7 +72,7 @@ class BookingPage extends StatelessWidget {
                     );
                   },
                   onStepContinue: () {
-                    context.read<BookingPageBloc>().add(NextStepEvent());
+                    context.read<BookingPageBloc>().add(NextStepEvent(context));
                   },
                   onStepCancel: () {
                     context.read<BookingPageBloc>().add(BackStepEvent());
@@ -124,12 +123,10 @@ class Form3 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BookingPageBloc, BookingState>(
-      buildWhen: (previous, current) =>
-          current.currentStep == 2 && previous.step3State != current.step3State,
+      buildWhen: (previous, current) => current.currentStep == 2,
       builder: (context, state) {
-        print(3);
         return Form(
-          key: state.step3State.formKey3,
+          key: state.formKey3,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -145,11 +142,15 @@ class Form3 extends StatelessWidget {
                         items: List.generate(
                             internalStorage.read("roomGroupsList").length,
                             (index) {
-                          RoomGroup roomGroup =
-                              internalStorage.read("roomGroupsList")[index];
                           return DropdownMenuItem(
-                              value: roomGroup.room.id,
-                              child: Text(roomGroup.room.id));
+                              value: internalStorage
+                                  .read("roomGroupsList")[index]
+                                  .room
+                                  .id,
+                              child: Text(internalStorage
+                                  .read("roomGroupsList")[index]
+                                  .room
+                                  .id));
                         }),
                         onChanged: (String? value) {
                           if (value != null) {
@@ -176,10 +177,10 @@ class Form3 extends StatelessWidget {
                           vertical: 10, horizontal: 16),
                       child: DropdownButtonFormField<int>(
                         isExpanded: true,
-                        items: state.step3State.order.subRoomNum == -1
+                        items: state.order.subRoomNum == -1
                             ? null
                             : List.generate(
-                                state.step3State.order.room.total,
+                                state.order.room.total,
                                 (index) => DropdownMenuItem(
                                     value: index + 1,
                                     child: Text("${index + 1}"))),
@@ -191,9 +192,9 @@ class Form3 extends StatelessWidget {
                               .add(ChangeStep3StateEvent(subRoomNum: value));
                         },
                         validator: Validators().notNullValidator,
-                        value: (state.step3State.order.subRoomNum == -1)
+                        value: (state.order.subRoomNum == -1)
                             ? null
-                            : state.step3State.order.subRoomNum,
+                            : state.order.subRoomNum,
                         hint: const Text("---"),
                         decoration: const InputDecoration(
                           errorMaxLines: 3,
@@ -242,8 +243,8 @@ class Form3 extends StatelessWidget {
                       child: DateTimePicker(
                         title: "Thời gian check-in",
                         validator: Validators(
-                                checkIn: state.step3State.order.checkIn,
-                                checkOut: state.step3State.order.checkOut)
+                                checkIn: state.order.checkIn,
+                                checkOut: state.order.checkOut)
                             .checkInValidator,
                         onChanged: (value) {
                           context
@@ -261,8 +262,8 @@ class Form3 extends StatelessWidget {
                       child: DateTimePicker(
                         title: "Thời gian check-out",
                         validator: Validators(
-                                checkIn: state.step3State.order.checkIn,
-                                checkOut: state.step3State.order.checkOut)
+                                checkIn: state.order.checkIn,
+                                checkOut: state.order.checkOut)
                             .checkOutValidator,
                         onChanged: (value) {
                           context
@@ -321,7 +322,7 @@ class Form3 extends StatelessWidget {
                 ],
               ),
               AdditionChooser(
-                  initialValue: state.step3State.order.additionsList,
+                  initialValue: state.order.additionsList,
                   onSaved: (value) {
                     context
                         .read<BookingPageBloc>()
@@ -347,7 +348,7 @@ class Form2 extends StatelessWidget {
         builder: (context, state) {
           print(2);
           return Form(
-            key: state.step2State.formKey2,
+            key: state.formKey2,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -506,8 +507,7 @@ class Form2 extends StatelessWidget {
                                 vertical: 10, horizontal: 16),
                             child: TextFormField(
                               validator: Validators(
-                                      weightRank:
-                                          state.step2State.cat.weightRank)
+                                      weightRank: state.order.cat.weightRank)
                                   .weightValidator,
                               onSaved: (value) {
                                 context.read<BookingPageBloc>().add(
@@ -657,7 +657,7 @@ class Form1 extends StatelessWidget {
       builder: (context, state) {
         print(1);
         return Form(
-          key: state.step1State.formKey1,
+          key: state.formKey1,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

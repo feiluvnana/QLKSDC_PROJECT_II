@@ -1,6 +1,6 @@
-import '../utils/PairUtils.dart';
-import 'OrderModel.dart';
-import 'RoomModel.dart';
+import '../data/types/pair.dart';
+import 'order_model.dart';
+import 'room_model.dart';
 
 class RoomGroup {
   Room room;

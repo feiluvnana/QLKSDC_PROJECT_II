@@ -6,24 +6,26 @@ import '../utils/validators/validators.dart';
 
 class LoginPage extends StatelessWidget {
   final loadingEntry = OverlayEntry(
-    builder: (context) => Container(
-      color: Colors.black54,
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      child: Align(
-        child: Container(
-            width: 200,
-            height: 200,
-            color: Colors.white,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator()),
-                Text("Đang xác thực...")
-              ],
-            )),
+    builder: (context) => Scaffold(
+      body: Container(
+        color: Colors.black54,
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: Align(
+          child: Container(
+              width: 200,
+              height: 200,
+              color: Colors.white,
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator()),
+                  Text("Đang xác thực...")
+                ],
+              )),
+        ),
       ),
     ),
   );
@@ -62,7 +64,6 @@ class LoginPage extends StatelessWidget {
                     }
                   },
                   builder: (context, state) {
-                    print("login");
                     return Container(
                       decoration: const BoxDecoration(
                         image: DecorationImage(

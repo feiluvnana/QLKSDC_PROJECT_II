@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:project_ii/data/providers/calendar_related_work_provider.dart';
 import 'package:project_ii/data/providers/service_related_work_provider.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../data/enums/RenderState.dart';
+import '../data/types/render_state.dart';
 
 abstract class CalendarPageEvent {}
 
@@ -22,7 +22,7 @@ class GuestListDayChangedEvent extends CalendarPageEvent {
 
 class RenderCompletedEvent extends CalendarPageEvent {}
 
-class DataNeededEvent extends CalendarPageEvent {}
+class RequireDataEvent extends CalendarPageEvent {}
 
 class GotoInformationPageEvent extends CalendarPageEvent {
   final int oidx, ridx;
@@ -30,6 +30,8 @@ class GotoInformationPageEvent extends CalendarPageEvent {
 
   GotoInformationPageEvent(this.oidx, this.ridx, this.context);
 }
+
+class RefreshEvent extends CalendarPageEvent {}
 
 class CalendarState extends Equatable {
   final DateTime currentMonth, today;
@@ -66,6 +68,9 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
                 DateTime.now().year, DateTime.now().month, DateTime.now().day),
             dayForGuestList: DateTime.now().day,
             state: RenderState.waiting)) {
+    GetIt.I<InternalStorage>().expose("roomGroupsList")?.listen((data) {
+      if (data == null) add(RefreshEvent());
+    });
     on<MonthIncreasedEvent>((event, emit) {
       if (state.state != RenderState.completed) return;
       DateTime newMonth;
@@ -95,7 +100,7 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
     on<RenderCompletedEvent>(
       (event, emit) => emit(state.copyWith(state: RenderState.completed)),
     );
-    on<DataNeededEvent>((event, emit) async {
+    on<RequireDataEvent>((event, emit) async {
       await CalendarRelatedWorkProvider(
               currentMonth: state.currentMonth, today: state.today)
           .getRoomGroups();
@@ -107,7 +112,10 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
         await ServiceRelatedWorkProvider.getServicesList();
       }
       // ignore: use_build_context_synchronously
-      event.context.go("/info?rid=${event.ridx}&oid=${event.oidx}");
+      event.context.push("/info?ridx=${event.ridx}&oidx=${event.oidx}");
+    });
+    on<RefreshEvent>((event, emit) {
+      emit(state.copyWith(state: RenderState.waiting));
     });
   }
 

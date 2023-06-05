@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import '../blocs/calendar_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../data/enums/RenderState.dart';
-import '../model/RoomGroupModel.dart';
-import '../utils/PairUtils.dart';
+import '../data/types/pair.dart';
+import '../data/types/render_state.dart';
+import '../model/room_group_model.dart';
 import '../data/generators/excel_generator.dart';
 
 class CalendarPage extends StatelessWidget with ExcelGenerator {
@@ -32,7 +31,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
-                          child: const FaIcon(FontAwesomeIcons.arrowLeft),
+                          child: const Icon(Icons.keyboard_arrow_left),
                           onTap: () => context
                               .read<CalendarPageBloc>()
                               .add(MonthDecreasedEvent())),
@@ -43,7 +42,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                             DateFormat("MM/yyyy").format(state.currentMonth)),
                       ),
                       GestureDetector(
-                        child: const FaIcon(FontAwesomeIcons.arrowRight),
+                        child: const Icon(Icons.keyboard_arrow_right),
                         onTap: () => context
                             .read<CalendarPageBloc>()
                             .add(MonthIncreasedEvent()),
@@ -71,7 +70,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                           child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FaIcon(FontAwesomeIcons.download, size: 14),
+                                Icon(Icons.download, size: 14),
                                 Text(" Xuất danh sách")
                               ])),
                       BlocBuilder<CalendarPageBloc, CalendarState>(
@@ -164,39 +163,38 @@ class BookingInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<CalendarPageBloc, CalendarState>(
-        listener: (context, state) {},
+    return BlocBuilder<CalendarPageBloc, CalendarState>(
         builder: (context, state) {
-          if (state.state == RenderState.waiting) {
-            BlocProvider.of<CalendarPageBloc>(context).add(DataNeededEvent());
-            return const Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                  Text('Đang tải...'),
-                ],
+      if (state.state == RenderState.waiting) {
+        BlocProvider.of<CalendarPageBloc>(context).add(RequireDataEvent());
+        return const Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
               ),
-            );
-          }
-          Future.delayed(
-              const Duration(milliseconds: 100),
-              () => BlocProvider.of<CalendarPageBloc>(context)
-                  .add(RenderCompletedEvent()));
-          List<RoomGroup> roomGroup =
-              GetIt.I<InternalStorage>().read("roomGroupsList");
-          return SingleChildScrollView(
-            primary: true,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                    roomGroup.length, (rid) => DisplayTable(rid: rid))),
-          );
-        });
+              Text('Đang tải...'),
+            ],
+          ),
+        );
+      }
+      Future.delayed(
+          Duration.zero,
+          () => BlocProvider.of<CalendarPageBloc>(context)
+              .add(RenderCompletedEvent()));
+
+      return SingleChildScrollView(
+        primary: true,
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(
+                GetIt.I<InternalStorage>().read("roomGroupsList").length,
+                (rid) => DisplayTable(rid: rid))),
+      );
+    });
   }
 }
 
@@ -314,7 +312,7 @@ class Cell extends StatelessWidget {
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
-                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
+                  "${GetIt.I<InternalStorage>().read("roomGroupsList")[rid].room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
               child: Container(
                 margin: (isTheBeginningOfABooking(days, rid, index, oid))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)
@@ -421,7 +419,7 @@ class HalfCell extends StatelessWidget {
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
               message:
-                  "${roomGroup.room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
+                  "${GetIt.I<InternalStorage>().read("roomGroupsList")[rid].room.getRoomDataToString()}\n${roomGroup.ordersList[oid].getBookingInfoToString()}",
               child: Container(
                 margin: (isTheBeginningOfABooking(days, rid, index, oid))
                     ? const EdgeInsets.only(left: 1, top: 1, bottom: 1)

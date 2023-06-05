@@ -3,23 +3,27 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:project_ii/blocs/information_page_bloc.dart';
+import 'package:project_ii/blocs/info_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../model/RoomGroupModel.dart';
+import '../model/room_group_model.dart';
 import '../data/generators/excel_generator.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';
 import '../utils/validators/validators.dart';
 
-class InformationPage extends StatelessWidget with ExcelGenerator {
+class InfoPage extends StatelessWidget {
   final int ridx, oidx;
-  const InformationPage({super.key, required this.ridx, required this.oidx});
+  const InfoPage({
+    super.key,
+    required this.ridx,
+    required this.oidx,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<InformationPageBloc>(
-      create: (context) => InformationPageBloc(ridx, oidx),
+    return BlocProvider<InfoPageBloc>(
+      create: (context) => InfoPageBloc(ridx, oidx),
       child: Scaffold(
         body: SingleChildScrollView(
           primary: true,
@@ -36,17 +40,19 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
                   child: Builder(builder: (_) {
                     return ElevatedButton(
                         onPressed: () =>
-                            _.read<InformationPageBloc>().add(GotoHomePage(_)),
+                            _.read<InfoPageBloc>().add(GotoHomePage(_)),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            FaIcon(FontAwesomeIcons.arrowLeft, size: 14),
+                            Icon(Icons.arrow_back, size: 14),
                             Text(" Quay lại")
                           ],
                         ));
                   }),
                 ),
                 const SizedBox(height: 10),
+                const StatusInfo(),
+                const SizedBox(height: 50),
                 const CatInfo(),
                 const SizedBox(height: 50),
                 const OwnerInfo(),
@@ -65,14 +71,12 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
                               foregroundColor: Colors.black,
                             ),
                             onPressed: () {
-                              _
-                                  .read<InformationPageBloc>()
-                                  .add(SaveChangesEvent());
+                              _.read<InfoPageBloc>().add(SaveChangesEvent(_));
                             },
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
+                                Icon(Icons.save, size: 14),
                                 Text(" Lưu thay đổi")
                               ],
                             ),
@@ -89,15 +93,13 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
                               backgroundColor: const Color(0xfffaf884),
                               foregroundColor: Colors.black,
                             ),
-                            onPressed: () {
-                              _
-                                  .read<InformationPageBloc>()
-                                  .add(CheckoutEvent());
+                            onPressed: () async {
+                              _.read<InfoPageBloc>().add(CheckoutEvent(_));
                             },
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FaIcon(FontAwesomeIcons.moneyBill, size: 14),
+                                Icon(Icons.receipt, size: 14),
                                 Text(" Check-out")
                               ],
                             ),
@@ -115,14 +117,12 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
                               foregroundColor: Colors.black,
                             ),
                             onPressed: () {
-                              _
-                                  .read<InformationPageBloc>()
-                                  .add(CancelOrderEvent());
+                              _.read<InfoPageBloc>().add(CancelOrderEvent(_));
                             },
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FaIcon(FontAwesomeIcons.ban, size: 14),
+                                Icon(Icons.cancel, size: 14),
                                 Text(" Hủy đặt phòng")
                               ],
                             ),
@@ -141,12 +141,95 @@ class InformationPage extends StatelessWidget with ExcelGenerator {
   }
 }
 
+class StatusInfo extends StatelessWidget {
+  const StatusInfo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<InfoPageBloc, InformationState>(
+        builder: (context, state) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "Thông tin trạng thái ",
+            style: TextStyle(
+              color: Color(0xff3d426b),
+              fontSize: 28,
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xff68b6ef), width: 1)),
+            child: Table(
+              columnWidths: const {
+                0: FlexColumnWidth(3),
+                1: FlexColumnWidth(20)
+              },
+              border: const TableBorder(
+                  verticalInside: BorderSide(
+                      width: 1,
+                      color: Color(0xff68b6ef),
+                      style: BorderStyle.solid)),
+              children: [
+                TableRow(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text("Tình trạng check-out"),
+                    ),
+                    Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: (state.order.isOut)
+                            ? const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                    Icon(
+                                      Icons.check,
+                                      color: Colors.green,
+                                    ),
+                                    Text("Đã check-out")
+                                  ])
+                            : const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                    Icon(
+                                      Icons.close,
+                                      color: Colors.red,
+                                    ),
+                                    Text("Chưa check-out")
+                                  ]))
+                  ],
+                ),
+                TableRow(
+                  decoration: const BoxDecoration(color: Color(0xffe3f2fd)),
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Số lần đã xuất hoá đơn"),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(state.order.billNum.toString()),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          )
+        ],
+      );
+    });
+  }
+}
+
 class CatInfo extends StatelessWidget {
   const CatInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<InformationPageBloc, InformationState>(
+    return BlocBuilder<InfoPageBloc, InformationState>(
       buildWhen: (previous, current) =>
           previous.isEditing1 != current.isEditing1,
       builder: (context, state) {
@@ -168,14 +251,10 @@ class CatInfo extends StatelessWidget {
                   ),
                   InkWell(
                     onTap: () => context
-                        .read<InformationPageBloc>()
+                        .read<InfoPageBloc>()
                         .add(ToggleModifyCatEvent()),
-                    child: FaIcon(
-                        (state.isEditing1)
-                            ? FontAwesomeIcons.xmark
-                            : FontAwesomeIcons.penToSquare,
-                        size: 28,
-                        color: const Color(0xff68b6ef)),
+                    child: Icon((state.isEditing1) ? Icons.close : Icons.edit,
+                        size: 28, color: const Color(0xff68b6ef)),
                   ),
                 ],
               ),
@@ -207,7 +286,7 @@ class CatInfo extends StatelessWidget {
                                   initialValue: state.modifiedOrder.cat.name,
                                   onChanged: (value) {
                                     context
-                                        .read<InformationPageBloc>()
+                                        .read<InfoPageBloc>()
                                         .add(ModifyCatEvent(name: value));
                                   },
                                   validator: Validators().nameValidator,
@@ -236,7 +315,7 @@ class CatInfo extends StatelessWidget {
                                       height: 420,
                                       onChanged: (value) {
                                         context
-                                            .read<InformationPageBloc>()
+                                            .read<InfoPageBloc>()
                                             .add(ModifyCatEvent(image: value));
                                       },
                                       initialWidget: (state
@@ -278,7 +357,7 @@ class CatInfo extends StatelessWidget {
                                   ],
                                   onChanged: (String? value) {
                                     context
-                                        .read<InformationPageBloc>()
+                                        .read<InfoPageBloc>()
                                         .add(ModifyCatEvent(gender: value));
                                   },
                                   value: state.modifiedOrder.cat.gender,
@@ -306,7 +385,7 @@ class CatInfo extends StatelessWidget {
                                   initialValue:
                                       state.modifiedOrder.cat.age.toString(),
                                   onChanged: (value) {
-                                    context.read<InformationPageBloc>().add(
+                                    context.read<InfoPageBloc>().add(
                                         ModifyCatEvent(
                                             age: int.tryParse(value)));
                                   },
@@ -340,7 +419,7 @@ class CatInfo extends StatelessWidget {
                                           .multilineTextCanNotNullValidator,
                                       maxLines: null,
                                       onChanged: (value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyCatEvent(
                                                 physicalCondition: value));
                                       },
@@ -378,7 +457,7 @@ class CatInfo extends StatelessWidget {
                                         ),
                                       ],
                                       onChanged: (int? value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyCatEvent(vaccination: value));
                                       },
                                       value:
@@ -409,7 +488,7 @@ class CatInfo extends StatelessWidget {
                                       ),
                                     ],
                                     onChanged: (value) {
-                                      context.read<InformationPageBloc>().add(
+                                      context.read<InfoPageBloc>().add(
                                           ModifyCatEvent(sterilization: value));
                                     },
                                     value:
@@ -455,9 +534,10 @@ class CatInfo extends StatelessWidget {
                                   initialValue: state.modifiedOrder.cat.species,
                                   validator: Validators().speciesValidator,
                                   onChanged: (value) {
-                                    context
-                                        .read<InformationPageBloc>()
-                                        .add(ModifyCatEvent(species: value));
+                                    context.read<InfoPageBloc>().add(
+                                        ModifyCatEvent(
+                                            species:
+                                                value == "" ? null : value));
                                   },
                                   decoration: const InputDecoration(
                                     labelText: "Giống mèo",
@@ -487,7 +567,7 @@ class CatInfo extends StatelessWidget {
                                           .multilineTextCanNullValidator,
                                       maxLines: null,
                                       onChanged: (value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyCatEvent(appearance: value));
                                       },
                                       decoration: const InputDecoration(
@@ -518,7 +598,7 @@ class CatInfo extends StatelessWidget {
                                         ),
                                       ],
                                       onChanged: (String? value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyCatEvent(weightRank: value));
                                       },
                                       value: state.modifiedOrder.cat.weightRank,
@@ -542,7 +622,7 @@ class CatInfo extends StatelessWidget {
                                                 .modifiedOrder.cat.weightRank)
                                         .weightValidator,
                                     onChanged: (value) {
-                                      context.read<InformationPageBloc>().add(
+                                      context.read<InfoPageBloc>().add(
                                           ModifyCatEvent(
                                               weight: double.tryParse(value)));
                                     },
@@ -588,7 +668,7 @@ class OwnerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<InformationPageBloc, InformationState>(
+    return BlocBuilder<InfoPageBloc, InformationState>(
       builder: (context, state) {
         return Form(
           key: state.formKey2,
@@ -608,14 +688,10 @@ class OwnerInfo extends StatelessWidget {
                   ),
                   InkWell(
                     onTap: () => context
-                        .read<InformationPageBloc>()
+                        .read<InfoPageBloc>()
                         .add(ToggleModifyOwnerEvent()),
-                    child: FaIcon(
-                        (state.isEditing2)
-                            ? FontAwesomeIcons.xmark
-                            : FontAwesomeIcons.penToSquare,
-                        size: 28,
-                        color: const Color(0xff68b6ef)),
+                    child: Icon((state.isEditing2) ? Icons.close : Icons.edit,
+                        size: 28, color: const Color(0xff68b6ef)),
                   ),
                 ],
               ),
@@ -661,7 +737,7 @@ class OwnerInfo extends StatelessWidget {
                                     value: state.modifiedOrder.cat.owner.gender,
                                     onChanged: (value) {
                                       context
-                                          .read<InformationPageBloc>()
+                                          .read<InfoPageBloc>()
                                           .add(ModifyOwnerEvent(gender: value));
                                     },
                                     hint: const Text("---"),
@@ -680,7 +756,7 @@ class OwnerInfo extends StatelessWidget {
                                       validator: Validators().nameValidator,
                                       onChanged: (value) {
                                         context
-                                            .read<InformationPageBloc>()
+                                            .read<InfoPageBloc>()
                                             .add(ModifyOwnerEvent(name: value));
                                       },
                                       decoration: const InputDecoration(
@@ -716,7 +792,7 @@ class OwnerInfo extends StatelessWidget {
                                   validator: Validators().telValidator,
                                   onChanged: (value) {
                                     context
-                                        .read<InformationPageBloc>()
+                                        .read<InfoPageBloc>()
                                         .add(ModifyOwnerEvent(tel: value));
                                   },
                                   decoration: const InputDecoration(
@@ -745,7 +821,7 @@ class OrderInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var internalStorage = GetIt.I<InternalStorage>();
-    return BlocBuilder<InformationPageBloc, InformationState>(
+    return BlocBuilder<InfoPageBloc, InformationState>(
         builder: (context, state) {
       return Form(
         key: state.formKey3,
@@ -765,14 +841,10 @@ class OrderInfo extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () => context
-                      .read<InformationPageBloc>()
+                      .read<InfoPageBloc>()
                       .add(ToggleModifyOrderEvent()),
-                  child: FaIcon(
-                      (state.isEditing3)
-                          ? FontAwesomeIcons.xmark
-                          : FontAwesomeIcons.penToSquare,
-                      size: 28,
-                      color: const Color(0xff68b6ef)),
+                  child: Icon((state.isEditing3) ? Icons.close : Icons.edit,
+                      size: 28, color: const Color(0xff68b6ef)),
                 ),
               ],
             ),
@@ -809,14 +881,15 @@ class OrderInfo extends StatelessWidget {
                                           internalStorage
                                               .read("roomGroupsList")
                                               .length, (index) {
-                                        RoomGroup roomGroup = internalStorage
-                                            .read("roomGroupsList")[index];
+                                        RoomGroup roomGroup =
+                                            GetIt.I<InternalStorage>()
+                                                .read("roomGroupsList")[index];
                                         return DropdownMenuItem(
                                             value: roomGroup.room.id,
                                             child: Text(roomGroup.room.id));
                                       }),
                                       onChanged: (String? value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyOrderEvent(roomID: value));
                                       },
                                       validator: Validators().notNullValidator,
@@ -844,7 +917,7 @@ class OrderInfo extends StatelessWidget {
                                                   value: index + 1,
                                                   child: Text("${index + 1}"))),
                                       onChanged: (value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyOrderEvent(
                                                 subRoomNum: value));
                                       },
@@ -905,7 +978,7 @@ class OrderInfo extends StatelessWidget {
                                 ),
                                 onChanged: (int? value) {
                                   context
-                                      .read<InformationPageBloc>()
+                                      .read<InfoPageBloc>()
                                       .add(ModifyOrderEvent(eatingRank: value));
                                 },
                                 validator: Validators().notNullValidator,
@@ -946,10 +1019,8 @@ class OrderInfo extends StatelessWidget {
                                                     .modifiedOrder.checkOut)
                                             .checkInValidator,
                                         onChanged: (value) {
-                                          context
-                                              .read<InformationPageBloc>()
-                                              .add(ModifyOrderEvent(
-                                                  checkIn: value));
+                                          context.read<InfoPageBloc>().add(
+                                              ModifyOrderEvent(checkIn: value));
                                         },
                                       ),
                                     ),
@@ -968,7 +1039,7 @@ class OrderInfo extends StatelessWidget {
                                                   state.modifiedOrder.checkOut)
                                           .checkOutValidator,
                                       onChanged: (value) {
-                                        context.read<InformationPageBloc>().add(
+                                        context.read<InfoPageBloc>().add(
                                             ModifyOrderEvent(checkOut: value));
                                       },
                                     ),
@@ -1049,7 +1120,7 @@ class OrderInfo extends StatelessWidget {
                                     Validators().multilineTextCanNullValidator,
                                 onChanged: (value) {
                                   context
-                                      .read<InformationPageBloc>()
+                                      .read<InfoPageBloc>()
                                       .add(ModifyOrderEvent(attention: value));
                                 },
                                 maxLines: null,
@@ -1079,7 +1150,7 @@ class OrderInfo extends StatelessWidget {
                                     Validators().multilineTextCanNullValidator,
                                 onChanged: (value) {
                                   context
-                                      .read<InformationPageBloc>()
+                                      .read<InfoPageBloc>()
                                       .add(ModifyOrderEvent(note: value));
                                 },
                                 maxLines: null,
@@ -1150,10 +1221,16 @@ class OrderInfo extends StatelessWidget {
                                         children: [
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
-                                            child: Text(state
-                                                .order
-                                                .additionsList![index]
-                                                .serviceName),
+                                            child: Text(GetIt.I<
+                                                    InternalStorage>()
+                                                .read("servicesList")
+                                                .firstWhere((element) =>
+                                                    state
+                                                        .order
+                                                        .additionsList![index]
+                                                        .serviceID ==
+                                                    element.id)
+                                                .name),
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
@@ -1162,10 +1239,16 @@ class OrderInfo extends StatelessWidget {
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
-                                            child: Text(state
-                                                .order
-                                                .additionsList![index]
-                                                .servicePrice
+                                            child: Text(GetIt.I<
+                                                    InternalStorage>()
+                                                .read("servicesList")
+                                                .firstWhere((element) =>
+                                                    state
+                                                        .order
+                                                        .additionsList![index]
+                                                        .serviceID ==
+                                                    element.id)
+                                                .price
                                                 .toInt()
                                                 .toString()),
                                           ),
@@ -1178,7 +1261,7 @@ class OrderInfo extends StatelessWidget {
                                   initialValue:
                                       state.modifiedOrder.additionsList,
                                   onChanged: (value) {
-                                    context.read<InformationPageBloc>().add(
+                                    context.read<InfoPageBloc>().add(
                                         ModifyOrderEvent(additionsList: value));
                                   }),
                         ),

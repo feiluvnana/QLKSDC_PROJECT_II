@@ -1,6 +1,10 @@
+// ignore_for_file: use_build_context_synchronously, depend_on_referenced_packages, avoid_web_libraries_in_flutter
+
 import 'dart:async';
 import 'dart:convert';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_api_headers/google_api_headers.dart';
@@ -11,46 +15,89 @@ import 'dart:html' as html;
 class LocationPicker extends StatelessWidget {
   final void Function(String?)? onSaved, onChanged;
   final String? initialValue;
+
   const LocationPicker(
       {super.key, this.onSaved, this.onChanged, this.initialValue});
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      onSaved: onSaved,
-      onChanged: onChanged,
-      initialValue: initialValue,
-      decoration: InputDecoration(
-          label: const Text("Thông tin vị trí"),
-          border: const OutlineInputBorder(),
-          suffix: FittedBox(
-              child: InkWell(
-                  onTap: () async {
-                    await showDialog(
-                        context: context,
-                        builder: (context) => SizedBox.expand(
-                            child: Center(
-                                child: SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2,
-                                    height:
-                                        MediaQuery.of(context).size.height / 2,
-                                    child: const MyGoogleMaps()))),
-                        barrierDismissible: false);
-                  },
-                  child: const FaIcon(FontAwesomeIcons.map)))),
+    return BlocProvider(
+      create: (context) => _LocationPickerBloc(initialValue),
+      child: BlocBuilder<_LocationPickerBloc, _LocationState>(
+          builder: (context, state) {
+        return TextFormField(
+          onSaved: onSaved,
+          onChanged: onChanged,
+          controller: state.controller,
+          decoration: InputDecoration(
+              label: const Text("Thông tin vị trí"),
+              border: const OutlineInputBorder(),
+              suffix: FittedBox(
+                  child: InkWell(
+                      onTap: () async {
+                        String? str = await showDialog<String>(
+                            context: context,
+                            builder: (context) => SizedBox.expand(
+                                child: Center(
+                                    child: SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width /
+                                                2,
+                                        height:
+                                            MediaQuery.of(context).size.height /
+                                                2,
+                                        child: const _MyGoogleMaps()))),
+                            barrierDismissible: false);
+                        context
+                            .read<_LocationPickerBloc>()
+                            .add(_ChangeTextEvent(str));
+                      },
+                      child: const Icon(Icons.map)))),
+        );
+      }),
     );
   }
 }
 
-class MyGoogleMaps extends StatefulWidget {
-  const MyGoogleMaps({super.key});
+abstract class _LocationPickerEvent {}
 
-  @override
-  State<MyGoogleMaps> createState() => _MyGoogleMapsState();
+class _ChangeTextEvent extends _LocationPickerEvent {
+  final String? text;
+  _ChangeTextEvent(this.text);
 }
 
-class _MyGoogleMapsState extends State<MyGoogleMaps> {
+class _LocationState extends Equatable {
+  final TextEditingController controller;
+  final String text;
+  @override
+  List<Object?> get props => [text];
+
+  _LocationState(this.controller, this.text) {
+    controller.text = text;
+  }
+
+  _LocationState copyWith(String? text) {
+    return _LocationState(controller, text ?? "");
+  }
+}
+
+class _LocationPickerBloc extends Bloc<_LocationPickerEvent, _LocationState> {
+  _LocationPickerBloc(String? initialValue)
+      : super(_LocationState(TextEditingController(), initialValue ?? "")) {
+    on<_ChangeTextEvent>((event, emit) {
+      emit(state.copyWith(event.text));
+    });
+  }
+}
+
+class _MyGoogleMaps extends StatefulWidget {
+  const _MyGoogleMaps();
+
+  @override
+  State<_MyGoogleMaps> createState() => _MyGoogleMapsState();
+}
+
+class _MyGoogleMapsState extends State<_MyGoogleMaps> {
   final Completer<GoogleMapController> _mapController =
       Completer<GoogleMapController>();
 
@@ -66,8 +113,9 @@ class _MyGoogleMapsState extends State<MyGoogleMaps> {
             padding: const EdgeInsets.all(8),
             child: ElevatedButton(
               onPressed: () async {
-                Navigator.of(context).pop(
-                    "(${(await InfoFetcher.calculate(_markerController)).values.first.toStringAsPrecision(3)}) ${(await InfoFetcher.calculate(_markerController)).keys.first}");
+                Navigator.of(context).pop<String>("check");
+                //print(
+                // "(${(await InfoFetcher.calculate(_markerController)).values.first.toStringAsPrecision(3)}) ${(await InfoFetcher.calculate(_markerController)).keys.first}");
               },
               child: const Text("Xác nhận địa chỉ"),
             ),

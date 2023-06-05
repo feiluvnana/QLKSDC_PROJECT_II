@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/dependencies/internal_storage.dart';
-import '../../model/AdditionModel.dart';
-import '../../model/ServiceModel.dart';
+import '../../model/addition_model.dart';
+import '../../model/service_model.dart';
 import 'date_time_picker.dart';
 import 'location_picker.dart';
 
@@ -51,19 +51,8 @@ class AdditionChooser extends StatelessWidget {
                               formState.setValue(
                                   List.generate(formState.value!.length, (i) {
                                 if (i == index) {
-                                  return Addition.fromJson(_generateJson(
-                                      value,
-                                      servicesList
-                                          .firstWhere(
-                                              (element) => element.id == value)
-                                          .name,
-                                      servicesList
-                                          .firstWhere(
-                                              (element) => element.id == value)
-                                          .price,
-                                      null,
-                                      null,
-                                      null));
+                                  return Addition.fromJson(
+                                      _generateJson(value, null, null, null));
                                 }
                                 return formState.value![i];
                               }));
@@ -80,49 +69,20 @@ class AdditionChooser extends StatelessWidget {
                         ),
                       ),
                     ),
-                    (servicesList
-                            .firstWhere((element) =>
-                                element.id == formState.value?[index].serviceID)
-                            .distanceNeed)
-                        ? Flexible(
-                            child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: LocationPicker(
-                                initialValue: formState.value![index].distance,
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  formState.setState(() {
-                                    formState.setValue(List.generate(
-                                        formState.value!.length, (i) {
-                                      if (i == index) {
-                                        return Addition.fromJson(_generateJson(
-                                            formState.value![index].serviceID,
-                                            formState.value![index].serviceName,
-                                            formState
-                                                .value![index].servicePrice,
-                                            value,
-                                            formState.value![index].quantity,
-                                            formState.value![index].time));
-                                      }
-                                      return formState.value![i];
-                                    }));
-                                  });
-                                  _exec(formState.value, onChanged);
-                                }),
-                          ))
-                        : Flexible(flex: 0, child: Container()),
-                    (servicesList
-                            .firstWhere((element) =>
-                                element.id == formState.value?[index].serviceID)
-                            .timeNeed)
-                        ? Flexible(
-                            child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 16),
-                                child: DateTimePicker(
-                                  title: "Thời gian",
-                                  initialValue: formState.value![index].time,
+                    if (servicesList.any((element) =>
+                        element.id == formState.value?[index].serviceID))
+                      (servicesList
+                              .firstWhere((element) =>
+                                  element.id ==
+                                  formState.value?[index].serviceID)
+                              .distanceNeed)
+                          ? Flexible(
+                              child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 16),
+                              child: LocationPicker(
+                                  initialValue:
+                                      formState.value![index].distance,
                                   onChanged: (value) {
                                     if (value == null) return;
                                     formState.setState(() {
@@ -133,61 +93,96 @@ class AdditionChooser extends StatelessWidget {
                                               _generateJson(
                                                   formState
                                                       .value![index].serviceID,
-                                                  formState.value![index]
-                                                      .serviceName,
-                                                  formState.value![index]
-                                                      .servicePrice,
-                                                  formState
-                                                      .value![index].distance,
+                                                  value,
                                                   formState
                                                       .value![index].quantity,
-                                                  value));
+                                                  formState
+                                                      .value![index].time));
                                         }
                                         return formState.value![i];
                                       }));
                                     });
                                     _exec(formState.value, onChanged);
-                                  },
-                                )))
-                        : Flexible(flex: 0, child: Container()),
-                    (servicesList
-                            .firstWhere((element) =>
-                                element.id == formState.value?[index].serviceID)
-                            .quantityNeed)
-                        ? Flexible(
-                            child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: TextFormField(
-                              initialValue: formState.value?[index].quantity ==
-                                      null
-                                  ? null
-                                  : formState.value![index].quantity.toString(),
-                              onChanged: (value) {
-                                var newValue = int.tryParse(value);
-                                formState.setState(() {
-                                  formState.setValue(List.generate(
-                                      formState.value!.length, (i) {
-                                    if (i == index) {
-                                      return Addition.fromJson(_generateJson(
-                                          formState.value![index].serviceID,
-                                          formState.value![index].serviceName,
-                                          formState.value![index].servicePrice,
-                                          formState.value![index].distance,
-                                          newValue,
-                                          formState.value![index].time));
-                                    }
-                                    return formState.value![i];
-                                  }));
-                                });
-                                _exec(formState.value, onChanged);
-                              },
-                              decoration: const InputDecoration(
-                                  label: Text("Số lượng"),
-                                  border: OutlineInputBorder()),
-                            ),
-                          ))
-                        : Flexible(flex: 0, child: Container()),
+                                  }),
+                            ))
+                          : Flexible(flex: 0, child: Container()),
+                    if (servicesList.any((element) =>
+                        element.id == formState.value?[index].serviceID))
+                      (servicesList
+                              .firstWhere((element) =>
+                                  element.id ==
+                                  formState.value?[index].serviceID)
+                              .timeNeed)
+                          ? Flexible(
+                              child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 16),
+                                  child: DateTimePicker(
+                                    title: "Thời gian",
+                                    initialValue: formState.value![index].time,
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      formState.setState(() {
+                                        formState.setValue(List.generate(
+                                            formState.value!.length, (i) {
+                                          if (i == index) {
+                                            return Addition.fromJson(
+                                                _generateJson(
+                                                    formState.value![index]
+                                                        .serviceID,
+                                                    formState
+                                                        .value![index].distance,
+                                                    formState
+                                                        .value![index].quantity,
+                                                    value));
+                                          }
+                                          return formState.value![i];
+                                        }));
+                                      });
+                                      _exec(formState.value, onChanged);
+                                    },
+                                  )))
+                          : Flexible(flex: 0, child: Container()),
+                    if (servicesList.any((element) =>
+                        element.id == formState.value?[index].serviceID))
+                      (servicesList
+                              .firstWhere((element) =>
+                                  element.id ==
+                                  formState.value?[index].serviceID)
+                              .quantityNeed)
+                          ? Flexible(
+                              child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 16),
+                              child: TextFormField(
+                                initialValue:
+                                    formState.value?[index].quantity == null
+                                        ? null
+                                        : formState.value![index].quantity
+                                            .toString(),
+                                onChanged: (value) {
+                                  var newValue = int.tryParse(value);
+                                  formState.setState(() {
+                                    formState.setValue(List.generate(
+                                        formState.value!.length, (i) {
+                                      if (i == index) {
+                                        return Addition.fromJson(_generateJson(
+                                            formState.value![index].serviceID,
+                                            formState.value![index].distance,
+                                            newValue,
+                                            formState.value![index].time));
+                                      }
+                                      return formState.value![i];
+                                    }));
+                                  });
+                                  _exec(formState.value, onChanged);
+                                },
+                                decoration: const InputDecoration(
+                                    label: Text("Số lượng"),
+                                    border: OutlineInputBorder()),
+                              ),
+                            ))
+                          : Flexible(flex: 0, child: Container()),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
@@ -235,15 +230,13 @@ class AdditionChooser extends StatelessWidget {
     if (func != null) func(value);
   }
 
-  Map<String, dynamic> _generateJson(int serviceID, String serviceName,
-      double servicePrice, String? distance, int? quantity, DateTime? time) {
+  Map<String, dynamic> _generateJson(
+      int serviceID, String? distance, int? quantity, DateTime? time) {
     return {
       "service_id": serviceID,
-      "service_name": serviceName,
-      "service_price": servicePrice,
-      "addition_distance": distance,
-      "addition_quantity": quantity,
-      "addition_time": time?.toString()
+      "distance": distance,
+      "quantity": quantity,
+      "time": time?.toString()
     };
   }
 }

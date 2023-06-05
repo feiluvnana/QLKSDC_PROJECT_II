@@ -1,10 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project_ii/view/booking_page_view.dart';
-import 'package:project_ii/view/calendar_page_view.dart';
-import 'package:project_ii/view/room_page_view.dart';
-
+import 'package:go_router/go_router.dart';
+import 'package:project_ii/data/providers/login_related_work_provider.dart';
+import 'package:project_ii/view/history_page_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../view/booking_page_view.dart';
+import '../view/calendar_page_view.dart';
+import '../view/room_page_view.dart';
 import '../view/service_page_view.dart';
 
 abstract class HomePageEvent {}
@@ -15,6 +18,12 @@ class TabChangedEvent extends HomePageEvent {
   TabChangedEvent(this.selectedIndex, this.primaryFocus);
 }
 
+class LogoutEvent extends HomePageEvent {
+  final BuildContext context;
+
+  LogoutEvent(this.context);
+}
+
 class HomeState extends Equatable {
   final List<Widget Function(BuildContext)> builders;
   final int selectedIndex;
@@ -23,8 +32,8 @@ class HomeState extends Equatable {
     (context) => const BookingPage(),
     (context) => const RoomPage(),
     (context) => const ServicePage(),
-    (context) => const Text("statistics"),
-    (context) => const Text("history"),
+  
+    (context) => const HistoryPage(),
   ];
 
   @override
@@ -59,6 +68,11 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
             state.copyWith(builders: list, selectedIndex: event.selectedIndex));
       },
     );
+    on<LogoutEvent>((event, emit) async {
+      await LoginRelatedWorkProvider.logout();
+      await (await SharedPreferences.getInstance()).clear();
+      event.context.go("/login");
+    });
   }
 
   @override

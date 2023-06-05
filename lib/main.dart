@@ -7,7 +7,7 @@ import 'generated/l10n.dart';
 import 'package:go_router/go_router.dart';
 import 'view/home_page_view.dart';
 import 'view/login_page_view.dart';
-import 'view/InformationPageView.dart';
+import 'view/info_page_view.dart';
 
 void main() {
   Future.delayed(const Duration(seconds: 0), () async {
@@ -28,7 +28,7 @@ class ProjectII extends StatelessWidget {
             title: "Đăng nhập",
             child: LoginPage()),
         redirect: (context, state) async =>
-            ((await SharedPreferences.getInstance()).getString("sessionID") !=
+            ((await SharedPreferences.getInstance()).getString("session_id") !=
                     null)
                 ? "/home"
                 : null),
@@ -37,9 +37,9 @@ class ProjectII extends StatelessWidget {
         builder: (context, state) => Title(
             color: const Color(0xff68b6ef),
             title: "Trang chủ",
-            child: const HomePage()),
+            child: HomePage()),
         redirect: (context, state) async =>
-            ((await SharedPreferences.getInstance()).getString("sessionID") ==
+            ((await SharedPreferences.getInstance()).getString("session_id") ==
                     null)
                 ? "/login"
                 : null),
@@ -49,9 +49,10 @@ class ProjectII extends StatelessWidget {
           return Title(
               color: const Color(0xff68b6ef),
               title: "Thông tin",
-              child: InformationPage(
-                  ridx: int.parse(state.queryParameters["rid"]!),
-                  oidx: int.parse(state.queryParameters["oid"]!)));
+              child: InfoPage(
+                ridx: int.parse(state.queryParameters["ridx"]!),
+                oidx: int.parse(state.queryParameters["oidx"]!),
+              ));
         },
         redirect: (context, state) =>
             (GetIt.I<InternalStorage>().read("roomGroupsList") == null ||

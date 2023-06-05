@@ -80,7 +80,7 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
       }
     });
     on<GotoHomePage>((event, emit) {
-      event.context.go("/home");
+      event.context.go("/home", extra: 0);
       close();
     });
   }

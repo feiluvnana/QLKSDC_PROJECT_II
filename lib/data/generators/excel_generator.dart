@@ -4,10 +4,11 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
-import '../../model/OrderModel.dart';
-import '../../model/AdditionModel.dart';
-import '../../model/RoomGroupModel.dart';
-import '../../model/RoomModel.dart';
+import '../../model/order_model.dart';
+import '../../model/addition_model.dart';
+import '../../model/room_group_model.dart';
+import '../../model/room_model.dart';
+import '../../model/service_model.dart';
 import '../dependencies/internal_storage.dart';
 
 mixin ExcelGenerator {
@@ -212,11 +213,14 @@ mixin ExcelGenerator {
     int countService = 0;
     if (list == null) return str;
     for (var l in list) {
-      if (l.serviceName == "Đón mèo" || l.serviceName == "Trả mèo") continue;
+      Service s = GetIt.I<InternalStorage>()
+          .read("servicesList")
+          .firstWhere((element) => l.serviceID == element.id);
+      if (s.name == "Đón mèo" || s.name == "Trả mèo") continue;
       if (l.time != null) {
         if (ignoreHour(l.time!) != guestListDate) continue;
       }
-      str += "${++countService}. ${l.serviceName}\n";
+      str += "${++countService}. ${s.name}\n";
     }
     return str;
   }
@@ -228,15 +232,18 @@ mixin ExcelGenerator {
     if (list == null) return str;
     str += "Thời gian check-in: ${DateFormat("HH:mm").format(order.checkIn)}\n";
     for (var l in list) {
-      if (l.serviceName == "Đón mèo") {
-        str += "${++countService}. ${l.serviceName}\n";
+      Service s = GetIt.I<InternalStorage>()
+          .read("servicesList")
+          .firstWhere((element) => l.serviceID == element.id);
+      if (s.name == "Đón mèo") {
+        str += "${++countService}. ${s.name}\n";
         str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
         continue;
       }
       if (l.time != null) {
         if (ignoreHour(l.time!) != guestListDate) continue;
       }
-      str += "${++countService}. ${l.serviceName}\n";
+      str += "${++countService}. ${s.name}\n";
       if (l.quantity != null) {
         str += "   Số lượng khách đặt: ${l.quantity}";
       }
@@ -253,20 +260,27 @@ mixin ExcelGenerator {
     str +=
         "Thời gian check-out: ${DateFormat("HH:mm").format(bookingData.checkOut)}\n";
     for (var l in list) {
-      if (l.serviceName == "Trả mèo") {
-        str += "${++countService}. ${l.serviceName}\n";
+      Service s = GetIt.I<InternalStorage>()
+          .read("servicesList")
+          .firstWhere((element) => l.serviceID == element.id);
+      if (s.name == "Trả mèo") {
+        str += "${++countService}. ${s.name}\n";
         str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
         continue;
       }
       if (l.time != null) {
         if (ignoreHour(l.time!) != guestListDate) continue;
       }
-      str += "${++countService}. ${l.serviceName}\n";
+      str += "${++countService}. ${s.name}\n";
     }
     return str;
   }
 
-  Future<void> createBill({required int oidx, required int ridx}) async {
+  Future<void> createBill(
+      {required int oidx,
+      required int ridx,
+      required int billID,
+      required int billNum}) async {
     final Workbook wb = Workbook();
     final Worksheet ws = wb.worksheets[0];
     ws.pageSetup
@@ -377,7 +391,7 @@ mixin ExcelGenerator {
       ..cellStyle = infoStyle;
     ws.getRangeByName("B8:G8")
       ..merge()
-      ..setText("Số hoá đơn: ${DateFormat("ddMMyy").format(DateTime.now())}")
+      ..setText("Số hoá đơn: ${billID}_$billNum")
       ..cellStyle = infoStyle;
     ws.getRangeByName("B9:G9")
       ..merge()
@@ -504,9 +518,13 @@ mixin ExcelGenerator {
       frequency.forEach((key, value) {
         Addition a = order.additionsList!
             .firstWhere((element) => element.serviceID == key);
+        Service s = GetIt.I<InternalStorage>()
+            .read("servicesList")
+            .firstWhere((element) => a.serviceID == element.id);
+
         ws.getRangeByName("B$currentRow:C$currentRow")
           ..merge()
-          ..setText(a.serviceName)
+          ..setText(s.name)
           ..cellStyle = cellStyle;
         ws.getRangeByName("D$currentRow")
           ..setNumber((a.distance != null)
@@ -525,7 +543,7 @@ mixin ExcelGenerator {
                   : "lần")
           ..cellStyle = cellStyle;
         ws.getRangeByName("F$currentRow")
-          ..setNumber(a.servicePrice)
+          ..setNumber(s.price)
           ..cellStyle = cellStyle
           ..numberFormat = "#,#";
         ws.getRangeByName("G$currentRow")
@@ -568,8 +586,7 @@ mixin ExcelGenerator {
     final content = base64Encode(rawData);
     AnchorElement(
         href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-      ..setAttribute("download",
-          "bill-${DateFormat("ddMMyy").format(DateTime.now())}.xlsx")
+      ..setAttribute("download", "bill $billID-$billNum.xlsx")
       ..click();
   }
 }
