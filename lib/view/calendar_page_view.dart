@@ -34,7 +34,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                           child: const Icon(Icons.keyboard_arrow_left),
                           onTap: () => context
                               .read<CalendarPageBloc>()
-                              .add(MonthDecreasedEvent())),
+                              .add(DecreaseMonthEvent())),
                       BlocBuilder<CalendarPageBloc, CalendarState>(
                         buildWhen: (previous, current) =>
                             previous.currentMonth != current.currentMonth,
@@ -45,7 +45,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                         child: const Icon(Icons.keyboard_arrow_right),
                         onTap: () => context
                             .read<CalendarPageBloc>()
-                            .add(MonthIncreasedEvent()),
+                            .add(IncreaseMonthEvent()),
                       ),
                     ],
                   ),
@@ -87,7 +87,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                           onChanged: (int? value) {
                             context
                                 .read<CalendarPageBloc>()
-                                .add(GuestListDayChangedEvent(value));
+                                .add(ChangeGuestListDay(value));
                           },
                           value: state.dayForGuestList,
                         ),
@@ -183,16 +183,18 @@ class BookingInfo extends StatelessWidget {
       }
       Future.delayed(
           Duration.zero,
-          () => BlocProvider.of<CalendarPageBloc>(context)
-              .add(RenderCompletedEvent()));
+          () =>
+              BlocProvider.of<CalendarPageBloc>(context).add(CompleteRender()));
 
-      return SingleChildScrollView(
-        primary: true,
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(
-                GetIt.I<InternalStorage>().read("roomGroupsList").length,
-                (rid) => DisplayTable(rid: rid))),
+      return SizedBox.expand(
+        child: SingleChildScrollView(
+          primary: true,
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                  GetIt.I<InternalStorage>().read("roomGroupsList").length,
+                  (rid) => DisplayTable(rid: rid))),
+        ),
       );
     });
   }
@@ -307,7 +309,7 @@ class Cell extends StatelessWidget {
             onTap: () {
               context
                   .read<CalendarPageBloc>()
-                  .add(GotoInformationPageEvent(oid, rid, context));
+                  .add(GotoInfoPageEvent(oid, rid, context));
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
@@ -414,7 +416,7 @@ class HalfCell extends StatelessWidget {
             onTap: () {
               context
                   .read<CalendarPageBloc>()
-                  .add(GotoInformationPageEvent(rid, index, context));
+                  .add(GotoInfoPageEvent(rid, index, context));
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project_ii/data/generators/excel_generator.dart';
+import 'package:project_ii/data/providers/history_related_work_provider.dart';
 import 'package:project_ii/utils/reusables/notice_dialog.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/providers/calendar_related_work_provider.dart';
@@ -285,6 +286,9 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
     on<GotoHomePage>((event, emit) => event.context.pop());
     on<SaveChangesEvent>((event, emit) async {
       if (state.order.isOut) return;
+      if (state.formKey1.currentState?.validate() != true) return;
+      if (state.formKey2.currentState?.validate() != true) return;
+      if (state.formKey3.currentState?.validate() != true) return;
       bool isSuccessed = false;
       await InfoRelatedWorkProvider.saveChanges(
               state.modifiedOrder, state.order)
@@ -301,6 +305,7 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       });
       if (!isSuccessed) return;
       CalendarRelatedWorkProvider.clearRoomGroupsList();
+      HistoryRelatedWorkProvider.clearHistoriesList();
       await CalendarRelatedWorkProvider(
               currentMonth: DateTime(state.modifiedOrder.checkIn.year,
                   state.modifiedOrder.checkIn.month),
@@ -321,11 +326,18 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       event.context.pushReplacement("/info?ridx=$newRidx&oidx=$newOidx");
     });
     on<CancelOrderEvent>((event, emit) async {
+      if (state.order.checkIn.isBefore(DateTime.now())) {
+        await NoticeDialog.showMessageDialog(event.context,
+            text: "Không thể huỷ vì đã check-in.");
+        return;
+      }
       if (state.order.isOut) return;
       await InfoRelatedWorkProvider.cancel(state.order).then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
           await NoticeDialog.showMessageDialog(event.context,
               text: "Huỷ đặt phòng thành công");
+          HistoryRelatedWorkProvider.clearHistoriesList();
+          CalendarRelatedWorkProvider.clearRoomGroupsList();
           add(GotoHomePage(event.context));
         } else {
           NoticeDialog.showErrDialog(event.context,
@@ -335,6 +347,13 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       });
     });
     on<CheckoutEvent>((event, emit) async {
+      if (state.order.checkOut.day != DateTime.now().day &&
+          state.order.checkOut.month == DateTime.now().month &&
+          state.order.checkOut.year == DateTime.now().year) {
+        await NoticeDialog.showMessageDialog(event.context,
+            text: "Không ở trong ngày có thể check-out.");
+        return;
+      }
       if (state.order.isOut) return;
       bool isSuccessed = false;
       int fin =
@@ -363,6 +382,7 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
         }
       });
       if (!isSuccessed) return;
+      HistoryRelatedWorkProvider.clearHistoriesList();
       CalendarRelatedWorkProvider.clearRoomGroupsList();
       await CalendarRelatedWorkProvider(
               currentMonth: DateTime(state.modifiedOrder.checkIn.year,

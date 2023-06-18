@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../model/room_model.dart';
-import '../dependencies/internal_storage.dart';
 import 'package:http/http.dart' as http;
 
 class RoomRelatedWorkProvider {
@@ -14,7 +12,7 @@ class RoomRelatedWorkProvider {
     }).then((res) {
       if (jsonDecode(res.body)["errors"].length == 0 &&
           (jsonDecode(res.body)["results"].length != 0)) {
-        return jsonDecode(jsonDecode(res.body)["results"]);
+        return jsonDecode(res.body)["results"];
       }
 
       return [];

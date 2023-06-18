@@ -1,12 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:project_ii/blocs/info_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../model/room_group_model.dart';
-import '../data/generators/excel_generator.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';
@@ -389,7 +387,7 @@ class CatInfo extends StatelessWidget {
                                         ModifyCatEvent(
                                             age: int.tryParse(value)));
                                   },
-                                  validator: Validators().ageValidator,
+                                  validator: Validators().intValidator,
                                   decoration: const InputDecoration(
                                     errorMaxLines: 2,
                                     labelText: "Tuổi",
@@ -970,7 +968,7 @@ class OrderInfo extends StatelessWidget {
                             ? DropdownButtonFormField<int>(
                                 isExpanded: true,
                                 items: List.generate(
-                                  internalStorage.read("servicesList")?.length,
+                                  4,
                                   (index) => DropdownMenuItem(
                                     value: index + 1,
                                     child: Text("${index + 1}"),
@@ -1009,6 +1007,8 @@ class OrderInfo extends StatelessWidget {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: DateTimePicker(
+                                        enabled: DateTime.now().isBefore(
+                                            state.modifiedOrder.checkIn),
                                         initialValue:
                                             state.modifiedOrder.checkIn,
                                         title: "Thời gian check-in",
@@ -1258,6 +1258,8 @@ class OrderInfo extends StatelessWidget {
                                   ],
                                 )
                               : AdditionChooser(
+                                  checkIn: state.modifiedOrder.checkIn,
+                                  checkOut: state.modifiedOrder.checkOut,
                                   initialValue:
                                       state.modifiedOrder.additionsList,
                                   onChanged: (value) {

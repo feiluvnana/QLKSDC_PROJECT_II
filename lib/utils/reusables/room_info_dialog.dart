@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/room_model.dart';
+import '../validators/validators.dart';
 
 class RoomInfoDialog {
   final formKey = GlobalKey<FormState>();
@@ -56,6 +57,7 @@ class _RoomInfoForm extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
               controller: roomID,
+              validator: Validators().notNullValidator,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Mã phòng"),
             ),
@@ -65,6 +67,7 @@ class _RoomInfoForm extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
               controller: roomType,
+              validator: Validators().nameValidator,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Loại phòng"),
             ),
@@ -74,6 +77,7 @@ class _RoomInfoForm extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
               controller: roomPrice,
+              validator: Validators().intValidator,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Giá phòng"),
             ),
@@ -83,6 +87,7 @@ class _RoomInfoForm extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
               controller: roomTotal,
+              validator: Validators().intValidator,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Số phòng con"),
             ),
@@ -96,7 +101,9 @@ class _RoomInfoForm extends StatelessWidget {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                       onPressed: () {
-                        save(context);
+                        if (formKey.currentState?.validate() == true) {
+                          save(context);
+                        }
                       },
                       child: const Text("Lưu")),
                 ),

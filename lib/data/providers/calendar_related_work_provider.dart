@@ -95,7 +95,7 @@ class CalendarRelatedWorkProvider {
       },
     ).then((res) {
       if (jsonDecode(res.body)["errors"].isEmpty) {
-        return jsonDecode(jsonDecode(res.body)["results"]);
+        return jsonDecode(res.body)["results"];
       }
       return [];
     });

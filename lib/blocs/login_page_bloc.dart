@@ -6,31 +6,31 @@ import 'package:project_ii/data/providers/login_related_work_provider.dart';
 
 abstract class LoginPageEvent {}
 
-class UsernameChangedEvent extends LoginPageEvent {
+class ChangeUsernameEvent extends LoginPageEvent {
   final String username;
 
-  UsernameChangedEvent(this.username);
+  ChangeUsernameEvent(this.username);
 }
 
-class PasswordChangedEvent extends LoginPageEvent {
+class ChangePasswordEvent extends LoginPageEvent {
   final String password;
 
-  PasswordChangedEvent(this.password);
+  ChangePasswordEvent(this.password);
 }
 
-class SubmitButtonPressedEvent extends LoginPageEvent {
+class SubmitEvent extends LoginPageEvent {
   final String username, password;
 
-  SubmitButtonPressedEvent(this.username, this.password);
+  SubmitEvent(this.username, this.password);
 }
 
-class GotoHomePage extends LoginPageEvent {
+class GotoHomePageEvent extends LoginPageEvent {
   final BuildContext context;
 
-  GotoHomePage(this.context);
+  GotoHomePageEvent(this.context);
 }
 
-class ErrorDialogRemove extends LoginPageEvent {}
+class RemoveErrDialogEvent extends LoginPageEvent {}
 
 enum AuthenticationState { unauthenticated, authenticated, authenticating }
 
@@ -63,11 +63,11 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
             formKey: GlobalKey<FormState>(),
             username: "",
             password: "")) {
-    on<UsernameChangedEvent>(
+    on<ChangeUsernameEvent>(
         (event, emit) => emit(state.copyWith(username: event.username)));
-    on<PasswordChangedEvent>(
+    on<ChangePasswordEvent>(
         (event, emit) => emit(state.copyWith(password: event.password)));
-    on<SubmitButtonPressedEvent>((event, emit) async {
+    on<SubmitEvent>((event, emit) async {
       if (state.formKey.currentState?.validate() != true) {
         return;
       }
@@ -79,7 +79,7 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
         emit(state.copyWith(state: AuthenticationState.unauthenticated));
       }
     });
-    on<GotoHomePage>((event, emit) {
+    on<GotoHomePageEvent>((event, emit) {
       event.context.go("/home", extra: 0);
       close();
     });

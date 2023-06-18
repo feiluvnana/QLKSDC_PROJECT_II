@@ -1,10 +1,11 @@
+import 'package:intl/intl.dart';
+
 class Validators {
   final DateTime? checkIn, checkOut;
   final String? weightRank;
 
   Validators({this.checkIn, this.checkOut, this.weightRank}) {
     checkInValidator = (value) {
-      print("executed");
       if (value == null) return "Không để trống";
       if (checkOut == null) return null;
       if (value.isBefore(DateTime.now())) {
@@ -14,7 +15,6 @@ class Validators {
       return null;
     };
     checkOutValidator = (value) {
-      print("executed");
       if (value == null) return "Không để trống";
       if (checkIn == null) return null;
       if (checkIn!.isAfter(value)) return "Phải check-out sau check-in";
@@ -31,6 +31,13 @@ class Validators {
           double.parse(value) <= 6) return null;
       if (weightRank == "> 6kg" && double.parse(value) > 6) return null;
       return "Cân nặng phải nằm trong hạng cân";
+    };
+    additionsTimeValidator = (value) {
+      if (value == null) return "Không để trống";
+      print("executed ${value.isAfter(checkOut!) || value.isBefore(checkIn!)}");
+      if (value.isAfter(checkOut!) || value.isBefore(checkIn!))
+        return "Phải nằm trong thời gian check-in và check-out";
+      return null;
     };
   }
 
@@ -49,7 +56,7 @@ class Validators {
     return null;
   };
   String? Function(Object?)? notNullValidator = (value) {
-    if (value == null) return "Không để trống";
+    if (value == null || value.toString() == "") return "Không để trống";
     return null;
   };
   String? Function(DateTime?)? checkInValidator, checkOutValidator;
@@ -88,10 +95,10 @@ class Validators {
   };
 
   String? Function(String?)? weightValidator;
-  String? Function(String?)? ageValidator = (value) {
+  String? Function(String?)? intValidator = (value) {
     if (value == null) return "Không để trống";
-    if (int.tryParse(value) == null) return "Tuổi phải là số nguyên dương";
-    if (int.parse(value) < 0) return "Tuổi phải là số nguyên dương";
+    if (int.tryParse(value) == null) return "Phải là số nguyên không âm";
+    if (int.parse(value) < 0) return "Phải là số nguyên không âm";
     return null;
   };
 
@@ -104,4 +111,6 @@ class Validators {
     }
     return null;
   };
+
+  String? Function(DateTime?)? additionsTimeValidator;
 }

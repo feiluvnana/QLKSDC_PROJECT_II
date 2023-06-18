@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import '../blocs/history_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/render_state.dart';
+import 'package:flutter/services.dart' as sv;
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
@@ -63,11 +64,27 @@ class HistoryPage extends StatelessWidget {
                               DataCell(Text(GetIt.I<InternalStorage>()
                                   .read("historiesList")[index]
                                   .perfomer)),
-                              DataCell(Tooltip(
-                                  message: GetIt.I<InternalStorage>()
-                                      .read("historiesList")[index]
-                                      .details,
-                                  child: const Icon(Icons.info))),
+                              DataCell(GestureDetector(
+                                onTap: () async {
+                                  await sv.Clipboard.setData(sv.ClipboardData(
+                                      text: GetIt.I<InternalStorage>()
+                                          .read("historiesList")[index]
+                                          .details));
+                                  // ignore: use_build_context_synchronously
+                                  showBottomSheet(
+                                      context: context,
+                                      builder: (_) => BottomSheet(
+                                            builder: (_) => Text(
+                                                "Nội dung thay đổi ${GetIt.I<InternalStorage>().read("historiesList")[index].details}"),
+                                            onClosing: () {},
+                                          ));
+                                },
+                                child: Tooltip(
+                                    message: GetIt.I<InternalStorage>()
+                                        .read("historiesList")[index]
+                                        .details,
+                                    child: const Icon(Icons.info)),
+                              )),
                             ])),
                   ),
                 ));

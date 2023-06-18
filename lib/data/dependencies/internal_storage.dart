@@ -4,6 +4,7 @@ import 'package:project_ii/model/history_model.dart';
 import '../../model/room_group_model.dart';
 import '../../model/service_model.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../model/statistic_model.dart';
 
 class InternalStorage {
   static void init() {
@@ -11,6 +12,7 @@ class InternalStorage {
   }
 
   final Map<String, BehaviorSubject<dynamic>> _storage = {
+    "statistic": BehaviorSubject<Statistic?>(),
     "historiesList": BehaviorSubject<List<History>?>(),
     "roomGroupsList": BehaviorSubject<List<RoomGroup>?>(),
     "servicesList": BehaviorSubject<List<Service>?>(),

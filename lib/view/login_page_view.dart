@@ -59,7 +59,7 @@ class LoginPage extends StatelessWidget {
                       if (state.state == AuthenticationState.authenticated) {
                         context
                             .read<LoginPageBloc>()
-                            .add(GotoHomePage(context));
+                            .add(GotoHomePageEvent(context));
                       }
                     }
                   },
@@ -107,7 +107,7 @@ class LoginPage extends StatelessWidget {
                                         onPressed: () {
                                           {
                                             context.read<LoginPageBloc>().add(
-                                                SubmitButtonPressedEvent(
+                                                SubmitEvent(
                                                     _usernameController.text,
                                                     _passwordController.text));
                                           }
@@ -145,7 +145,7 @@ class UsernameInput extends StatelessWidget {
         validator: Validators().usernameValidator,
         onChanged: (value) => context
             .read<LoginPageBloc>()
-            .add(UsernameChangedEvent(usernameController.text)),
+            .add(ChangeUsernameEvent(usernameController.text)),
         decoration: const InputDecoration(
           labelText: "Tài khoản",
           labelStyle: TextStyle(color: Colors.black87),
@@ -173,7 +173,7 @@ class PasswordInput extends StatelessWidget {
         validator: Validators().passwordValidator,
         onChanged: (value) => context
             .read<LoginPageBloc>()
-            .add(PasswordChangedEvent(passwordController.text)),
+            .add(ChangePasswordEvent(passwordController.text)),
         decoration: const InputDecoration(
           labelText: "Mật khẩu",
           labelStyle: TextStyle(color: Colors.black87),

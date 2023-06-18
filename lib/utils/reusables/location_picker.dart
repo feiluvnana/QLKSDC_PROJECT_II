@@ -6,18 +6,24 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'dart:html' as html;
 
+import '../validators/validators.dart';
+
 class LocationPicker extends StatelessWidget {
   final void Function(String?)? onSaved, onChanged;
   final String? initialValue;
+  final bool? enabled;
 
   const LocationPicker(
-      {super.key, this.onSaved, this.onChanged, this.initialValue});
+      {super.key,
+      this.onSaved,
+      this.onChanged,
+      this.initialValue,
+      this.enabled});
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +32,8 @@ class LocationPicker extends StatelessWidget {
       child: BlocBuilder<_LocationPickerBloc, _LocationState>(
           builder: (context, state) {
         return TextFormField(
+          enabled: enabled ?? true,
+          validator: Validators().notNullValidator,
           onSaved: onSaved,
           onChanged: onChanged,
           controller: state.controller,
@@ -34,24 +42,28 @@ class LocationPicker extends StatelessWidget {
               border: const OutlineInputBorder(),
               suffix: FittedBox(
                   child: InkWell(
-                      onTap: () async {
-                        String? str = await showDialog<String>(
-                            context: context,
-                            builder: (context) => SizedBox.expand(
-                                child: Center(
-                                    child: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width /
-                                                2,
-                                        height:
-                                            MediaQuery.of(context).size.height /
-                                                2,
-                                        child: const _MyGoogleMaps()))),
-                            barrierDismissible: false);
-                        context
-                            .read<_LocationPickerBloc>()
-                            .add(_ChangeTextEvent(str));
-                      },
+                      onTap: (enabled == false)
+                          ? null
+                          : () async {
+                              String? str = await showDialog<String>(
+                                  context: context,
+                                  builder: (context) => SizedBox.expand(
+                                      child: Center(
+                                          child: SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width /
+                                                  2,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height /
+                                                  2,
+                                              child: const _MyGoogleMaps()))),
+                                  barrierDismissible: false);
+                              context
+                                  .read<_LocationPickerBloc>()
+                                  .add(_ChangeTextEvent(str));
+                            },
                       child: const Icon(Icons.map)))),
         );
       }),

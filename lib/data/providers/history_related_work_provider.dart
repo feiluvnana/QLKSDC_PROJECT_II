@@ -15,7 +15,7 @@ class HistoryRelatedWorkProvider {
     }).then((res) {
       if (jsonDecode(res.body)["errors"].length == 0 &&
           (jsonDecode(res.body)["results"].length != 0)) {
-        return jsonDecode(jsonDecode(res.body)["results"]);
+        return jsonDecode(res.body)["results"];
       }
       return [];
     });

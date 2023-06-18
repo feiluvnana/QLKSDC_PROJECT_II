@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/service_model.dart';
+import '../validators/validators.dart';
 
 class ServiceInfoDialog {
   final formKey = GlobalKey<FormState>();
@@ -69,6 +70,7 @@ class _ServiceInfoFormState extends State<_ServiceInfoForm> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: serviceName,
+                  validator: Validators().notNullValidator,
                   decoration: const InputDecoration(
                       border: OutlineInputBorder(), labelText: "Tên dịch vụ"),
                 ),
@@ -78,6 +80,7 @@ class _ServiceInfoFormState extends State<_ServiceInfoForm> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: servicePrice,
+                  validator: Validators().intValidator,
                   decoration: const InputDecoration(
                       border: OutlineInputBorder(), labelText: "Giá dịch vụ"),
                 ),

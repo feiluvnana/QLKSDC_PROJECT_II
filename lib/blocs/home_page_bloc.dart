@@ -9,41 +9,50 @@ import '../view/booking_page_view.dart';
 import '../view/calendar_page_view.dart';
 import '../view/room_page_view.dart';
 import '../view/service_page_view.dart';
+import '../view/statistic_page_view.dart';
 
 abstract class HomePageEvent {}
 
-class TabChangedEvent extends HomePageEvent {
+class ChangeTabEvent extends HomePageEvent {
   final int selectedIndex;
   final FocusNode? primaryFocus;
-  TabChangedEvent(this.selectedIndex, this.primaryFocus);
+  ChangeTabEvent(this.selectedIndex, this.primaryFocus);
 }
 
 class LogoutEvent extends HomePageEvent {
   final BuildContext context;
-
   LogoutEvent(this.context);
 }
+
+class RequireDataEvent extends HomePageEvent {}
 
 class HomeState extends Equatable {
   final List<Widget Function(BuildContext)> builders;
   final int selectedIndex;
+  final String infoString;
   static List<Widget Function(BuildContext)> builderCalls = [
     (context) => const CalendarPage(),
     (context) => const BookingPage(),
     (context) => const RoomPage(),
     (context) => const ServicePage(),
-  
+    (context) => const StatisticPage(),
     (context) => const HistoryPage(),
   ];
 
   @override
   List<Object?> get props => [builders, selectedIndex];
 
-  const HomeState({required this.selectedIndex, required this.builders});
+  const HomeState(
+      {required this.selectedIndex,
+      required this.builders,
+      required this.infoString});
 
   HomeState copyWith(
-      {List<Widget Function(BuildContext)>? builders, int? selectedIndex}) {
+      {List<Widget Function(BuildContext)>? builders,
+      int? selectedIndex,
+      String? infoString}) {
     return HomeState(
+        infoString: infoString ?? this.infoString,
         builders: builders ?? this.builders,
         selectedIndex: selectedIndex ?? this.selectedIndex);
   }
@@ -58,8 +67,13 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
           (context) => Container(),
           (context) => Container(),
           (context) => Container()
-        ], selectedIndex: 0)) {
-    on<TabChangedEvent>(
+        ], selectedIndex: 0, infoString: "")) {
+    on<RequireDataEvent>((event, emit) async {
+      emit(state.copyWith(
+          infoString:
+              "Tên: ${(await SharedPreferences.getInstance()).getString("name")}\nQuyền hạn: ${(await SharedPreferences.getInstance()).getString("role") == "ADMIN" ? "Quản lý" : "Lễ tân"}"));
+    });
+    on<ChangeTabEvent>(
       (event, emit) {
         event.primaryFocus?.unfocus();
         var list = state.builders;

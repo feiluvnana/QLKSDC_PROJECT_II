@@ -237,7 +237,7 @@ mixin ExcelGenerator {
           .firstWhere((element) => l.serviceID == element.id);
       if (s.name == "Đón mèo") {
         str += "${++countService}. ${s.name}\n";
-        str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
+        str += "   Thời gian: ${order.checkIn.hour}:${order.checkIn.minute}\n";
         continue;
       }
       if (l.time != null) {
@@ -251,21 +251,21 @@ mixin ExcelGenerator {
     return str;
   }
 
-  String getStringFromServiceForPart3(
-      DateTime guestListDate, Order bookingData) {
+  String getStringFromServiceForPart3(DateTime guestListDate, Order order) {
     String str = "";
     int countService = 0;
-    var list = bookingData.additionsList;
+    var list = order.additionsList;
     if (list == null) return str;
     str +=
-        "Thời gian check-out: ${DateFormat("HH:mm").format(bookingData.checkOut)}\n";
+        "Thời gian check-out: ${DateFormat("HH:mm").format(order.checkOut)}\n";
     for (var l in list) {
       Service s = GetIt.I<InternalStorage>()
           .read("servicesList")
           .firstWhere((element) => l.serviceID == element.id);
       if (s.name == "Trả mèo") {
         str += "${++countService}. ${s.name}\n";
-        str += "   Thời gian: ${l.time?.hour}:${l.time?.minute}\n";
+        str +=
+            "   Thời gian: ${order.checkOut.hour}:${order.checkOut.minute}\n";
         continue;
       }
       if (l.time != null) {
@@ -509,6 +509,44 @@ mixin ExcelGenerator {
         ..cellStyle = totalCellStyle;
       currentRow++;
     }
+    if (order.eatingRank == 2) {
+      ws.getRangeByName("B$currentRow:C$currentRow")
+        ..merge()
+        ..setText("Hạng ăn 2")
+        ..cellStyle = cellStyle;
+      ws.getRangeByName("D$currentRow")
+        ..setNumber(1)
+        ..cellStyle = cellStyle
+        ..numberFormat = "General";
+      ws.getRangeByName("E$currentRow").cellStyle = cellStyle;
+      ws.getRangeByName("F$currentRow")
+        ..setNumber(80000)
+        ..cellStyle = cellStyle
+        ..numberFormat = "#,#";
+      ws.getRangeByName("G$currentRow")
+        ..setFormula("=F$currentRow*D$currentRow")
+        ..cellStyle = totalCellStyle;
+      currentRow++;
+    }
+    if (order.eatingRank == 4) {
+      ws.getRangeByName("B$currentRow:C$currentRow")
+        ..merge()
+        ..setText("Hạng ăn 4")
+        ..cellStyle = cellStyle;
+      ws.getRangeByName("D$currentRow")
+        ..setNumber(1)
+        ..cellStyle = cellStyle
+        ..numberFormat = "General";
+      ws.getRangeByName("E$currentRow").cellStyle = cellStyle;
+      ws.getRangeByName("F$currentRow")
+        ..setNumber(30000)
+        ..cellStyle = cellStyle
+        ..numberFormat = "#,#";
+      ws.getRangeByName("G$currentRow")
+        ..setFormula("=F$currentRow*D$currentRow")
+        ..cellStyle = totalCellStyle;
+      currentRow++;
+    }
     Map<int, int> frequency = {};
     if (order.additionsList != null) {
       for (var a in order.additionsList!) {
@@ -524,7 +562,8 @@ mixin ExcelGenerator {
 
         ws.getRangeByName("B$currentRow:C$currentRow")
           ..merge()
-          ..setText(s.name)
+          ..setText(
+              s.name + ((s.name == "Tắm") ? "(${order.cat.weightRank})" : ""))
           ..cellStyle = cellStyle;
         ws.getRangeByName("D$currentRow")
           ..setNumber((a.distance != null)
@@ -543,7 +582,12 @@ mixin ExcelGenerator {
                   : "lần")
           ..cellStyle = cellStyle;
         ws.getRangeByName("F$currentRow")
-          ..setNumber(s.price)
+          ..setNumber(s.price *
+              ((order.cat.weightRank == "< 3kg" || s.name != "Tắm")
+                  ? 1
+                  : (order.cat.weightRank == "> 6kg")
+                      ? 1.5
+                      : 1.25))
           ..cellStyle = cellStyle
           ..numberFormat = "#,#";
         ws.getRangeByName("G$currentRow")

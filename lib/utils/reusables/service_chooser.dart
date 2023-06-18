@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:project_ii/utils/validators/validators.dart';
 import '../../data/dependencies/internal_storage.dart';
 import '../../model/addition_model.dart';
 import '../../model/service_model.dart';
@@ -11,8 +12,16 @@ import 'location_picker.dart';
 class AdditionChooser extends StatelessWidget {
   final List<Addition>? initialValue;
   final void Function(List<Addition>?)? onSaved, onChanged;
+  final DateTime checkIn, checkOut;
+  final bool? alwaysEnabled;
   const AdditionChooser(
-      {super.key, this.initialValue, this.onSaved, this.onChanged});
+      {super.key,
+      this.initialValue,
+      this.onSaved,
+      this.onChanged,
+      required this.checkIn,
+      required this.checkOut,
+      this.alwaysEnabled});
   @override
   Widget build(BuildContext context) {
     return FormField<List<Addition>>(
@@ -45,20 +54,24 @@ class AdditionChooser extends StatelessWidget {
                               (index) => DropdownMenuItem(
                                   value: servicesList[index].id,
                                   child: Text(servicesList[index].name))),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            formState.setState(() {
-                              formState.setValue(
-                                  List.generate(formState.value!.length, (i) {
-                                if (i == index) {
-                                  return Addition.fromJson(
-                                      _generateJson(value, null, null, null));
+                          onChanged: alwaysEnabled ??
+                                  false || _enable(formState.value![index])
+                              ? (value) {
+                                  if (value == null) return;
+                                  formState.setState(() {
+                                    formState.setValue(List.generate(
+                                        formState.value!.length, (i) {
+                                      if (i == index) {
+                                        return Addition.fromJson(_generateJson(
+                                            value, null, null, null));
+                                      }
+                                      return formState.value![i];
+                                    }));
+                                  });
+                                  _exec(formState.value, onChanged);
                                 }
-                                return formState.value![i];
-                              }));
-                            });
-                            _exec(formState.value, onChanged);
-                          },
+                              : null,
+                          validator: Validators().notNullValidator,
                           value: formState.value?[index].serviceID == -1
                               ? null
                               : formState.value?[index].serviceID,
@@ -81,6 +94,10 @@ class AdditionChooser extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
                               child: LocationPicker(
+                                  enabled: formState.value![index].time == null
+                                      ? true
+                                      : DateTime.now().isBefore(
+                                          formState.value![index].time!),
                                   initialValue:
                                       formState.value![index].distance,
                                   onChanged: (value) {
@@ -118,6 +135,15 @@ class AdditionChooser extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 16),
                                   child: DateTimePicker(
+                                    enabled:
+                                        formState.value![index].time == null
+                                            ? true
+                                            : DateTime.now().isBefore(
+                                                formState.value![index].time!),
+                                    validator: Validators(
+                                            checkIn: checkIn,
+                                            checkOut: checkOut)
+                                        .additionsTimeValidator,
                                     title: "Thời gian",
                                     initialValue: formState.value![index].time,
                                     onChanged: (value) {
@@ -155,6 +181,8 @@ class AdditionChooser extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
                               child: TextFormField(
+                                enabled: DateTime.now().isBefore(checkIn),
+                                validator: Validators().intValidator,
                                 initialValue:
                                     formState.value?[index].quantity == null
                                         ? null
@@ -187,13 +215,16 @@ class AdditionChooser extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
                       child: ElevatedButton(
-                          onPressed: () {
-                            var newAdditionsList = formState.value;
-                            newAdditionsList?.removeAt(index);
-                            formState.setState(() {
-                              formState.setValue(newAdditionsList);
-                            });
-                          },
+                          onPressed: alwaysEnabled ??
+                                  false || _enable(formState.value![index])
+                              ? () {
+                                  var newAdditionsList = formState.value;
+                                  newAdditionsList?.removeAt(index);
+                                  formState.setState(() {
+                                    formState.setValue(newAdditionsList);
+                                  });
+                                }
+                              : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xffff6961),
                             foregroundColor: Colors.black,
@@ -238,5 +269,14 @@ class AdditionChooser extends StatelessWidget {
       "quantity": quantity,
       "time": time?.toString()
     };
+  }
+
+  bool _enable(Addition? addition) {
+    if (addition == null) return true;
+    if (addition.time?.isBefore(DateTime.now()) == true) return false;
+    if (addition.time == null &&
+        DateTime.now().isAfter(checkIn) &&
+        addition.quantity != null) return false;
+    return true;
   }
 }

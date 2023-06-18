@@ -155,8 +155,7 @@ class Form3 extends StatelessWidget {
                         onChanged: (String? value) {
                           if (value != null) {
                             context.read<BookingPageBloc>().add(
-                                ChangeStep3StateEvent(
-                                    roomID: value, subRoomNum: 1));
+                                ModifyOrderEvent(roomID: value, subRoomNum: 1));
                           }
                         },
                         validator: Validators().notNullValidator,
@@ -189,7 +188,7 @@ class Form3 extends StatelessWidget {
                           print("fired $value");
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(subRoomNum: value));
+                              .add(ModifyOrderEvent(subRoomNum: value));
                         },
                         validator: Validators().notNullValidator,
                         value: (state.order.subRoomNum == -1)
@@ -212,7 +211,7 @@ class Form3 extends StatelessWidget {
                       child: DropdownButtonFormField<int>(
                         isExpanded: true,
                         items: List.generate(
-                          internalStorage.read("servicesList").length,
+                          4,
                           (index) => DropdownMenuItem(
                             value: index + 1,
                             child: Text("${index + 1}"),
@@ -222,7 +221,7 @@ class Form3 extends StatelessWidget {
                         onSaved: (int? value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(eatingRank: value));
+                              .add(ModifyOrderEvent(eatingRank: value));
                         },
                         validator: Validators().notNullValidator,
                         value: null,
@@ -249,7 +248,7 @@ class Form3 extends StatelessWidget {
                         onChanged: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(checkIn: value));
+                              .add(ModifyOrderEvent(checkIn: value));
                         },
                       ),
                     ),
@@ -268,7 +267,7 @@ class Form3 extends StatelessWidget {
                         onChanged: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(checkOut: value));
+                              .add(ModifyOrderEvent(checkOut: value));
                         },
                       ),
                     ),
@@ -289,7 +288,7 @@ class Form3 extends StatelessWidget {
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(attention: value));
+                              .add(ModifyOrderEvent(attention: value));
                         },
                         maxLines: null,
                         decoration: const InputDecoration(
@@ -309,7 +308,7 @@ class Form3 extends StatelessWidget {
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep3StateEvent(note: value));
+                              .add(ModifyOrderEvent(note: value));
                         },
                         maxLines: null,
                         decoration: const InputDecoration(
@@ -322,11 +321,14 @@ class Form3 extends StatelessWidget {
                 ],
               ),
               AdditionChooser(
+                  alwaysEnabled: true,
+                  checkIn: state.order.checkIn,
+                  checkOut: state.order.checkOut,
                   initialValue: state.order.additionsList,
                   onSaved: (value) {
                     context
                         .read<BookingPageBloc>()
-                        .add(ChangeStep3StateEvent(additionsList: value));
+                        .add(ModifyOrderEvent(additionsList: value));
                   }),
             ],
           ),
@@ -368,7 +370,7 @@ class Form2 extends StatelessWidget {
                                 onSaved: (value) {
                                   context
                                       .read<BookingPageBloc>()
-                                      .add(ChangeStep2StateEvent(name: value));
+                                      .add(ModifyCatEvent(name: value));
                                 },
                                 validator: Validators().nameValidator,
                                 decoration: const InputDecoration(
@@ -394,9 +396,9 @@ class Form2 extends StatelessWidget {
                               ],
                               onChanged: (value) {},
                               onSaved: (value) {
-                                context.read<BookingPageBloc>().add(
-                                    ChangeStep2StateEvent(
-                                        sterilization: value));
+                                context
+                                    .read<BookingPageBloc>()
+                                    .add(ModifyCatEvent(sterilization: value));
                               },
                               value: null,
                               hint: const Text("---"),
@@ -428,8 +430,9 @@ class Form2 extends StatelessWidget {
                                 ),
                               ],
                               onChanged: (String? value) {
-                                context.read<BookingPageBloc>().add(
-                                    ChangeStep2StateEvent(weightRank: value));
+                                context
+                                    .read<BookingPageBloc>()
+                                    .add(ModifyCatEvent(weightRank: value));
                               },
                               value: null,
                               hint: const Text("---"),
@@ -456,7 +459,7 @@ class Form2 extends StatelessWidget {
                               onSaved: (value) {
                                 context
                                     .read<BookingPageBloc>()
-                                    .add(ChangeStep2StateEvent(species: value));
+                                    .add(ModifyCatEvent(species: value));
                               },
                               decoration: const InputDecoration(
                                 labelText: "Giống mèo",
@@ -490,8 +493,9 @@ class Form2 extends StatelessWidget {
                               ],
                               onChanged: (int? value) {},
                               onSaved: (value) {
-                                context.read<BookingPageBloc>().add(
-                                    ChangeStep2StateEvent(vaccination: value));
+                                context
+                                    .read<BookingPageBloc>()
+                                    .add(ModifyCatEvent(vaccination: value));
                               },
                               value: null,
                               hint: const Text("---"),
@@ -511,7 +515,7 @@ class Form2 extends StatelessWidget {
                                   .weightValidator,
                               onSaved: (value) {
                                 context.read<BookingPageBloc>().add(
-                                    ChangeStep2StateEvent(
+                                    ModifyCatEvent(
                                         weight: double.tryParse(
                                             value ?? "invalid")));
                               },
@@ -536,10 +540,10 @@ class Form2 extends StatelessWidget {
                             child: TextFormField(
                               onSaved: (value) {
                                 context.read<BookingPageBloc>().add(
-                                    ChangeStep2StateEvent(
+                                    ModifyCatEvent(
                                         age: int.tryParse(value ?? "invalid")));
                               },
-                              validator: Validators().ageValidator,
+                              validator: Validators().intValidator,
                               decoration: const InputDecoration(
                                 errorMaxLines: 2,
                                 labelText: "Tuổi",
@@ -565,7 +569,7 @@ class Form2 extends StatelessWidget {
                               onSaved: (value) {
                                 context
                                     .read<BookingPageBloc>()
-                                    .add(ChangeStep2StateEvent(gender: value));
+                                    .add(ModifyCatEvent(gender: value));
                               },
                               onChanged: (String? value) {},
                               value: null,
@@ -607,9 +611,9 @@ class Form2 extends StatelessWidget {
                               Validators().multilineTextCanNotNullValidator,
                           maxLines: null,
                           onSaved: (value) {
-                            context.read<BookingPageBloc>().add(
-                                ChangeStep2StateEvent(
-                                    physicalCondition: value));
+                            context
+                                .read<BookingPageBloc>()
+                                .add(ModifyCatEvent(physicalCondition: value));
                           },
                           decoration: const InputDecoration(
                             labelText: "Thể trạng",
@@ -629,7 +633,7 @@ class Form2 extends StatelessWidget {
                           onSaved: (value) {
                             context
                                 .read<BookingPageBloc>()
-                                .add(ChangeStep2StateEvent(appearance: value));
+                                .add(ModifyCatEvent(appearance: value));
                           },
                           decoration: const InputDecoration(
                             labelText: "Đặc điểm hình thái",
@@ -674,7 +678,7 @@ class Form1 extends StatelessWidget {
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep1StateEvent(name: value));
+                              .add(ModifyOwnerEvent(name: value));
                         },
                         decoration: const InputDecoration(
                           labelText: "Tên khách hàng",
@@ -706,7 +710,7 @@ class Form1 extends StatelessWidget {
                         onSaved: (value) {
                           context
                               .read<BookingPageBloc>()
-                              .add(ChangeStep1StateEvent(gender: value));
+                              .add(ModifyOwnerEvent(gender: value));
                         },
                         hint: const Text("---"),
                         decoration: const InputDecoration(
@@ -726,7 +730,7 @@ class Form1 extends StatelessWidget {
                   onSaved: (value) {
                     context
                         .read<BookingPageBloc>()
-                        .add(ChangeStep1StateEvent(tel: value));
+                        .add(ModifyOwnerEvent(tel: value));
                   },
                   decoration: const InputDecoration(
                     labelText: "Số điện thoại",

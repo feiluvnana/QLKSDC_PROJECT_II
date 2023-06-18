@@ -37,13 +37,13 @@ class CompleteRenderEvent extends BookingPageEvent {}
 
 class RefreshEvent extends BookingPageEvent {}
 
-class ChangeStep1StateEvent extends BookingPageEvent {
+class ModifyOwnerEvent extends BookingPageEvent {
   final String? name, tel, gender;
 
-  ChangeStep1StateEvent({this.name, this.tel, this.gender});
+  ModifyOwnerEvent({this.name, this.tel, this.gender});
 }
 
-class ChangeStep2StateEvent extends BookingPageEvent {
+class ModifyCatEvent extends BookingPageEvent {
   final String? weightRank,
       name,
       species,
@@ -54,7 +54,7 @@ class ChangeStep2StateEvent extends BookingPageEvent {
   final int? age, sterilization, vaccination;
   final double? weight;
 
-  ChangeStep2StateEvent(
+  ModifyCatEvent(
       {this.weightRank,
       this.name,
       this.species,
@@ -68,14 +68,14 @@ class ChangeStep2StateEvent extends BookingPageEvent {
       this.weight});
 }
 
-class ChangeStep3StateEvent extends BookingPageEvent {
+class ModifyOrderEvent extends BookingPageEvent {
   final List<Addition>? additionsList;
   final DateTime? checkIn, checkOut;
   final String? attention, note;
   final String? roomID;
   final int? eatingRank, subRoomNum;
 
-  ChangeStep3StateEvent(
+  ModifyOrderEvent(
       {this.additionsList,
       this.checkIn,
       this.checkOut,
@@ -141,11 +141,11 @@ class BookingState extends Equatable {
         "note": orderNote ?? order.note,
         "bill_num": -1,
         "is_out": 0,
-        "additions_list": jsonDecode(jsonEncode((additionsList != null)
+        "additions_list": (additionsList != null)
             ? List.generate(
                 additionsList.length, (index) => additionsList[index].toJson())
             : List.generate(order.additionsList?.length ?? 0,
-                (index) => order.additionsList![index].toJson()))),
+                (index) => order.additionsList![index].toJson()),
         "room": roomID == null
             ? order.room.toJson()
             : GetIt.I<InternalStorage>()
@@ -245,7 +245,7 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
     on<CompleteRenderEvent>((event, emit) {
       emit(state.copyWith(renderState: RenderState.completed));
     });
-    on<ChangeStep1StateEvent>((event, emit) {
+    on<ModifyOwnerEvent>((event, emit) {
       emit(state.copyWith(
           order: state.modifyOrder(
               cat: state.modifyCat(
@@ -254,7 +254,7 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
                       ownerGender: event.gender,
                       ownerTel: event.tel)))));
     });
-    on<ChangeStep2StateEvent>((event, emit) {
+    on<ModifyCatEvent>((event, emit) {
       emit(state.copyWith(
         order: state.modifyOrder(
             cat: state.modifyCat(
@@ -271,7 +271,7 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
                 catWeightRank: event.weightRank)),
       ));
     });
-    on<ChangeStep3StateEvent>((event, emit) async {
+    on<ModifyOrderEvent>((event, emit) async {
       emit(state.copyWith(
           order: state.modifyOrder(
               additionsList: event.additionsList,
@@ -285,6 +285,44 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
     });
     on<SubmitDataEvent>((event, emit) async {
       bool isSuccessed = false;
+      List<Addition>? list;
+      if (state.order.additionsList != null) {
+        print("check ${state.order.additionsList}");
+        list = List.generate(state.order.additionsList!.length, (index) {
+          if (GetIt.I<InternalStorage>()
+                  .read("servicesList")
+                  .firstWhere((element) =>
+                      state.order.additionsList![index].serviceID == element.id)
+                  .name ==
+              "Đón mèo") {
+            return Addition.fromJson({
+              "service_id": state.order.additionsList![index].serviceID,
+              "distance": state.order.additionsList![index].distance,
+              "quantity": state.order.additionsList![index].quantity,
+              "time": state.order.checkIn.toString()
+            });
+          }
+          if (GetIt.I<InternalStorage>()
+                  .read("servicesList")
+                  .firstWhere((element) =>
+                      state.order.additionsList![index].serviceID == element.id)
+                  .name ==
+              "Trả mèo") {
+            return Addition.fromJson({
+              "service_id": state.order.additionsList![index].serviceID,
+              "distance": state.order.additionsList![index].distance,
+              "quantity": state.order.additionsList![index].quantity,
+              "time": state.order.checkOut.toString()
+            });
+          }
+          return state.order.additionsList![index];
+        });
+        emit(state.copyWith(
+            order: state.modifyOrder(
+          additionsList: list,
+        )));
+      }
+      print("checkend ${state.order.additionsList}");
       await BookingRelatedWorkProvider.sendOrderInfo(state.order)
           .then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
