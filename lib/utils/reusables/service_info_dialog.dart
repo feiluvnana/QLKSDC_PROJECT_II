@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../model/service_model.dart';
+import '../../models/service_model.dart';
 import '../validators/validators.dart';
 
 class ServiceInfoDialog {
@@ -29,11 +29,12 @@ class _ServiceInfoForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final String title;
 
-  _ServiceInfoForm(
+  const _ServiceInfoForm(
       {required this.title, this.initialValue, required this.formKey});
 
   @override
   State<_ServiceInfoForm> createState() =>
+      // ignore: no_logic_in_create_state
       _ServiceInfoFormState(initialValue: initialValue);
 }
 
@@ -42,6 +43,7 @@ class _ServiceInfoFormState extends State<_ServiceInfoForm> {
 
   final servicePrice = TextEditingController();
 
+  // ignore: non_constant_identifier_names
   bool d_need, q_need, t_need;
 
   _ServiceInfoFormState({Service? initialValue})

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:project_ii/blocs/info_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../model/room_group_model.dart';
+import '../models/room_group_model.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';

@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project_ii/data/providers/login_related_work_provider.dart';
-import 'package:project_ii/view/history_page_view.dart';
+import 'package:project_ii/views/history_page_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../view/booking_page_view.dart';
-import '../view/calendar_page_view.dart';
-import '../view/room_page_view.dart';
-import '../view/service_page_view.dart';
-import '../view/statistic_page_view.dart';
+import '../views/booking_page_view.dart';
+import '../views/calendar_page_view.dart';
+import '../views/room_page_view.dart';
+import '../views/service_page_view.dart';
+import '../views/statistic_page_view.dart';
 
 abstract class HomePageEvent {}
 
@@ -85,6 +85,7 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
     on<LogoutEvent>((event, emit) async {
       await LoginRelatedWorkProvider.logout();
       await (await SharedPreferences.getInstance()).clear();
+      // ignore: use_build_context_synchronously
       event.context.go("/login");
     });
   }
@@ -92,6 +93,5 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
   @override
   void onTransition(Transition<HomePageEvent, HomeState> transition) {
     super.onTransition(transition);
-    print("[HomePageBloc] $transition\n");
   }
 }

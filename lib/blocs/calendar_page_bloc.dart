@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:project_ii/data/providers/calendar_related_work_provider.dart';
-import 'package:project_ii/data/providers/service_related_work_provider.dart';
+import '../data/generators/excel_generator.dart';
+import '../data/providers/calendar_related_work_provider.dart';
+import '../data/providers/service_related_work_provider.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/render_state.dart';
 
@@ -14,13 +15,15 @@ class IncreaseMonthEvent extends CalendarPageEvent {}
 
 class DecreaseMonthEvent extends CalendarPageEvent {}
 
-class ChangeGuestListDay extends CalendarPageEvent {
+class ChangeGuestListDayEvent extends CalendarPageEvent {
   final int? dayForGuestList;
 
-  ChangeGuestListDay(this.dayForGuestList);
+  ChangeGuestListDayEvent(this.dayForGuestList);
 }
 
-class CompleteRender extends CalendarPageEvent {}
+class CompleteRenderEvent extends CalendarPageEvent {}
+
+class PrintGuestListEvent extends CalendarPageEvent {}
 
 class RequireDataEvent extends CalendarPageEvent {}
 
@@ -60,7 +63,8 @@ class CalendarState extends Equatable {
   List<Object?> get props => [currentMonth, dayForGuestList, state];
 }
 
-class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
+class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState>
+    with ExcelGenerator {
   CalendarPageBloc()
       : super(CalendarState(
             currentMonth: DateTime(DateTime.now().year, DateTime.now().month),
@@ -70,6 +74,10 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
             state: RenderState.waiting)) {
     GetIt.I<InternalStorage>().expose("roomGroupsList")?.listen((data) {
       if (data == null) add(RefreshEvent());
+    });
+    on<PrintGuestListEvent>((event, emit) async {
+      await createGuestList(state.dayForGuestList, state.currentMonth.month,
+          state.currentMonth.year);
     });
     on<IncreaseMonthEvent>((event, emit) {
       if (state.state != RenderState.completed) return;
@@ -93,11 +101,11 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       }
       emit(state.copyWith(currentMonth: newMonth, state: RenderState.waiting));
     });
-    on<ChangeGuestListDay>((event, emit) {
+    on<ChangeGuestListDayEvent>((event, emit) {
       if (state.state != RenderState.completed) return;
       emit(state.copyWith(dayForGuestList: event.dayForGuestList));
     });
-    on<CompleteRender>(
+    on<CompleteRenderEvent>(
       (event, emit) => emit(state.copyWith(state: RenderState.completed)),
     );
     on<RequireDataEvent>((event, emit) async {
@@ -107,7 +115,6 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
       emit(state.copyWith(state: RenderState.rendering));
     });
     on<GotoInfoPageEvent>((event, emit) async {
-      print("fired");
       if (GetIt.I<InternalStorage>().read("servicesList") == null) {
         await ServiceRelatedWorkProvider.getServicesList();
       }
@@ -122,6 +129,5 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState> {
   @override
   void onTransition(Transition<CalendarPageEvent, CalendarState> transition) {
     super.onTransition(transition);
-    print("[CalendarPageBlock] $transition");
   }
 }

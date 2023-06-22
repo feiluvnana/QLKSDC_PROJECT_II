@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../model/order_model.dart';
+import '../../models/order_model.dart';
 import 'package:http/http.dart' as http;
 
 class BookingRelatedWorkProvider {

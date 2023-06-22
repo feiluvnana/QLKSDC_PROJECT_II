@@ -10,10 +10,10 @@ import 'package:project_ii/utils/reusables/notice_dialog.dart';
 import '../data/providers/calendar_related_work_provider.dart';
 import '../data/types/render_state.dart';
 import '../data/providers/booking_related_work_provider.dart';
-import '../model/addition_model.dart';
-import '../model/cat_model.dart';
-import '../model/owner_model.dart';
-import '../model/order_model.dart';
+import '../models/addition_model.dart';
+import '../models/cat_model.dart';
+import '../models/owner_model.dart';
+import '../models/order_model.dart';
 
 abstract class BookingPageEvent {}
 
@@ -287,7 +287,6 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
       bool isSuccessed = false;
       List<Addition>? list;
       if (state.order.additionsList != null) {
-        print("check ${state.order.additionsList}");
         list = List.generate(state.order.additionsList!.length, (index) {
           if (GetIt.I<InternalStorage>()
                   .read("servicesList")
@@ -322,7 +321,6 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
           additionsList: list,
         )));
       }
-      print("checkend ${state.order.additionsList}");
       await BookingRelatedWorkProvider.sendOrderInfo(state.order)
           .then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
@@ -348,6 +346,5 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
   @override
   void onTransition(Transition<BookingPageEvent, BookingState> transition) {
     super.onTransition(transition);
-    print("[BookingPageBloc] $transition");
   }
 }

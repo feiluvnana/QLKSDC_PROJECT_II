@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 class Validators {
   final DateTime? checkIn, checkOut;
   final String? weightRank;
@@ -34,9 +32,9 @@ class Validators {
     };
     additionsTimeValidator = (value) {
       if (value == null) return "Không để trống";
-      print("executed ${value.isAfter(checkOut!) || value.isBefore(checkIn!)}");
-      if (value.isAfter(checkOut!) || value.isBefore(checkIn!))
+      if (value.isAfter(checkOut!) || value.isBefore(checkIn!)) {
         return "Phải nằm trong thời gian check-in và check-out";
+      }
       return null;
     };
   }

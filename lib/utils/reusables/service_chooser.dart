@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:project_ii/utils/validators/validators.dart';
 import '../../data/dependencies/internal_storage.dart';
-import '../../model/addition_model.dart';
-import '../../model/service_model.dart';
+import '../../models/addition_model.dart';
+import '../../models/service_model.dart';
 import 'date_time_picker.dart';
 import 'location_picker.dart';
 

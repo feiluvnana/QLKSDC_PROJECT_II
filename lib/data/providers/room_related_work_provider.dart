@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../model/room_model.dart';
+import '../../models/room_model.dart';
 import 'package:http/http.dart' as http;
 
 class RoomRelatedWorkProvider {
@@ -44,10 +44,10 @@ class RoomRelatedWorkProvider {
         });
   }
 
-  static Future<http.Response> modify(Room room, Room old_room) async {
+  static Future<http.Response> modify(Room room, Room oldRoom) async {
     return http.post(Uri.http("localhost", "php-crash/room_related_work.php"),
         body: <String, String>{
-          "data": jsonEncode([room.toJson(), old_room.toJson()]),
+          "data": jsonEncode([room.toJson(), oldRoom.toJson()]),
           "session_id":
               (await SharedPreferences.getInstance()).getString("session_id") ??
                   "",

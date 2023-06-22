@@ -88,6 +88,5 @@ class LoginPageBloc extends Bloc<LoginPageEvent, LoginState> {
   @override
   void onTransition(Transition<LoginPageEvent, LoginState> transition) {
     super.onTransition(transition);
-    print("[LoginPageBlock] $transition");
   }
 }

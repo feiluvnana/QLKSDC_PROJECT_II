@@ -198,14 +198,10 @@ class _MyGoogleMapsState extends State<_MyGoogleMaps> {
                   bearing: 60),
               onMapCreated: (controller) => _mapController.complete(controller),
               onTap: (latLng) async {
-                print("tapped");
                 GoogleMapController controller = await _mapController.future;
-                controller.getZoomLevel().then((value) => print(value));
-                print(latLng.toJson());
                 controller.animateCamera(CameraUpdate.newLatLng(latLng));
               },
               onLongPress: (latLng) {
-                print("longPressed");
                 _markerController.addMarker(latLng);
                 setState(() {});
               },

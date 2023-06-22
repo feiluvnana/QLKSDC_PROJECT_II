@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../model/room_model.dart';
+import '../../models/room_model.dart';
 import '../validators/validators.dart';
 
 class RoomInfoDialog {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../model/history_model.dart';
+import '../../models/history_model.dart';
 import 'package:http/http.dart' as http;
 
 import '../dependencies/internal_storage.dart';

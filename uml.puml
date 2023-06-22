@@ -121,16 +121,21 @@ class "project_ii::blocs::calendar_page_bloc.dart::DecreaseMonthEvent" {
 
 "project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::DecreaseMonthEvent"
 
-class "project_ii::blocs::calendar_page_bloc.dart::ChangeGuestListDay" {
+class "project_ii::blocs::calendar_page_bloc.dart::ChangeGuestListDayEvent" {
   +int? dayForGuestList
 }
 
-"project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::ChangeGuestListDay"
+"project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::ChangeGuestListDayEvent"
 
-class "project_ii::blocs::calendar_page_bloc.dart::CompleteRender" {
+class "project_ii::blocs::calendar_page_bloc.dart::CompleteRenderEvent" {
 }
 
-"project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::CompleteRender"
+"project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::CompleteRenderEvent"
+
+class "project_ii::blocs::calendar_page_bloc.dart::PrintGuestListEvent" {
+}
+
+"project_ii::blocs::calendar_page_bloc.dart::CalendarPageEvent" <|-- "project_ii::blocs::calendar_page_bloc.dart::PrintGuestListEvent"
 
 class "project_ii::blocs::calendar_page_bloc.dart::RequireDataEvent" {
 }
@@ -168,6 +173,7 @@ class "project_ii::blocs::calendar_page_bloc.dart::CalendarPageBloc" {
 }
 
 "bloc::src::bloc.dart::Bloc" <|-- "project_ii::blocs::calendar_page_bloc.dart::CalendarPageBloc"
+"project_ii::data::generators::excel_generator.dart::ExcelGenerator" <|-- "project_ii::blocs::calendar_page_bloc.dart::CalendarPageBloc"
 
 abstract class "project_ii::blocs::history_page_bloc.dart::HistoryPageEvent" {
 }
@@ -1063,7 +1069,6 @@ class "project_ii::view::calendar_page_view.dart::CalendarPage" {
 }
 
 "flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::CalendarPage"
-"project_ii::data::generators::excel_generator.dart::ExcelGenerator" <|-- "project_ii::view::calendar_page_view.dart::CalendarPage"
 
 class "project_ii::view::calendar_page_view.dart::BookingInfo" {
   +Widget build()

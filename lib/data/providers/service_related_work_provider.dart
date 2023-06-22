@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../model/service_model.dart';
+import '../../models/service_model.dart';
 import '../dependencies/internal_storage.dart';
 
 class ServiceRelatedWorkProvider {
@@ -49,11 +49,11 @@ class ServiceRelatedWorkProvider {
   }
 
   static Future<http.Response> modify(
-      Service service, Service old_service) async {
+      Service service, Service oldService) async {
     return http.post(
         Uri.http("localhost", "php-crash/service_related_work.php"),
         body: <String, String>{
-          "data": jsonEncode([service.toJson(), old_service.toJson()]),
+          "data": jsonEncode([service.toJson(), oldService.toJson()]),
           "session_id":
               (await SharedPreferences.getInstance()).getString("session_id") ??
                   "",

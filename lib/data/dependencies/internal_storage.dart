@@ -1,10 +1,10 @@
 // ignore_for_file: prefer_final_fields
 import 'package:get_it/get_it.dart';
-import 'package:project_ii/model/history_model.dart';
-import '../../model/room_group_model.dart';
-import '../../model/service_model.dart';
+import 'package:project_ii/models/history_model.dart';
+import '../../models/room_group_model.dart';
+import '../../models/service_model.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../model/statistic_model.dart';
+import '../../models/statistic_model.dart';
 
 class InternalStorage {
   static void init() {

@@ -10,7 +10,7 @@ import 'package:project_ii/utils/reusables/room_info_dialog.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/render_state.dart';
 import '../data/providers/room_related_work_provider.dart';
-import '../model/room_model.dart';
+import '../models/room_model.dart';
 
 abstract class RoomPageEvent {}
 
@@ -171,6 +171,7 @@ class RoomPageBloc extends Bloc<RoomPageEvent, RoomState> {
           }
         });
       }
+      // ignore: use_build_context_synchronously
       NoticeDialog.showMessageDialog(event.context, text: notice);
       CalendarRelatedWorkProvider.clearRoomGroupsList();
       HistoryRelatedWorkProvider.clearHistoriesList();
@@ -184,6 +185,5 @@ class RoomPageBloc extends Bloc<RoomPageEvent, RoomState> {
   @override
   void onTransition(Transition<RoomPageEvent, RoomState> transition) {
     super.onTransition(transition);
-    print("[RoomPageBloc] $transition");
   }
 }

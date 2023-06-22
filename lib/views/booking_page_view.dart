@@ -185,7 +185,6 @@ class Form3 extends StatelessWidget {
                                     child: Text("${index + 1}"))),
                         onChanged: (value) {},
                         onSaved: (value) {
-                          print("fired $value");
                           context
                               .read<BookingPageBloc>()
                               .add(ModifyOrderEvent(subRoomNum: value));
@@ -348,7 +347,6 @@ class Form2 extends StatelessWidget {
     return BlocBuilder<BookingPageBloc, BookingState>(
         buildWhen: (previous, current) => current.currentStep == 1,
         builder: (context, state) {
-          print(2);
           return Form(
             key: state.formKey2,
             child: Column(
@@ -659,7 +657,6 @@ class Form1 extends StatelessWidget {
     return BlocBuilder<BookingPageBloc, BookingState>(
       buildWhen: (previous, current) => current.currentStep == 0,
       builder: (context, state) {
-        print(1);
         return Form(
           key: state.formKey1,
           child: Column(

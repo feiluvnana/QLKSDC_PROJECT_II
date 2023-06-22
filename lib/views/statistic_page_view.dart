@@ -6,7 +6,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../blocs/statistic_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/render_state.dart';
-import '../model/statistic_model.dart';
+import '../models/statistic_model.dart';
 
 class StatisticPage extends StatelessWidget {
   const StatisticPage({super.key});

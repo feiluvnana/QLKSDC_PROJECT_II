@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
@@ -11,11 +13,11 @@ import 'package:project_ii/utils/reusables/notice_dialog.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/providers/calendar_related_work_provider.dart';
 import '../data/providers/info_related_work_provider.dart';
-import '../model/cat_model.dart';
-import '../model/order_model.dart';
-import '../model/addition_model.dart';
-import '../model/owner_model.dart';
-import '../model/room_group_model.dart';
+import '../models/cat_model.dart';
+import '../models/order_model.dart';
+import '../models/addition_model.dart';
+import '../models/owner_model.dart';
+import '../models/room_group_model.dart';
 
 abstract class InformationPageEvent {}
 
@@ -25,7 +27,7 @@ class ToggleModifyCatEvent extends InformationPageEvent {}
 
 class ToggleModifyOrderEvent extends InformationPageEvent {}
 
-class ModifyOwnerEvent extends InformationPageEvent with ExcelGenerator {
+class ModifyOwnerEvent extends InformationPageEvent {
   final String? name, tel, gender;
 
   ModifyOwnerEvent({this.name, this.tel, this.gender});
@@ -409,6 +411,5 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
   void onTransition(
       Transition<InformationPageEvent, InformationState> transition) {
     super.onTransition(transition);
-    print("[InformationPageBloc] $transition");
   }
 }

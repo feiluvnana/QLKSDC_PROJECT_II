@@ -1,14 +1,15 @@
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
 import 'dart:html';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
-import '../../model/order_model.dart';
-import '../../model/addition_model.dart';
-import '../../model/room_group_model.dart';
-import '../../model/room_model.dart';
-import '../../model/service_model.dart';
+import '../../models/order_model.dart';
+import '../../models/addition_model.dart';
+import '../../models/room_group_model.dart';
+import '../../models/room_model.dart';
+import '../../models/service_model.dart';
 import '../dependencies/internal_storage.dart';
 
 mixin ExcelGenerator {

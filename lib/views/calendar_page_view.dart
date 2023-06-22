@@ -6,10 +6,9 @@ import '../blocs/calendar_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/pair.dart';
 import '../data/types/render_state.dart';
-import '../model/room_group_model.dart';
-import '../data/generators/excel_generator.dart';
+import '../models/room_group_model.dart';
 
-class CalendarPage extends StatelessWidget with ExcelGenerator {
+class CalendarPage extends StatelessWidget {
   const CalendarPage({super.key});
 
   @override
@@ -53,20 +52,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ElevatedButton(
-                          onPressed: () async {
-                            await createGuestList(
-                                BlocProvider.of<CalendarPageBloc>(context)
-                                    .state
-                                    .dayForGuestList,
-                                BlocProvider.of<CalendarPageBloc>(context)
-                                    .state
-                                    .currentMonth
-                                    .month,
-                                BlocProvider.of<CalendarPageBloc>(context)
-                                    .state
-                                    .currentMonth
-                                    .year);
-                          },
+                          onPressed: () async {},
                           child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -87,7 +73,7 @@ class CalendarPage extends StatelessWidget with ExcelGenerator {
                           onChanged: (int? value) {
                             context
                                 .read<CalendarPageBloc>()
-                                .add(ChangeGuestListDay(value));
+                                .add(ChangeGuestListDayEvent(value));
                           },
                           value: state.dayForGuestList,
                         ),
@@ -183,8 +169,8 @@ class BookingInfo extends StatelessWidget {
       }
       Future.delayed(
           Duration.zero,
-          () =>
-              BlocProvider.of<CalendarPageBloc>(context).add(CompleteRender()));
+          () => BlocProvider.of<CalendarPageBloc>(context)
+              .add(CompleteRenderEvent()));
 
       return SizedBox.expand(
         child: SingleChildScrollView(

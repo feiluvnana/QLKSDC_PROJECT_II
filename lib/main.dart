@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/dependencies/internal_storage.dart';
 import 'generated/l10n.dart';
 import 'package:go_router/go_router.dart';
-import 'view/home_page_view.dart';
-import 'view/login_page_view.dart';
-import 'view/info_page_view.dart';
+import 'views/home_page_view.dart';
+import 'views/login_page_view.dart';
+import 'views/info_page_view.dart';
 
 void main() {
   Future.delayed(const Duration(seconds: 0), () async {
@@ -37,7 +37,7 @@ class ProjectII extends StatelessWidget {
         builder: (context, state) => Title(
             color: const Color(0xff68b6ef),
             title: "Trang chủ",
-            child: HomePage()),
+            child: const HomePage()),
         redirect: (context, state) async =>
             ((await SharedPreferences.getInstance()).getString("session_id") ==
                     null)
