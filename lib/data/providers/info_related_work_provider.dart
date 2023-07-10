@@ -14,23 +14,35 @@ class InfoRelatedWorkProvider {
         });
   }
 
-  static Future<http.Response> checkout(Order old, int fin) async {
+  static Future<http.Response> checkout(Order old, {double? charge}) async {
     return http
         .post(Uri.http("localhost", "php-crash/info_related_work.php"), body: {
       "session_id":
           (await SharedPreferences.getInstance()).getString("session_id"),
       "flag": "checkout",
-      "data": jsonEncode({"old": old.toJson(), "final": fin})
+      "data": jsonEncode(
+          {"old": old.toJson(), "charge": charge?.toStringAsFixed(1) ?? "0"}),
     });
   }
 
-  static Future<http.Response> cancel(Order old) async {
+  static Future<http.Response> checkin(Order order) async {
+    return http.post(
+        Uri.http("localhost", "php-crash/booking_related_work.php"),
+        body: {
+          "session_id":
+              (await SharedPreferences.getInstance()).getString("session_id"),
+          "data": jsonEncode(order.toJson()),
+        });
+  }
+
+  static Future<http.Response> cancel(Order old, {double? charge}) async {
     return http
         .post(Uri.http("localhost", "php-crash/info_related_work.php"), body: {
       "session_id":
           (await SharedPreferences.getInstance()).getString("session_id"),
       "flag": "cancel",
-      "data": jsonEncode({"old": old.toJson()})
+      "data": jsonEncode(
+          {"old": old.toJson(), "charge": charge?.toStringAsFixed(1) ?? 0}),
     });
   }
 }

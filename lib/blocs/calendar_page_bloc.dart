@@ -119,7 +119,10 @@ class CalendarPageBloc extends Bloc<CalendarPageEvent, CalendarState>
         await ServiceRelatedWorkProvider.getServicesList();
       }
       // ignore: use_build_context_synchronously
-      event.context.push("/info?ridx=${event.ridx}&oidx=${event.oidx}");
+      event.context.push("/info", extra: {
+        "ridx": event.ridx.toString(),
+        "oidx": event.oidx.toString()
+      });
     });
     on<RefreshEvent>((event, emit) {
       emit(state.copyWith(state: RenderState.waiting));

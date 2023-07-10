@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/dependencies/internal_storage.dart';
 import 'generated/l10n.dart';
 import 'package:go_router/go_router.dart';
+import 'models/order_model.dart';
+import 'views/checkin_page_view.dart';
 import 'views/home_page_view.dart';
 import 'views/login_page_view.dart';
 import 'views/info_page_view.dart';
@@ -50,10 +52,21 @@ class ProjectII extends StatelessWidget {
               color: const Color(0xff68b6ef),
               title: "Thông tin",
               child: InfoPage(
-                ridx: int.parse(state.queryParameters["ridx"]!),
-                oidx: int.parse(state.queryParameters["oidx"]!),
+                ridx: int.parse((state.extra as Map<String, String>)["ridx"]!),
+                oidx: int.parse((state.extra as Map<String, String>)["oidx"]!),
               ));
         },
+        routes: [
+          GoRoute(
+            path: "checkin",
+            builder: (context, state) {
+              return Title(
+                  color: const Color(0xff68b6ef),
+                  title: "Check-in",
+                  child: CheckinPage(order: state.extra as Order));
+            },
+          )
+        ],
         redirect: (context, state) =>
             (GetIt.I<InternalStorage>().read("roomGroupsList") == null ||
                     GetIt.I<InternalStorage>().read("servicesList") == null)

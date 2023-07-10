@@ -6,7 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 import '../../models/order_model.dart';
-import '../../models/addition_model.dart';
+import '../providers/addition_model.dart';
 import '../../models/room_group_model.dart';
 import '../../models/room_model.dart';
 import '../../models/service_model.dart';
@@ -280,8 +280,7 @@ mixin ExcelGenerator {
   Future<void> createBill(
       {required int oidx,
       required int ridx,
-      required int billID,
-      required int billNum}) async {
+      required dynamic billTemplate}) async {
     final Workbook wb = Workbook();
     final Worksheet ws = wb.worksheets[0];
     ws.pageSetup
@@ -387,12 +386,11 @@ mixin ExcelGenerator {
     Room room = GetIt.I<InternalStorage>().read("roomGroupsList")[ridx].room;
     ws.getRangeByName("B7:G7")
       ..merge()
-      ..setText(
-          "Thời gian thanh toán: ${DateFormat("dd/MM/yyyy HH:mm").format(DateTime.now())}")
+      ..setText("Thời gian thanh toán: ${billTemplate["time"]}")
       ..cellStyle = infoStyle;
     ws.getRangeByName("B8:G8")
       ..merge()
-      ..setText("Số hoá đơn: ${billID}_$billNum")
+      ..setText("Số hoá đơn: ${billTemplate["id"]}")
       ..cellStyle = infoStyle;
     ws.getRangeByName("B9:G9")
       ..merge()
@@ -409,8 +407,7 @@ mixin ExcelGenerator {
       ..cellStyle = infoStyle;
     ws.getRangeByName("B12:G12")
       ..merge()
-      ..setText(
-          "Ngày đi: ${DateFormat("dd/MM/yyyy HH:mm").format(order.checkOut)}")
+      ..setText("Ngày đi: ${billTemplate["time"]}")
       ..cellStyle = infoStyle;
 
     ws.getRangeByName("B14")
@@ -434,15 +431,12 @@ mixin ExcelGenerator {
       ..setText(room.type)
       ..cellStyle = cellStyle;
     ws.getRangeByName("C17")
-      ..setNumber(ignoreHour(order.checkOut)
-          .difference(ignoreHour(order.checkIn))
-          .inDays
-          .toDouble())
+      ..setNumber(billTemplate["room"]["quantity"])
       ..cellStyle = cellStyle
       ..numberFormat = "General";
     ws.getRangeByName("D17:E17")
       ..merge()
-      ..setNumber(room.price)
+      ..setNumber(billTemplate["room"]["price"])
       ..cellStyle = cellStyle
       ..numberFormat = "#,#";
     ws.getRangeByName("F17:G17")
@@ -471,7 +465,7 @@ mixin ExcelGenerator {
       ..setText("Thành tiền")
       ..cellStyle = cellStyle;
     int currentRow = 22;
-    if (order.checkIn.hour < 14) {
+    if (billTemplate["room"]["early"] == 1) {
       ws.getRangeByName("B$currentRow:C$currentRow")
         ..merge()
         ..setText("Check-in sớm")
@@ -490,8 +484,7 @@ mixin ExcelGenerator {
         ..cellStyle = totalCellStyle;
       currentRow++;
     }
-    if (order.checkOut.hour > 14 ||
-        (order.checkOut.hour == 14 && order.checkOut.minute > 0)) {
+    if (billTemplate["room"]["late"] == 1) {
       ws.getRangeByName("B$currentRow:C$currentRow")
         ..merge()
         ..setText("Check-out muộn")
@@ -510,93 +503,28 @@ mixin ExcelGenerator {
         ..cellStyle = totalCellStyle;
       currentRow++;
     }
-    if (order.eatingRank == 2) {
+    billTemplate["addition"].forEach((value) {
       ws.getRangeByName("B$currentRow:C$currentRow")
         ..merge()
-        ..setText("Hạng ăn 2")
+        ..setText(value["name"] +
+            ((value["rank"] != null) ? "(${value["rank"]})" : ""))
         ..cellStyle = cellStyle;
       ws.getRangeByName("D$currentRow")
-        ..setNumber(1)
+        ..setNumber(value["quantity"])
         ..cellStyle = cellStyle
         ..numberFormat = "General";
-      ws.getRangeByName("E$currentRow").cellStyle = cellStyle;
+      ws.getRangeByName("E$currentRow")
+        ..setText(value["unit"])
+        ..cellStyle = cellStyle;
       ws.getRangeByName("F$currentRow")
-        ..setNumber(80000)
+        ..setNumber(value["price"])
         ..cellStyle = cellStyle
         ..numberFormat = "#,#";
       ws.getRangeByName("G$currentRow")
         ..setFormula("=F$currentRow*D$currentRow")
         ..cellStyle = totalCellStyle;
       currentRow++;
-    }
-    if (order.eatingRank == 4) {
-      ws.getRangeByName("B$currentRow:C$currentRow")
-        ..merge()
-        ..setText("Hạng ăn 4")
-        ..cellStyle = cellStyle;
-      ws.getRangeByName("D$currentRow")
-        ..setNumber(1)
-        ..cellStyle = cellStyle
-        ..numberFormat = "General";
-      ws.getRangeByName("E$currentRow").cellStyle = cellStyle;
-      ws.getRangeByName("F$currentRow")
-        ..setNumber(30000)
-        ..cellStyle = cellStyle
-        ..numberFormat = "#,#";
-      ws.getRangeByName("G$currentRow")
-        ..setFormula("=F$currentRow*D$currentRow")
-        ..cellStyle = totalCellStyle;
-      currentRow++;
-    }
-    Map<int, int> frequency = {};
-    if (order.additionsList != null) {
-      for (var a in order.additionsList!) {
-        frequency.update(a.serviceID, (value) => value + (a.quantity ?? 1),
-            ifAbsent: () => a.quantity ?? 1);
-      }
-      frequency.forEach((key, value) {
-        Addition a = order.additionsList!
-            .firstWhere((element) => element.serviceID == key);
-        Service s = GetIt.I<InternalStorage>()
-            .read("servicesList")
-            .firstWhere((element) => a.serviceID == element.id);
-
-        ws.getRangeByName("B$currentRow:C$currentRow")
-          ..merge()
-          ..setText(
-              s.name + ((s.name == "Tắm") ? "(${order.cat.weightRank})" : ""))
-          ..cellStyle = cellStyle;
-        ws.getRangeByName("D$currentRow")
-          ..setNumber((a.distance != null)
-              ? double.parse(
-                  (a.distance?.substring(1, a.distance?.indexOf("km)")))!)
-              : (a.quantity != null)
-                  ? a.quantity?.toDouble()
-                  : value.toDouble())
-          ..cellStyle = cellStyle
-          ..numberFormat = "General";
-        ws.getRangeByName("E$currentRow")
-          ..setText((a.distance != null)
-              ? "km"
-              : (a.quantity != null)
-                  ? "cái"
-                  : "lần")
-          ..cellStyle = cellStyle;
-        ws.getRangeByName("F$currentRow")
-          ..setNumber(s.price *
-              ((order.cat.weightRank == "< 3kg" || s.name != "Tắm")
-                  ? 1
-                  : (order.cat.weightRank == "> 6kg")
-                      ? 1.5
-                      : 1.25))
-          ..cellStyle = cellStyle
-          ..numberFormat = "#,#";
-        ws.getRangeByName("G$currentRow")
-          ..setFormula("=F$currentRow*D$currentRow")
-          ..cellStyle = totalCellStyle;
-        currentRow++;
-      });
-    }
+    });
     currentRow++;
     ws.getRangeByName("E$currentRow")
       ..setText("Tổng:")
@@ -631,7 +559,209 @@ mixin ExcelGenerator {
     final content = base64Encode(rawData);
     AnchorElement(
         href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-      ..setAttribute("download", "bill $billID-$billNum.xlsx")
+      ..setAttribute("download", "bill ${billTemplate["id"]}.xlsx")
+      ..click();
+  }
+
+  Future<void> createCancelBill(
+      {required int oidx,
+      required int ridx,
+      required dynamic billTemplate}) async {
+    final Workbook wb = Workbook();
+    final Worksheet ws = wb.worksheets[0];
+    ws.pageSetup
+      ..isFitToPage = true
+      ..topMargin = 0.75
+      ..rightMargin = 0.25
+      ..leftMargin = 0.25
+      ..bottomMargin = 0.25
+      ..headerMargin = 0.3
+      ..footerMargin = 0.3
+      ..isCenterHorizontally = true;
+
+    ws
+      ..getRangeByName("A1").columnWidth = 2
+      ..getRangeByName("B1").columnWidth = 7.44
+      ..getRangeByName("C1").columnWidth = 4.22
+      ..getRangeByName("D1").columnWidth = 2.70
+      ..getRangeByName("D1").columnWidth = 4.56
+      ..getRangeByName("E1").columnWidth = 5.33
+      ..getRangeByName("G1").columnWidth = 8.11
+      ..getRangeByName("H1").columnWidth = 2;
+    ws
+      ..getRangeByName("A2").rowHeight = 28.2
+      ..getRangeByName("A3").rowHeight = 28.2
+      ..getRangeByName("A6").rowHeight = 22.8;
+
+    final Style titleStyle = wb.styles.add('titleStyle');
+    titleStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 12
+      ..bold = true
+      ..hAlign = HAlignType.center
+      ..vAlign = VAlignType.center;
+    final Style totalStyle = wb.styles.add("totalStyle");
+    totalStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 7
+      ..bold = true
+      ..hAlign = HAlignType.right
+      ..vAlign = VAlignType.center;
+    final Style totalCellStyle = wb.styles.add("totalCellStyle");
+    totalCellStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 7
+      ..bold = true
+      ..hAlign = HAlignType.center
+      ..vAlign = VAlignType.center
+      ..borders.all.lineStyle = LineStyle.thin;
+    final Style cellStyle = wb.styles.add("cellStyle");
+    cellStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 7
+      ..hAlign = HAlignType.center
+      ..vAlign = VAlignType.center
+      ..borders.all.lineStyle = LineStyle.thin;
+    final Style infoStyle = wb.styles.add("infoStyle");
+    infoStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 8
+      ..hAlign = HAlignType.left
+      ..vAlign = VAlignType.center;
+    final Style sectionStyle = wb.styles.add("sectionStyle");
+    sectionStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 11
+      ..bold = true
+      ..hAlign = HAlignType.left
+      ..vAlign = VAlignType.center;
+    final Style contactStyle = wb.styles.add("contactStyle");
+    contactStyle
+      ..fontName = "Tahoma"
+      ..fontSize = 8
+      ..wrapText = true
+      ..hAlign = HAlignType.center
+      ..vAlign = VAlignType.center;
+
+    List<int> logoBytes =
+        (await rootBundle.load("images/logo.png")).buffer.asUint8List();
+    var picture = ws.pictures.addStream(2, 2, logoBytes);
+    picture
+      ..width = (picture.width * 0.32).toInt()
+      ..height = (picture.height * 0.32).toInt();
+
+    ws.getRangeByName("C2:G2")
+      ..merge()
+      ..setText("KHÁCH SẠN DỨA CON")
+      ..cellStyle = titleStyle;
+    ws.getRangeByName("C3:G3")
+      ..merge()
+      ..setText("Địa chỉ: 99 Nguyễn Chí Thanh, Láng Hạ, Đống Đa, TP Hà Nội.")
+      ..cellStyle = contactStyle;
+    ws.getRangeByName("C4:G4")
+      ..merge()
+      ..setText("SĐT: 0123456789")
+      ..cellStyle = contactStyle;
+    ws.getRangeByName("B6:G6")
+      ..merge()
+      ..setText("HOÁ ĐƠN HỦY PHÒNG")
+      ..cellStyle = titleStyle;
+
+    Order order = (GetIt.I<InternalStorage>().read("roomGroupsList")[ridx])
+        .ordersList[oidx];
+    Room room = GetIt.I<InternalStorage>().read("roomGroupsList")[ridx].room;
+    ws.getRangeByName("B7:G7")
+      ..merge()
+      ..setText("Thời gian thanh toán: ${billTemplate["time"]}")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("B8:G8")
+      ..merge()
+      ..setText("Số hoá đơn: ${billTemplate["id"]}")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("B9:G9")
+      ..merge()
+      ..setText("Tên khách hàng: ${order.cat.owner.name}")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("B10:G10")
+      ..merge()
+      ..setText("Tên mèo: ${order.cat.name}")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("B11:G11")
+      ..merge()
+      ..setText(
+          "Ngày dự kiến đến: ${DateFormat("dd/MM/yyyy HH:mm").format(order.checkIn)}")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("B12:G12")
+      ..merge()
+      ..setText("Ngày đã hủy: ${billTemplate["time"]}")
+      ..cellStyle = infoStyle;
+
+    ws.getRangeByName("B14")
+      ..setText("Tiền hủy phòng")
+      ..cellStyle = sectionStyle;
+    ws.getRangeByName("B16")
+      ..setText("Loại phòng")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("C16")
+      ..setText("Số đêm")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("D16:E16")
+      ..merge()
+      ..setText("Đơn giá")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("F16:G16")
+      ..merge()
+      ..setText("Thành tiền")
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("B17")
+      ..setText(room.type)
+      ..cellStyle = cellStyle;
+    ws.getRangeByName("C17")
+      ..setNumber(double.parse(billTemplate["late"]["quantity"]))
+      ..cellStyle = cellStyle
+      ..numberFormat = "General";
+    ws.getRangeByName("D17:E17")
+      ..merge()
+      ..setNumber(billTemplate["late"]["price"])
+      ..cellStyle = cellStyle
+      ..numberFormat = "#,#";
+    ws.getRangeByName("F17:G17")
+      ..merge()
+      ..setFormula("=D17*C17")
+      ..cellStyle = totalCellStyle
+      ..numberFormat = "#,#";
+
+    ws.getRangeByName("E19")
+      ..setText("Tổng:")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("G19")
+      ..setFormula("=SUM(G1:G18)")
+      ..cellStyle = totalStyle
+      ..numberFormat = "#,#";
+    ws.getRangeByName("E20")
+      ..setText("Khách đưa:")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("G20")
+      ..setNumber(0)
+      ..cellStyle = totalStyle
+      ..numberFormat = "#,#";
+    ws.getRangeByName("E21")
+      ..setText("Trả lại:")
+      ..cellStyle = infoStyle;
+    ws.getRangeByName("G21")
+      ..setFormula("G20-G19")
+      ..cellStyle = totalStyle
+      ..numberFormat = "#,#";
+    ws.getRangeByName("E22")
+      ..setText("(Đã bao gồm thuế GTGT)")
+      ..cellStyle = infoStyle;
+
+    final rawData = wb.saveAsStream();
+    wb.dispose();
+    final content = base64Encode(rawData);
+    AnchorElement(
+        href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      ..setAttribute("download", "bill ${billTemplate["id"]}.xlsx")
       ..click();
   }
 }

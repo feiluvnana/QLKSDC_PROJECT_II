@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:project_ii/blocs/info_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
-import '../models/room_group_model.dart';
 import '../utils/reusables/date_time_picker.dart';
 import '../utils/reusables/image_picker.dart';
 import '../utils/reusables/service_chooser.dart';
@@ -88,29 +87,6 @@ class InfoPage extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xfffaf884),
-                              foregroundColor: Colors.black,
-                            ),
-                            onPressed: () async {
-                              _.read<InfoPageBloc>().add(CheckoutEvent(_));
-                            },
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.receipt, size: 14),
-                                Text(" Check-out")
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    Flexible(
-                      child: Builder(builder: (_) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xffff6961),
                               foregroundColor: Colors.black,
                             ),
@@ -179,7 +155,7 @@ class StatusInfo extends StatelessWidget {
                     ),
                     Padding(
                         padding: const EdgeInsets.all(8),
-                        child: (state.order.isOut)
+                        child: (state.order.isCheckedout)
                             ? const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -189,15 +165,42 @@ class StatusInfo extends StatelessWidget {
                                     ),
                                     Text("Đã check-out")
                                   ])
-                            : const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                    Icon(
-                                      Icons.close,
-                                      color: Colors.red,
-                                    ),
-                                    Text("Chưa check-out")
-                                  ]))
+                            : Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Icon(
+                                  Icons.close,
+                                  color: Colors.red,
+                                ),
+                                const Text("Chưa check-out"),
+                                (state.order.isCheckedin ||
+                                        state.order.isWalkedin)
+                                    ? Flexible(
+                                        child: Builder(builder: (_) {
+                                          return Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    const Color(0xfffaf884),
+                                                foregroundColor: Colors.black,
+                                              ),
+                                              onPressed: () async {
+                                                _
+                                                    .read<InfoPageBloc>()
+                                                    .add(CheckoutEvent(_));
+                                              },
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.receipt, size: 14),
+                                                  Text(" Check-out")
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      )
+                                    : Container(),
+                              ]))
                   ],
                 ),
                 TableRow(
@@ -205,11 +208,44 @@ class StatusInfo extends StatelessWidget {
                   children: [
                     const Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text("Số lần đã xuất hoá đơn"),
+                      child: Text("Tình trạng đặt phòng"),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(state.order.billNum.toString()),
+                      child: state.order.isCheckedin
+                          ? const Text("Đã check-in")
+                          : state.order.isWalkedin
+                              ? const Text("Đã walk-in")
+                              : Row(children: [
+                                  const Text("Đã đặt phòng"),
+                                  Flexible(
+                                    child: Builder(builder: (_) {
+                                      return Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xff77dd77),
+                                            foregroundColor: Colors.black,
+                                          ),
+                                          onPressed: () {
+                                            context
+                                                .read<InfoPageBloc>()
+                                                .add(CheckinEvent(context));
+                                          },
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check_circle_rounded,
+                                                  size: 14),
+                                              Text(" Check-in")
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ]),
                     )
                   ],
                 ),
@@ -394,7 +430,7 @@ class CatInfo extends StatelessWidget {
                                     border: OutlineInputBorder(),
                                   ),
                                 )
-                              : Text(state.order.cat.age.toString()),
+                              : Text(state.order.cat.ageText()),
                         )
                       ],
                     ),
@@ -639,12 +675,12 @@ class CatInfo extends StatelessWidget {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                          "Đặc điểm hình thái: \n${state.order.cat.appearance}"),
+                                          "Đặc điểm hình thái: \n${state.order.cat.appearance ?? ""}"),
                                     ),
                                     const Spacer(),
                                     Flexible(
                                         child: Text(
-                                            "Cân nặng(kg): ${state.order.cat.weight?.toStringAsPrecision(2) ?? "Không được cung cấp"} (${state.order.cat.weightRank})")),
+                                            "Cân nặng(kg): ${state.order.cat.weight?.toStringAsPrecision(2) ?? "Không được cung cấp"} ${state.order.cat.weightRank == "" ? "" : "(${state.order.cat.weightRank})"}")),
                                   ],
                                 ),
                               )
@@ -818,7 +854,6 @@ class OrderInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var internalStorage = GetIt.I<InternalStorage>();
     return BlocBuilder<InfoPageBloc, InformationState>(
         builder: (context, state) {
       return Form(
@@ -867,79 +902,11 @@ class OrderInfo extends StatelessWidget {
                         padding: EdgeInsets.all(8),
                         child: Text("Số phòng"),
                       ),
-                      (state.isEditing3)
-                          ? Row(
-                              children: [
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: DropdownButtonFormField<String>(
-                                      isExpanded: true,
-                                      items: List.generate(
-                                          internalStorage
-                                              .read("roomGroupsList")
-                                              .length, (index) {
-                                        RoomGroup roomGroup =
-                                            GetIt.I<InternalStorage>()
-                                                .read("roomGroupsList")[index];
-                                        return DropdownMenuItem(
-                                            value: roomGroup.room.id,
-                                            child: Text(roomGroup.room.id));
-                                      }),
-                                      onChanged: (String? value) {
-                                        context.read<InfoPageBloc>().add(
-                                            ModifyOrderEvent(roomID: value));
-                                      },
-                                      validator: Validators().notNullValidator,
-                                      value: state.modifiedOrder.room.id,
-                                      hint: const Text("---"),
-                                      decoration: const InputDecoration(
-                                        errorMaxLines: 3,
-                                        labelText: "Mã phòng",
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: DropdownButtonFormField<int>(
-                                      isExpanded: true,
-                                      items: state.modifiedOrder.subRoomNum ==
-                                              -1
-                                          ? null
-                                          : List.generate(
-                                              state.modifiedOrder.room.total,
-                                              (index) => DropdownMenuItem(
-                                                  value: index + 1,
-                                                  child: Text("${index + 1}"))),
-                                      onChanged: (value) {
-                                        context.read<InfoPageBloc>().add(
-                                            ModifyOrderEvent(
-                                                subRoomNum: value));
-                                      },
-                                      validator: Validators().notNullValidator,
-                                      value:
-                                          (state.modifiedOrder.subRoomNum == -1)
-                                              ? null
-                                              : state.modifiedOrder.subRoomNum,
-                                      hint: const Text("---"),
-                                      decoration: const InputDecoration(
-                                        errorMaxLines: 3,
-                                        labelText: "Mã phòng con",
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                  "${state.order.room.id}(${state.order.subRoomNum})"),
-                            ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                            "${state.order.room.id}(${state.order.subRoomNum})"),
+                      ),
                     ],
                   ),
                   TableRow(
@@ -988,7 +955,9 @@ class OrderInfo extends StatelessWidget {
                                   border: OutlineInputBorder(),
                                 ),
                               )
-                            : Text(state.order.eatingRank.toString()),
+                            : Text(state.order.eatingRank == -1
+                                ? ""
+                                : state.order.eatingRank.toString()),
                       )
                     ],
                   ),
@@ -1007,8 +976,8 @@ class OrderInfo extends StatelessWidget {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: DateTimePicker(
-                                        enabled: DateTime.now().isBefore(
-                                            state.modifiedOrder.checkIn),
+                                        enabled: !state.order.isCheckedin &&
+                                            !state.order.isWalkedin,
                                         initialValue:
                                             state.modifiedOrder.checkIn,
                                         title: "Thời gian check-in",
@@ -1029,6 +998,7 @@ class OrderInfo extends StatelessWidget {
                                       child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: DateTimePicker(
+                                      enabled: !state.order.isCheckedout,
                                       initialValue:
                                           state.modifiedOrder.checkOut,
                                       title: "Thời gian check-out",

@@ -55,15 +55,22 @@ class Cat {
     };
   }
 
+  String ageText() {
+    if (age > 0) return age.toString();
+    return "";
+  }
+
   String sterText() {
     if (sterilization == 0) return "Chưa thiến";
-    return "Đã thiến";
+    if (sterilization == 1) return "Đã thiến";
+    return "";
   }
 
   String vaccText() {
     if (vaccination == 0) return "Chưa tiêm";
     if (vaccination == 1) return "Đã tiêm vaccine dại";
     if (vaccination == 2) return "Đã tiêm vaccine tổng hợp";
-    return "Đã tiêm cả hai loại vaccine";
+    if (vaccination == 3) return "Đã tiêm cả hai loại vaccine";
+    return "";
   }
 }

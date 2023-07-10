@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:project_ii/data/providers/login_related_work_provider.dart';
+import 'package:project_ii/views/booking_page_view.dart';
 import 'package:project_ii/views/history_page_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../views/booking_page_view.dart';
+import '../views/walkin_page_view.dart';
 import '../views/calendar_page_view.dart';
 import '../views/room_page_view.dart';
 import '../views/service_page_view.dart';
@@ -32,6 +33,7 @@ class HomeState extends Equatable {
   final String infoString;
   static List<Widget Function(BuildContext)> builderCalls = [
     (context) => const CalendarPage(),
+    (context) => const WalkinPage(),
     (context) => const BookingPage(),
     (context) => const RoomPage(),
     (context) => const ServicePage(),
@@ -62,6 +64,7 @@ class HomePageBloc extends Bloc<HomePageEvent, HomeState> {
   HomePageBloc()
       : super(HomeState(builders: [
           (context) => const CalendarPage(),
+          (context) => Container(),
           (context) => Container(),
           (context) => Container(),
           (context) => Container(),

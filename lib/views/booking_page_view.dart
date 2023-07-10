@@ -6,8 +6,7 @@ import '../blocs/booking_page_bloc.dart';
 import '../data/dependencies/internal_storage.dart';
 import '../data/types/render_state.dart';
 import '../utils/reusables/date_time_picker.dart';
-import '../utils/reusables/image_picker.dart';
-import '../utils/reusables/service_chooser.dart';
+import '../utils/reusables/location_picker.dart';
 import '../utils/validators/validators.dart';
 
 class BookingPage extends StatelessWidget {
@@ -92,16 +91,8 @@ class BookingPage extends StatelessWidget {
                           ? StepState.editing
                           : StepState.indexed,
                       isActive: state.currentStep >= 1,
-                      title: const Text("Nhập thông tin mèo"),
+                      title: const Text("Nhập thông tin đặt phòng"),
                       content: Form2(internalStorage: internalStorage),
-                    ),
-                    Step(
-                      state: (state.currentStep == 2)
-                          ? StepState.editing
-                          : StepState.indexed,
-                      isActive: state.currentStep >= 2,
-                      title: const Text("Nhập thông tin đặt phòng và dịch vụ"),
-                      content: Form3(internalStorage: internalStorage),
                     ),
                   ],
                 ),
@@ -112,8 +103,8 @@ class BookingPage extends StatelessWidget {
   }
 }
 
-class Form3 extends StatelessWidget {
-  const Form3({
+class Form2 extends StatelessWidget {
+  const Form2({
     super.key,
     required this.internalStorage,
   });
@@ -123,10 +114,11 @@ class Form3 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BookingPageBloc, BookingState>(
-      buildWhen: (previous, current) => current.currentStep == 2,
+      buildWhen: (previous, current) =>
+          current.currentStep == 1 || previous.isPickedup != current.isPickedup,
       builder: (context, state) {
         return Form(
-          key: state.formKey3,
+          key: state.formKey2,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -203,43 +195,12 @@ class Form3 extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    flex: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 16),
-                      child: DropdownButtonFormField<int>(
-                        isExpanded: true,
-                        items: List.generate(
-                          4,
-                          (index) => DropdownMenuItem(
-                            value: index + 1,
-                            child: Text("${index + 1}"),
-                          ),
-                        ),
-                        onChanged: (int? value) {},
-                        onSaved: (int? value) {
-                          context
-                              .read<BookingPageBloc>()
-                              .add(ModifyOrderEvent(eatingRank: value));
-                        },
-                        validator: Validators().notNullValidator,
-                        value: null,
-                        hint: const Text("---"),
-                        decoration: const InputDecoration(
-                          errorMaxLines: 2,
-                          labelText: "Hạng ăn",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Flexible(
                     flex: 3,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
                       child: DateTimePicker(
-                        title: "Thời gian check-in",
+                        title: "Thời gian check-in (dự kiến)",
                         validator: Validators(
                                 checkIn: state.order.checkIn,
                                 checkOut: state.order.checkOut)
@@ -258,7 +219,7 @@ class Form3 extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
                       child: DateTimePicker(
-                        title: "Thời gian check-out",
+                        title: "Thời gian check-out (dự kiến)",
                         validator: Validators(
                                 checkIn: state.order.checkIn,
                                 checkOut: state.order.checkOut)
@@ -319,333 +280,58 @@ class Form3 extends StatelessWidget {
                   ),
                 ],
               ),
-              AdditionChooser(
-                  alwaysEnabled: true,
-                  checkIn: state.order.checkIn,
-                  checkOut: state.order.checkOut,
-                  initialValue: state.order.additionsList,
-                  onSaved: (value) {
-                    context
-                        .read<BookingPageBloc>()
-                        .add(ModifyOrderEvent(additionsList: value));
-                  }),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                child: DropdownButtonFormField<bool>(
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: true, child: Text("Có pick-up")),
+                    DropdownMenuItem(value: false, child: Text("Không pick-up"))
+                  ],
+                  onChanged: (value) {
+                    context.read<BookingPageBloc>().add(TogglePickupEvent());
+                  },
+                  validator: Validators().notNullValidator,
+                  value: state.isPickedup,
+                  hint: const Text("---"),
+                  decoration: const InputDecoration(
+                    errorMaxLines: 3,
+                    labelText: "Lựa chọn pick-up",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              state.isPickedup
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 16),
+                      child: DateTimePicker(
+                          title: "Thời gian pickup",
+                          validator: Validators().notNullValidator,
+                          onChanged: (value) {
+                            context
+                                .read<BookingPageBloc>()
+                                .add(ModifyPickupEvent(pickupTime: value));
+                          }),
+                    )
+                  : Container(),
+              state.isPickedup
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 16),
+                      child: LocationPicker(onChanged: (value) {
+                        context
+                            .read<BookingPageBloc>()
+                            .add(ModifyPickupEvent(distance: value));
+                      }),
+                    )
+                  : Container(),
             ],
           ),
         );
       },
     );
-  }
-}
-
-class Form2 extends StatelessWidget {
-  const Form2({super.key, required this.internalStorage});
-
-  final InternalStorage internalStorage;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<BookingPageBloc, BookingState>(
-        buildWhen: (previous, current) => current.currentStep == 1,
-        builder: (context, state) {
-          return Form(
-            key: state.formKey2,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 16),
-                              child: TextFormField(
-                                onSaved: (value) {
-                                  context
-                                      .read<BookingPageBloc>()
-                                      .add(ModifyCatEvent(name: value));
-                                },
-                                validator: Validators().nameValidator,
-                                decoration: const InputDecoration(
-                                  labelText: "Tên mèo",
-                                  border: OutlineInputBorder(),
-                                ),
-                              )),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: DropdownButtonFormField<int>(
-                              isExpanded: true,
-                              validator: Validators().notNullValidator,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 0,
-                                  child: Text("Chưa thiến"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 1,
-                                  child: Text("Đã thiến"),
-                                ),
-                              ],
-                              onChanged: (value) {},
-                              onSaved: (value) {
-                                context
-                                    .read<BookingPageBloc>()
-                                    .add(ModifyCatEvent(sterilization: value));
-                              },
-                              value: null,
-                              hint: const Text("---"),
-                              decoration: const InputDecoration(
-                                errorMaxLines: 2,
-                                labelText: "Tình trạng thiến",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              validator: Validators().notNullValidator,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "< 3kg",
-                                  child: Text("< 3kg"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "3-6kg",
-                                  child: Text("3-6kg"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "> 6kg",
-                                  child: Text("> 6kg"),
-                                ),
-                              ],
-                              onChanged: (String? value) {
-                                context
-                                    .read<BookingPageBloc>()
-                                    .add(ModifyCatEvent(weightRank: value));
-                              },
-                              value: null,
-                              hint: const Text("---"),
-                              decoration: const InputDecoration(
-                                errorMaxLines: 2,
-                                labelText: "Hạng cân",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: TextFormField(
-                              validator: Validators().speciesValidator,
-                              onSaved: (value) {
-                                context
-                                    .read<BookingPageBloc>()
-                                    .add(ModifyCatEvent(species: value));
-                              },
-                              decoration: const InputDecoration(
-                                labelText: "Giống mèo",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: DropdownButtonFormField<int>(
-                              isExpanded: true,
-                              validator: Validators().notNullValidator,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 0,
-                                  child: Text("Chưa tiêm"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 1,
-                                  child: Text("Đã tiêm vaccine dại"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 2,
-                                  child: Text("Đã tiêm vaccine tổng hợp"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 3,
-                                  child: Text("Đã tiêm cả hai loại vaccine"),
-                                ),
-                              ],
-                              onChanged: (int? value) {},
-                              onSaved: (value) {
-                                context
-                                    .read<BookingPageBloc>()
-                                    .add(ModifyCatEvent(vaccination: value));
-                              },
-                              value: null,
-                              hint: const Text("---"),
-                              decoration: const InputDecoration(
-                                errorMaxLines: 2,
-                                labelText: "Tình trạng tiêm phòng",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: TextFormField(
-                              validator: Validators(
-                                      weightRank: state.order.cat.weightRank)
-                                  .weightValidator,
-                              onSaved: (value) {
-                                context.read<BookingPageBloc>().add(
-                                    ModifyCatEvent(
-                                        weight: double.tryParse(
-                                            value ?? "invalid")));
-                              },
-                              decoration: const InputDecoration(
-                                suffix: Text("kg"),
-                                labelText: "Cân nặng",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: TextFormField(
-                              onSaved: (value) {
-                                context.read<BookingPageBloc>().add(
-                                    ModifyCatEvent(
-                                        age: int.tryParse(value ?? "invalid")));
-                              },
-                              validator: Validators().intValidator,
-                              decoration: const InputDecoration(
-                                errorMaxLines: 2,
-                                labelText: "Tuổi",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            child: DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "Đực",
-                                  child: Text("Đực"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "Cái",
-                                  child: Text("Cái"),
-                                ),
-                              ],
-                              onSaved: (value) {
-                                context
-                                    .read<BookingPageBloc>()
-                                    .add(ModifyCatEvent(gender: value));
-                              },
-                              onChanged: (String? value) {},
-                              value: null,
-                              hint: const Text("---"),
-                              decoration: const InputDecoration(
-                                labelText: "Giới tính",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 16),
-                      child: ImagePicker(
-                          width: 200,
-                          height: 200,
-                          onSaved: (bytes) {
-                            context
-                                .read<BookingPageBloc>()
-                                .add(PickImageEvent(bytes));
-                          }),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 16),
-                        child: TextFormField(
-                          keyboardType: TextInputType.multiline,
-                          validator:
-                              Validators().multilineTextCanNotNullValidator,
-                          maxLines: null,
-                          onSaved: (value) {
-                            context
-                                .read<BookingPageBloc>()
-                                .add(ModifyCatEvent(physicalCondition: value));
-                          },
-                          decoration: const InputDecoration(
-                            labelText: "Thể trạng",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 16),
-                        child: TextFormField(
-                          keyboardType: TextInputType.multiline,
-                          validator: Validators().multilineTextCanNullValidator,
-                          maxLines: null,
-                          onSaved: (value) {
-                            context
-                                .read<BookingPageBloc>()
-                                .add(ModifyCatEvent(appearance: value));
-                          },
-                          decoration: const InputDecoration(
-                            labelText: "Đặc điểm hình thái",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          );
-        });
   }
 }
 

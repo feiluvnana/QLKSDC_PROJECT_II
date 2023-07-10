@@ -28,45 +28,75 @@ class NoticeDialog {
             AlertDialog(title: const Text("Thông báo"), content: Text(text)));
   }
 
-  static Future<bool?> showCheckoutDialog(
-    BuildContext context,
-  ) {
-    return showDialog<bool?>(
+  static Future<bool?> showConfirmDialog(BuildContext context,
+      {required String text}) async {
+    return showDialog(
         context: context,
-        builder: (ctx) {
-          return AlertDialog(
-            title: const Text("Thông báo"),
-            content: const Text("Xác định check-out"),
-            actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-                child: const Text("Xác nhận"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xfffaf884),
-                  foregroundColor: Colors.black,
+        builder: (_) => AlertDialog(
+              title: const Text("Xác nhận"),
+              content: Text(
+                  "$text\nHành động này là không thể đảo ngược, tiếp tục chứ?"),
+              actions: [
+                ElevatedButton(
+                  style:
+                      ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text("Xác nhận"),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-                child: const Text("Chỉ hoá đơn"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffff6961),
-                  foregroundColor: Colors.black,
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffff6961),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(null);
+                  },
+                  child: const Text("Huỷ"),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop(null);
-                },
-                child: const Text("Huỷ"),
-              ),
-            ],
-          );
-        });
+              ],
+            ));
+  }
+
+  static Future<bool?> showCheckoutDialog(BuildContext context,
+      {String? text}) async {
+    return showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+              title: const Text("Xác nhận"),
+              content: Text(
+                  "${text != null ? "$text\n" : ""}Hành động này là không thể đảo ngược, tiếp tục chứ?"),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffff6961),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text("Check-out (để đổi phòng)"),
+                ),
+                ElevatedButton(
+                  style:
+                      ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text("Check-out"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffff6961),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(null);
+                  },
+                  child: const Text("Huỷ"),
+                ),
+              ],
+            ));
   }
 }

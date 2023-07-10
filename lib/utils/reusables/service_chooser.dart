@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:project_ii/utils/validators/validators.dart';
 import '../../data/dependencies/internal_storage.dart';
-import '../../models/addition_model.dart';
+import '../../data/providers/addition_model.dart';
 import '../../models/service_model.dart';
 import 'date_time_picker.dart';
 import 'location_picker.dart';
@@ -94,7 +94,8 @@ class AdditionChooser extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
                               child: LocationPicker(
-                                  enabled: formState.value![index].time == null
+                                  enabled: alwaysEnabled ??
+                                          formState.value?[index].time == null
                                       ? true
                                       : DateTime.now().isBefore(
                                           formState.value![index].time!),
@@ -135,13 +136,13 @@ class AdditionChooser extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 16),
                                   child: DateTimePicker(
-                                    enabled:
-                                        formState.value![index].time == null
-                                            ? true
-                                            : DateTime.now().isBefore(
-                                                formState.value![index].time!),
+                                    enabled: alwaysEnabled ??
+                                            formState.value?[index].time == null
+                                        ? true
+                                        : DateTime.now().isBefore(
+                                            formState.value![index].time!),
                                     validator: Validators(
-                                            checkIn: checkIn,
+                                            checkIn: DateTime.now(),
                                             checkOut: checkOut)
                                         .additionsTimeValidator,
                                     title: "Thời gian",
@@ -181,7 +182,11 @@ class AdditionChooser extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 16),
                               child: TextFormField(
-                                enabled: DateTime.now().isBefore(checkIn),
+                                enabled: alwaysEnabled ??
+                                        formState.value?[index].time == null
+                                    ? true
+                                    : DateTime.now().isBefore(
+                                        formState.value![index].time!),
                                 validator: Validators().intValidator,
                                 initialValue:
                                     formState.value?[index].quantity == null
@@ -272,11 +277,7 @@ class AdditionChooser extends StatelessWidget {
   }
 
   bool _enable(Addition? addition) {
-    if (addition == null) return true;
-    if (addition.time?.isBefore(DateTime.now()) == true) return false;
-    if (addition.time == null &&
-        DateTime.now().isAfter(checkIn) &&
-        addition.quantity != null) return false;
+    if (addition?.time?.isBefore(DateTime.now()) == true) return false;
     return true;
   }
 }

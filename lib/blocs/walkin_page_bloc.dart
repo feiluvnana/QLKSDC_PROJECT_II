@@ -7,37 +7,68 @@ import 'package:get_it/get_it.dart';
 import 'package:project_ii/data/dependencies/internal_storage.dart';
 import 'package:project_ii/data/providers/service_related_work_provider.dart';
 import 'package:project_ii/utils/reusables/notice_dialog.dart';
-import '../data/providers/booking_related_work_provider.dart';
 import '../data/providers/calendar_related_work_provider.dart';
 import '../data/types/render_state.dart';
+import '../data/providers/booking_related_work_provider.dart';
 import '../data/providers/addition_model.dart';
 import '../models/cat_model.dart';
 import '../models/owner_model.dart';
 import '../models/order_model.dart';
 
-abstract class BookingPageEvent {}
+abstract class WalkinPageEvent {}
 
-class NextStepEvent extends BookingPageEvent {
+class NextStepEvent extends WalkinPageEvent {
   final BuildContext context;
 
   NextStepEvent(this.context);
 }
 
-class BackStepEvent extends BookingPageEvent {}
+class BackStepEvent extends WalkinPageEvent {}
 
-class RequireDataEvent extends BookingPageEvent {}
+class PickImageEvent extends WalkinPageEvent {
+  final Uint8List? bytes;
 
-class CompleteRenderEvent extends BookingPageEvent {}
+  PickImageEvent(this.bytes);
+}
 
-class RefreshEvent extends BookingPageEvent {}
+class RequireDataEvent extends WalkinPageEvent {}
 
-class ModifyOwnerEvent extends BookingPageEvent {
+class CompleteRenderEvent extends WalkinPageEvent {}
+
+class RefreshEvent extends WalkinPageEvent {}
+
+class ModifyOwnerEvent extends WalkinPageEvent {
   final String? name, tel, gender;
 
   ModifyOwnerEvent({this.name, this.tel, this.gender});
 }
 
-class ModifyOrderEvent extends BookingPageEvent {
+class ModifyCatEvent extends WalkinPageEvent {
+  final String? weightRank,
+      name,
+      species,
+      physicalCondition,
+      appearance,
+      gender;
+  final Uint8List? image;
+  final int? age, sterilization, vaccination;
+  final double? weight;
+
+  ModifyCatEvent(
+      {this.weightRank,
+      this.name,
+      this.species,
+      this.physicalCondition,
+      this.appearance,
+      this.gender,
+      this.image,
+      this.age,
+      this.sterilization,
+      this.vaccination,
+      this.weight});
+}
+
+class ModifyOrderEvent extends WalkinPageEvent {
   final List<Addition>? additionsList;
   final DateTime? checkIn, checkOut;
   final String? attention, note;
@@ -55,55 +86,32 @@ class ModifyOrderEvent extends BookingPageEvent {
       this.subRoomNum});
 }
 
-class ModifyPickupEvent extends BookingPageEvent {
-  final DateTime? pickupTime;
-  final String? distance;
-
-  ModifyPickupEvent({this.distance, this.pickupTime});
-}
-
-class TogglePickupEvent extends BookingPageEvent {}
-
-class SubmitDataEvent extends BookingPageEvent {
+class SubmitDataEvent extends WalkinPageEvent {
   final BuildContext context;
 
   SubmitDataEvent(this.context);
 }
 
-class BookingState extends Equatable {
-  final GlobalKey<FormState> formKey1, formKey2;
+class WalkinState extends Equatable {
+  final GlobalKey<FormState> formKey1, formKey2, formKey3;
   final Order order;
   final RenderState renderState;
   final int currentStep;
-  final bool isPickedup;
-  final DateTime? pickupTime;
-  final String? distance;
 
-  const BookingState(this.formKey1, this.formKey2,
+  const WalkinState(this.formKey1, this.formKey2, this.formKey3,
       {required this.order,
       required this.currentStep,
-      required this.renderState,
-      required this.isPickedup,
-      this.pickupTime,
-      this.distance});
+      required this.renderState});
 
   @override
-  List<Object?> get props => [order, currentStep, renderState, isPickedup];
+  List<Object?> get props => [order, currentStep, renderState];
 
-  BookingState copyWith(
-      {Order? order,
-      int? currentStep,
-      RenderState? renderState,
-      bool? isPickedup,
-      DateTime? pickupTime,
-      String? distance}) {
-    return BookingState(formKey1, formKey2,
+  WalkinState copyWith(
+      {Order? order, int? currentStep, RenderState? renderState}) {
+    return WalkinState(formKey1, formKey2, formKey3,
         order: order ?? this.order,
         currentStep: currentStep ?? this.currentStep,
-        renderState: renderState ?? this.renderState,
-        isPickedup: isPickedup ?? this.isPickedup,
-        pickupTime: pickupTime ?? this.pickupTime,
-        distance: distance ?? this.distance);
+        renderState: renderState ?? this.renderState);
   }
 
   Order modifyOrder({
@@ -146,7 +154,6 @@ class BookingState extends Equatable {
                 .room
                 .toJson(),
         "cat": cat == null ? order.cat.toJson() : cat.toJson(),
-        "is_checkedout": order.isCheckedout ? 1 : 0,
         "is_checkedin": order.isCheckedin ? 1 : 0,
         "is_walkedin": order.isWalkedin ? 1 : 0,
       },
@@ -194,13 +201,13 @@ class BookingState extends Equatable {
   }
 }
 
-class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
-  BookingPageBloc()
-      : super(BookingState(GlobalKey<FormState>(), GlobalKey<FormState>(),
-            order: Order.empty(),
+class WalkinPageBloc extends Bloc<WalkinPageEvent, WalkinState> {
+  WalkinPageBloc()
+      : super(WalkinState(GlobalKey<FormState>(), GlobalKey<FormState>(),
+            GlobalKey<FormState>(),
+            order: Order.empty(true),
             currentStep: 0,
-            renderState: RenderState.waiting,
-            isPickedup: false)) {
+            renderState: RenderState.waiting)) {
     GetIt.I<InternalStorage>().expose("servicesList")?.listen((data) {
       if (data == null) add(RefreshEvent());
     });
@@ -216,6 +223,10 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
       } else if (state.currentStep == 1) {
         if (state.formKey2.currentState?.validate() != true) return;
         state.formKey2.currentState?.save();
+        emit(state.copyWith(currentStep: 2));
+      } else if (state.currentStep == 2) {
+        if (state.formKey3.currentState?.validate() != true) return;
+        state.formKey3.currentState?.save();
         add(SubmitDataEvent(event.context));
       }
     });
@@ -223,7 +234,15 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
       if (state.currentStep == 1) {
         state.formKey2.currentState?.save();
         emit(state.copyWith(currentStep: 0));
+      } else if (state.currentStep == 2) {
+        state.formKey3.currentState?.save();
+        emit(state.copyWith(currentStep: 1));
       }
+    });
+    on<PickImageEvent>((event, emit) async {
+      emit(state.copyWith(
+          order:
+              state.modifyOrder(cat: state.modifyCat(catImage: event.bytes))));
     });
     on<CompleteRenderEvent>((event, emit) {
       emit(state.copyWith(renderState: RenderState.completed));
@@ -237,6 +256,23 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
                       ownerGender: event.gender,
                       ownerTel: event.tel)))));
     });
+    on<ModifyCatEvent>((event, emit) {
+      emit(state.copyWith(
+        order: state.modifyOrder(
+            cat: state.modifyCat(
+                catAge: event.age,
+                catName: event.name,
+                catAppearance: event.appearance,
+                catGender: event.gender,
+                catImage: event.image,
+                catPhysicalCondition: event.physicalCondition,
+                catSpecies: event.species,
+                catSterilization: event.sterilization,
+                catVaccination: event.vaccination,
+                catWeight: event.weight,
+                catWeightRank: event.weightRank)),
+      ));
+    });
     on<ModifyOrderEvent>((event, emit) async {
       emit(state.copyWith(
           order: state.modifyOrder(
@@ -249,42 +285,52 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
               roomID: event.roomID,
               subRoomNum: event.subRoomNum)));
     });
-    on<TogglePickupEvent>(
-      (event, emit) => emit(state.copyWith(isPickedup: !state.isPickedup)),
-    );
     on<SubmitDataEvent>((event, emit) async {
       bool isSuccessed = false;
       List<Addition>? list;
-      if (state.isPickedup) {
-        int id = GetIt.I<InternalStorage>()
-            .read("servicesList")
-            .firstWhere((element) => "Đón mèo" == element.name)
-            .id;
-
-        list = [
-          Addition.fromJson({
-            "service_id": id,
-            "distance": state.distance,
-            "quantity": null,
-            "time": state.pickupTime
-          })
-        ];
-
+      DateTime now = DateTime.now();
+      if (state.order.additionsList != null) {
+        list = List.generate(state.order.additionsList!.length, (index) {
+          if (state.order.additionsList![index].time == null) {
+            if (GetIt.I<InternalStorage>()
+                    .read("servicesList")
+                    .firstWhere((element) =>
+                        element.name ==
+                        state.order.additionsList![index].serviceID)
+                    .name ==
+                "Trả mèo") {
+              return Addition.fromJson({
+                "service_id": state.order.additionsList![index].serviceID,
+                "distance": state.order.additionsList![index].distance,
+                "quantity": state.order.additionsList![index].quantity,
+                "time": state.order.checkOut.toString()
+              });
+            }
+            return Addition.fromJson({
+              "service_id": state.order.additionsList![index].serviceID,
+              "distance": state.order.additionsList![index].distance,
+              "quantity": state.order.additionsList![index].quantity,
+              "time": now.add(const Duration(minutes: 30)).toString()
+            });
+          }
+          return state.order.additionsList![index];
+        });
         emit(state.copyWith(
             order: state.modifyOrder(
           additionsList: list,
         )));
       }
+      emit(state.copyWith(order: state.modifyOrder(orderCheckIn: now)));
       await BookingRelatedWorkProvider.sendOrderInfo(state.order)
           .then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
           NoticeDialog.showMessageDialog(event.context,
-              text: "Đặt phòng thành công.");
+              text: "Walk-in thành công.");
           isSuccessed = true;
         } else {
           NoticeDialog.showErrDialog(event.context,
               errList: jsonDecode(res.body)["errors"],
-              firstText: "Đặt phòng thất bại.");
+              firstText: "Walk-in thất bại.");
         }
       });
       if (isSuccessed) CalendarRelatedWorkProvider.clearRoomGroupsList();
@@ -298,7 +344,7 @@ class BookingPageBloc extends Bloc<BookingPageEvent, BookingState> {
   }
 
   @override
-  void onTransition(Transition<BookingPageEvent, BookingState> transition) {
+  void onTransition(Transition<WalkinPageEvent, WalkinState> transition) {
     super.onTransition(transition);
   }
 }

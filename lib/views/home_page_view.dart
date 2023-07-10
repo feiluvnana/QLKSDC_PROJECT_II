@@ -26,6 +26,10 @@ class HomePage extends StatelessWidget {
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.add),
+                    label: Text("Walk-in"),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.add),
                     label: Text("Đặt phòng"),
                   ),
                   NavigationRailDestination(
@@ -64,7 +68,7 @@ class HomePage extends StatelessWidget {
                 child: IndexedStack(
                   index: state.selectedIndex,
                   children: List.generate(
-                      6, (index) => Builder(builder: state.builders[index])),
+                      7, (index) => Builder(builder: state.builders[index])),
                 ),
               )
             ],

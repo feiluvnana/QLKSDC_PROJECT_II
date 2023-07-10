@@ -98,7 +98,7 @@ class "project_ii::blocs::booking_page_bloc.dart::BookingState" {
 }
 
 "project_ii::blocs::booking_page_bloc.dart::BookingState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
-"project_ii::blocs::booking_page_bloc.dart::BookingState" o-- "project_ii::model::order_model.dart::Order"
+"project_ii::blocs::booking_page_bloc.dart::BookingState" o-- "project_ii::models::order_model.dart::Order"
 "project_ii::blocs::booking_page_bloc.dart::BookingState" o-- "project_ii::data::types::render_state.dart::RenderState"
 "equatable::src::equatable.dart::Equatable" <|-- "project_ii::blocs::booking_page_bloc.dart::BookingState"
 
@@ -272,7 +272,6 @@ class "project_ii::blocs::info_page_bloc.dart::ModifyOwnerEvent" {
 }
 
 "project_ii::blocs::info_page_bloc.dart::InformationPageEvent" <|-- "project_ii::blocs::info_page_bloc.dart::ModifyOwnerEvent"
-"project_ii::data::generators::excel_generator.dart::ExcelGenerator" <|-- "project_ii::blocs::info_page_bloc.dart::ModifyOwnerEvent"
 
 class "project_ii::blocs::info_page_bloc.dart::ModifyCatEvent" {
   +String? weightRank
@@ -349,7 +348,7 @@ class "project_ii::blocs::info_page_bloc.dart::InformationState" {
 }
 
 "project_ii::blocs::info_page_bloc.dart::InformationState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
-"project_ii::blocs::info_page_bloc.dart::InformationState" o-- "project_ii::model::order_model.dart::Order"
+"project_ii::blocs::info_page_bloc.dart::InformationState" o-- "project_ii::models::order_model.dart::Order"
 "equatable::src::equatable.dart::Equatable" <|-- "project_ii::blocs::info_page_bloc.dart::InformationState"
 
 class "project_ii::blocs::info_page_bloc.dart::InfoPageBloc" {
@@ -713,7 +712,7 @@ class "project_ii::main.dart::ProjectII" {
 "project_ii::main.dart::ProjectII" o-- "go_router::src::router.dart::GoRouter"
 "flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::main.dart::ProjectII"
 
-class "project_ii::model::addition_model.dart::Addition" {
+class "project_ii::models::addition_model.dart::Addition" {
   +int serviceID
   +String? distance
   +int? quantity
@@ -721,7 +720,7 @@ class "project_ii::model::addition_model.dart::Addition" {
   +Map<String, dynamic> toJson()
 }
 
-class "project_ii::model::cat_model.dart::Cat" {
+class "project_ii::models::cat_model.dart::Cat" {
   +int age
   +int sterilization
   +int vaccination
@@ -739,10 +738,10 @@ class "project_ii::model::cat_model.dart::Cat" {
   +String vaccText()
 }
 
-"project_ii::model::cat_model.dart::Cat" o-- "dart::typed_data::Uint8List"
-"project_ii::model::cat_model.dart::Cat" o-- "project_ii::model::owner_model.dart::Owner"
+"project_ii::models::cat_model.dart::Cat" o-- "dart::typed_data::Uint8List"
+"project_ii::models::cat_model.dart::Cat" o-- "project_ii::models::owner_model.dart::Owner"
 
-class "project_ii::model::history_model.dart::History" {
+class "project_ii::models::history_model.dart::History" {
   +int id
   +String action
   +String perfomer
@@ -750,7 +749,7 @@ class "project_ii::model::history_model.dart::History" {
   +String details
 }
 
-class "project_ii::model::order_model.dart::Order" {
+class "project_ii::models::order_model.dart::Order" {
   +DateTime date
   +DateTime checkIn
   +DateTime checkOut
@@ -768,25 +767,25 @@ class "project_ii::model::order_model.dart::Order" {
   +String getBookingInfoToString()
 }
 
-"project_ii::model::order_model.dart::Order" o-- "project_ii::model::room_model.dart::Room"
-"project_ii::model::order_model.dart::Order" o-- "project_ii::model::cat_model.dart::Cat"
+"project_ii::models::order_model.dart::Order" o-- "project_ii::models::room_model.dart::Room"
+"project_ii::models::order_model.dart::Order" o-- "project_ii::models::cat_model.dart::Cat"
 
-class "project_ii::model::owner_model.dart::Owner" {
+class "project_ii::models::owner_model.dart::Owner" {
   +String name
   +String gender
   +String tel
   +Map<String, String> toJson()
 }
 
-class "project_ii::model::room_group_model.dart::RoomGroup" {
+class "project_ii::models::room_group_model.dart::RoomGroup" {
   +Room room
   +List<Order> ordersList
   +List<List<Pair>> displayArray
 }
 
-"project_ii::model::room_group_model.dart::RoomGroup" o-- "project_ii::model::room_model.dart::Room"
+"project_ii::models::room_group_model.dart::RoomGroup" o-- "project_ii::models::room_model.dart::Room"
 
-class "project_ii::model::room_model.dart::Room" {
+class "project_ii::models::room_model.dart::Room" {
   +String id
   +String type
   +double price
@@ -795,7 +794,7 @@ class "project_ii::model::room_model.dart::Room" {
   +String getRoomDataToString()
 }
 
-class "project_ii::model::service_model.dart::Service" {
+class "project_ii::models::service_model.dart::Service" {
   +int id
   +String name
   +double price
@@ -805,14 +804,14 @@ class "project_ii::model::service_model.dart::Service" {
   +Map<String, dynamic> toJson()
 }
 
-class "project_ii::model::statistic_model.dart::Statistic" {
+class "project_ii::models::statistic_model.dart::Statistic" {
   +List<RoomIncome> roomIncome
   +Map<String, int> allOrderNum
   +List<ServiceUsage> serviceUsage
   +Map<String, int> eatingRank
 }
 
-class "project_ii::model::statistic_model.dart::RoomIncome" {
+class "project_ii::models::statistic_model.dart::RoomIncome" {
   +String roomID
   +double room
   +double service
@@ -820,7 +819,7 @@ class "project_ii::model::statistic_model.dart::RoomIncome" {
   {static} +RoomIncome createSum()
 }
 
-class "project_ii::model::statistic_model.dart::ServiceUsage" {
+class "project_ii::models::statistic_model.dart::ServiceUsage" {
   +int serviceID
   +double num
   +double percentage
@@ -942,7 +941,7 @@ class "project_ii::utils::reusables::room_info_dialog.dart::RoomInfoDialog" {
 }
 
 "project_ii::utils::reusables::room_info_dialog.dart::RoomInfoDialog" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
-"project_ii::utils::reusables::room_info_dialog.dart::RoomInfoDialog" o-- "project_ii::model::room_model.dart::Room"
+"project_ii::utils::reusables::room_info_dialog.dart::RoomInfoDialog" o-- "project_ii::models::room_model.dart::Room"
 
 class "project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" {
   +Room? initialValue
@@ -957,7 +956,7 @@ class "project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" {
   +void cancel()
 }
 
-"project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" o-- "project_ii::model::room_model.dart::Room"
+"project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" o-- "project_ii::models::room_model.dart::Room"
 "project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
 "project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
 "flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::utils::reusables::room_info_dialog.dart::_RoomInfoForm"
@@ -986,7 +985,7 @@ class "project_ii::utils::reusables::service_info_dialog.dart::ServiceInfoDialog
 }
 
 "project_ii::utils::reusables::service_info_dialog.dart::ServiceInfoDialog" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
-"project_ii::utils::reusables::service_info_dialog.dart::ServiceInfoDialog" o-- "project_ii::model::service_model.dart::Service"
+"project_ii::utils::reusables::service_info_dialog.dart::ServiceInfoDialog" o-- "project_ii::models::service_model.dart::Service"
 
 class "project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm" {
   +Service? initialValue
@@ -995,7 +994,7 @@ class "project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm"
   +State<_ServiceInfoForm> createState()
 }
 
-"project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm" o-- "project_ii::model::service_model.dart::Service"
+"project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm" o-- "project_ii::models::service_model.dart::Service"
 "project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
 "flutter::src::widgets::framework.dart::StatefulWidget" <|-- "project_ii::utils::reusables::service_info_dialog.dart::_ServiceInfoForm"
 
@@ -1036,55 +1035,55 @@ class "project_ii::utils::validators::validators.dart::Validators" {
 "project_ii::utils::validators::validators.dart::Validators" o-- "null::String Function(Object)"
 "project_ii::utils::validators::validators.dart::Validators" o-- "null::String Function(DateTime)"
 
-class "project_ii::view::booking_page_view.dart::BookingPage" {
+class "project_ii::views::booking_page_view.dart::BookingPage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::booking_page_view.dart::BookingPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::booking_page_view.dart::BookingPage"
 
-class "project_ii::view::booking_page_view.dart::Form3" {
+class "project_ii::views::booking_page_view.dart::Form3" {
   +InternalStorage internalStorage
   +Widget build()
 }
 
-"project_ii::view::booking_page_view.dart::Form3" o-- "project_ii::data::dependencies::internal_storage.dart::InternalStorage"
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::booking_page_view.dart::Form3"
+"project_ii::views::booking_page_view.dart::Form3" o-- "project_ii::data::dependencies::internal_storage.dart::InternalStorage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::booking_page_view.dart::Form3"
 
-class "project_ii::view::booking_page_view.dart::Form2" {
+class "project_ii::views::booking_page_view.dart::Form2" {
   +InternalStorage internalStorage
   +Widget build()
 }
 
-"project_ii::view::booking_page_view.dart::Form2" o-- "project_ii::data::dependencies::internal_storage.dart::InternalStorage"
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::booking_page_view.dart::Form2"
+"project_ii::views::booking_page_view.dart::Form2" o-- "project_ii::data::dependencies::internal_storage.dart::InternalStorage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::booking_page_view.dart::Form2"
 
-class "project_ii::view::booking_page_view.dart::Form1" {
+class "project_ii::views::booking_page_view.dart::Form1" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::booking_page_view.dart::Form1"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::booking_page_view.dart::Form1"
 
-class "project_ii::view::calendar_page_view.dart::CalendarPage" {
+class "project_ii::views::calendar_page_view.dart::CalendarPage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::CalendarPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::calendar_page_view.dart::CalendarPage"
 
-class "project_ii::view::calendar_page_view.dart::BookingInfo" {
+class "project_ii::views::calendar_page_view.dart::BookingInfo" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::BookingInfo"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::calendar_page_view.dart::BookingInfo"
 
-class "project_ii::view::calendar_page_view.dart::DisplayTable" {
+class "project_ii::views::calendar_page_view.dart::DisplayTable" {
   +int rid
   +Widget build()
   +Pair getDisplayValue()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::DisplayTable"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::calendar_page_view.dart::DisplayTable"
 
-class "project_ii::view::calendar_page_view.dart::Cell" {
+class "project_ii::views::calendar_page_view.dart::Cell" {
   +int rid
   +int index
   +int oid
@@ -1097,9 +1096,9 @@ class "project_ii::view::calendar_page_view.dart::Cell" {
   +int getNumberOfNights()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::Cell"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::calendar_page_view.dart::Cell"
 
-class "project_ii::view::calendar_page_view.dart::HalfCell" {
+class "project_ii::views::calendar_page_view.dart::HalfCell" {
   +int rid
   +int index
   +int oid
@@ -1110,96 +1109,96 @@ class "project_ii::view::calendar_page_view.dart::HalfCell" {
   +bool isTheBeginningOfABooking()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::calendar_page_view.dart::HalfCell"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::calendar_page_view.dart::HalfCell"
 
-class "project_ii::view::history_page_view.dart::HistoryPage" {
+class "project_ii::views::history_page_view.dart::HistoryPage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::history_page_view.dart::HistoryPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::history_page_view.dart::HistoryPage"
 
-class "project_ii::view::home_page_view.dart::HomePage" {
+class "project_ii::views::home_page_view.dart::HomePage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::home_page_view.dart::HomePage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::home_page_view.dart::HomePage"
 
-class "project_ii::view::info_page_view.dart::InfoPage" {
+class "project_ii::views::info_page_view.dart::InfoPage" {
   +int ridx
   +int oidx
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::info_page_view.dart::InfoPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::info_page_view.dart::InfoPage"
 
-class "project_ii::view::info_page_view.dart::StatusInfo" {
+class "project_ii::views::info_page_view.dart::StatusInfo" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::info_page_view.dart::StatusInfo"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::info_page_view.dart::StatusInfo"
 
-class "project_ii::view::info_page_view.dart::CatInfo" {
+class "project_ii::views::info_page_view.dart::CatInfo" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::info_page_view.dart::CatInfo"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::info_page_view.dart::CatInfo"
 
-class "project_ii::view::info_page_view.dart::OwnerInfo" {
+class "project_ii::views::info_page_view.dart::OwnerInfo" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::info_page_view.dart::OwnerInfo"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::info_page_view.dart::OwnerInfo"
 
-class "project_ii::view::info_page_view.dart::OrderInfo" {
+class "project_ii::views::info_page_view.dart::OrderInfo" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::info_page_view.dart::OrderInfo"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::info_page_view.dart::OrderInfo"
 
-class "project_ii::view::login_page_view.dart::LoginPage" {
+class "project_ii::views::login_page_view.dart::LoginPage" {
   +OverlayEntry loadingEntry
   -TextEditingController _usernameController
   -TextEditingController _passwordController
   +Widget build()
 }
 
-"project_ii::view::login_page_view.dart::LoginPage" o-- "flutter::src::widgets::overlay.dart::OverlayEntry"
-"project_ii::view::login_page_view.dart::LoginPage" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::login_page_view.dart::LoginPage"
+"project_ii::views::login_page_view.dart::LoginPage" o-- "flutter::src::widgets::overlay.dart::OverlayEntry"
+"project_ii::views::login_page_view.dart::LoginPage" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::login_page_view.dart::LoginPage"
 
-class "project_ii::view::login_page_view.dart::UsernameInput" {
+class "project_ii::views::login_page_view.dart::UsernameInput" {
   +TextEditingController usernameController
   +Widget build()
 }
 
-"project_ii::view::login_page_view.dart::UsernameInput" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::login_page_view.dart::UsernameInput"
+"project_ii::views::login_page_view.dart::UsernameInput" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::login_page_view.dart::UsernameInput"
 
-class "project_ii::view::login_page_view.dart::PasswordInput" {
+class "project_ii::views::login_page_view.dart::PasswordInput" {
   +TextEditingController passwordController
   +Widget build()
 }
 
-"project_ii::view::login_page_view.dart::PasswordInput" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::login_page_view.dart::PasswordInput"
+"project_ii::views::login_page_view.dart::PasswordInput" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::login_page_view.dart::PasswordInput"
 
-class "project_ii::view::room_page_view.dart::RoomPage" {
+class "project_ii::views::room_page_view.dart::RoomPage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::room_page_view.dart::RoomPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::room_page_view.dart::RoomPage"
 
-class "project_ii::view::service_page_view.dart::ServicePage" {
+class "project_ii::views::service_page_view.dart::ServicePage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::service_page_view.dart::ServicePage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::service_page_view.dart::ServicePage"
 
-class "project_ii::view::statistic_page_view.dart::StatisticPage" {
+class "project_ii::views::statistic_page_view.dart::StatisticPage" {
   +Widget build()
 }
 
-"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::view::statistic_page_view.dart::StatisticPage"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "project_ii::views::statistic_page_view.dart::StatisticPage"
 
 
 @enduml

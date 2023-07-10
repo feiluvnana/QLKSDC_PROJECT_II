@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 import 'cat_model.dart';
-import 'addition_model.dart';
+import '../data/providers/addition_model.dart';
 import 'room_model.dart';
 
 class Order {
@@ -9,9 +9,9 @@ class Order {
   final Cat cat;
   final String inCharge;
   final String? note, attention;
-  final int subRoomNum, eatingRank, billNum;
+  final int subRoomNum, eatingRank;
   final List<Addition>? additionsList;
-  final bool isOut;
+  final bool isCheckedout, isCheckedin, isWalkedin;
 
   Order.fromJson(Map<String, dynamic> json)
       : date = DateTime.parse(json["date"]),
@@ -26,10 +26,11 @@ class Order {
             (index) => Addition.fromJson(json["additions_list"][index])),
         cat = Cat.fromJson(json["cat"]),
         room = Room.fromJson(json["room"]),
-        billNum = json["bill_num"],
-        isOut = json["is_out"] == 0 ? false : true;
+        isCheckedout = json["is_checkedout"] == 0 ? false : true,
+        isCheckedin = json["is_checkedin"] == 0 ? false : true,
+        isWalkedin = json["is_walkedin"] == 0 ? false : true;
 
-  Order.empty()
+  Order.empty([bool? walkin, bool? checkin])
       : date = DateTime.now(),
         checkIn = DateTime.now(),
         checkOut = DateTime.now(),
@@ -40,9 +41,10 @@ class Order {
         eatingRank = -1,
         cat = Cat.empty(),
         room = Room.empty(),
-        billNum = -1,
         additionsList = null,
-        isOut = false;
+        isCheckedout = false,
+        isCheckedin = checkin ?? false,
+        isWalkedin = walkin ?? false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -60,6 +62,9 @@ class Order {
               (index) => additionsList?[index].toJson()),
       "cat": cat.toJson(),
       "room": room.toJson(),
+      "checkedout": isCheckedout ? 1 : 0,
+      "checkedin": isCheckedin ? 1 : 0,
+      "walkedin": isWalkedin ? 1 : 0
     };
   }
 

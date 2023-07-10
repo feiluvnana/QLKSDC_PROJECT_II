@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
@@ -15,7 +14,7 @@ import '../data/providers/calendar_related_work_provider.dart';
 import '../data/providers/info_related_work_provider.dart';
 import '../models/cat_model.dart';
 import '../models/order_model.dart';
-import '../models/addition_model.dart';
+import '../data/providers/addition_model.dart';
 import '../models/owner_model.dart';
 import '../models/room_group_model.dart';
 
@@ -92,6 +91,12 @@ class CheckoutEvent extends InformationPageEvent {
   final BuildContext context;
 
   CheckoutEvent(this.context);
+}
+
+class CheckinEvent extends InformationPageEvent {
+  final BuildContext context;
+
+  CheckinEvent(this.context);
 }
 
 class GotoHomePage extends InformationPageEvent {
@@ -232,20 +237,24 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
                     as RoomGroup)
                 .ordersList[oidx])) {
     on<ToggleModifyCatEvent>((event, emit) {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+      if (state.order.isCheckedout) return;
       emit(state.copyWith(isEditing1: !(state.isEditing1)));
     });
     on<ToggleModifyOwnerEvent>((event, emit) {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+      if (state.order.isCheckedout) return;
       emit(state.copyWith(isEditing2: !(state.isEditing2)));
     });
     on<ToggleModifyOrderEvent>((event, emit) {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+      if (state.order.isCheckedout) return;
       emit(state.copyWith(isEditing3: !(state.isEditing3)));
     });
     on<ModifyCatEvent>(
       (event, emit) {
-        if (state.order.isOut) return;
+        if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+        if (state.order.isCheckedout) return;
         emit(state.copyWith(
             order: state.modifyOrder(
                 cat: state.modifyCat(
@@ -263,7 +272,8 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       },
     );
     on<ModifyOwnerEvent>((event, emit) {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+      if (state.order.isCheckedout) return;
       emit(state.copyWith(
           order: state.modifyOrder(
               cat: state.modifyCat(
@@ -273,7 +283,8 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
                       ownerTel: event.tel)))));
     });
     on<ModifyOrderEvent>((event, emit) {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) return;
+      if (state.order.isCheckedout) return;
       emit(state.copyWith(
           order: state.modifyOrder(
               additionsList: event.additionsList,
@@ -287,11 +298,51 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
     });
     on<GotoHomePage>((event, emit) => event.context.pop());
     on<SaveChangesEvent>((event, emit) async {
-      if (state.order.isOut) return;
+      if (!state.order.isCheckedin && !state.order.isWalkedin) {
+        await NoticeDialog.showMessageDialog(event.context,
+            text: "Không thể thay đổi vì chưa check-in hoặc walk-in.");
+        return;
+      }
+      if (state.order.isCheckedout) return;
       if (state.formKey1.currentState?.validate() != true) return;
       if (state.formKey2.currentState?.validate() != true) return;
       if (state.formKey3.currentState?.validate() != true) return;
       bool isSuccessed = false;
+      List<Addition>? list;
+      DateTime now = DateTime.now();
+      if (state.modifiedOrder.additionsList != null) {
+        list =
+            List.generate(state.modifiedOrder.additionsList!.length, (index) {
+          if (state.modifiedOrder.additionsList![index].time == null) {
+            if (GetIt.I<InternalStorage>()
+                    .read("servicesList")
+                    .firstWhere((element) =>
+                        element.id ==
+                        state.modifiedOrder.additionsList![index].serviceID)
+                    .name ==
+                "Trả mèo") {
+              return Addition.fromJson({
+                "service_id":
+                    state.modifiedOrder.additionsList![index].serviceID,
+                "distance": state.modifiedOrder.additionsList![index].distance,
+                "quantity": state.modifiedOrder.additionsList![index].quantity,
+                "time": state.modifiedOrder.checkOut.toString()
+              });
+            }
+            return Addition.fromJson({
+              "service_id": state.modifiedOrder.additionsList![index].serviceID,
+              "distance": state.modifiedOrder.additionsList![index].distance,
+              "quantity": state.modifiedOrder.additionsList![index].quantity,
+              "time": now.add(const Duration(minutes: 30)).toString()
+            });
+          }
+          return state.modifiedOrder.additionsList![index];
+        });
+        emit(state.copyWith(
+            order: state.modifyOrder(
+          additionsList: list,
+        )));
+      }
       await InfoRelatedWorkProvider.saveChanges(
               state.modifiedOrder, state.order)
           .then((res) async {
@@ -325,19 +376,38 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
           element.checkOut == state.modifiedOrder.checkOut &&
           element.subRoomNum == state.modifiedOrder.subRoomNum &&
           element.room.id == state.modifiedOrder.room.id));
-      event.context.pushReplacement("/info?ridx=$newRidx&oidx=$newOidx");
+      event.context.replace("/info",
+          extra: {"ridx": newRidx.toString(), "oidx": newOidx.toString()});
     });
     on<CancelOrderEvent>((event, emit) async {
-      if (state.order.checkIn.isBefore(DateTime.now())) {
+      if (state.order.isCheckedin || state.order.isWalkedin) {
         await NoticeDialog.showMessageDialog(event.context,
-            text: "Không thể huỷ vì đã check-in.");
+            text: "Không thể hủy vì đã check-in hoặc walk-in.");
         return;
       }
-      if (state.order.isOut) return;
-      await InfoRelatedWorkProvider.cancel(state.order).then((res) async {
+      if (state.order.isCheckedout) return;
+      int hours = DateTime(state.order.checkIn.year, state.order.checkIn.month,
+              state.order.checkIn.day, 14)
+          .difference(DateTime.now())
+          .inHours;
+      if ((await NoticeDialog.showConfirmDialog(event.context,
+              text:
+                  "Tình trạng hủy phòng: Trước khi check-in ${hours} tiếng${hours < 48 ? " (Hủy phòng trễ)" : ""}.") !=
+          true)) return;
+      await InfoRelatedWorkProvider.cancel(state.order,
+              charge: hours >= 48
+                  ? 0
+                  : hours >= 24
+                      ? 0.5
+                      : 1)
+          .then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
           await NoticeDialog.showMessageDialog(event.context,
               text: "Huỷ đặt phòng thành công");
+          await createCancelBill(
+              oidx: oidx,
+              ridx: ridx,
+              billTemplate: jsonDecode(res.body)["results"]);
           HistoryRelatedWorkProvider.clearHistoriesList();
           CalendarRelatedWorkProvider.clearRoomGroupsList();
           add(GotoHomePage(event.context));
@@ -349,33 +419,35 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       });
     });
     on<CheckoutEvent>((event, emit) async {
-      if (state.order.checkOut.day != DateTime.now().day &&
-          state.order.checkOut.month == DateTime.now().month &&
-          state.order.checkOut.year == DateTime.now().year) {
-        await NoticeDialog.showMessageDialog(event.context,
-            text: "Không ở trong ngày có thể check-out.");
-        return;
-      }
-      if (state.order.isOut) return;
+      if (state.order.isCheckedout) return;
+      int hours = DateTime.now()
+          .difference(DateTime(state.order.checkIn.year,
+              state.order.checkIn.month, state.order.checkIn.day, 14))
+          .inHours;
+      bool inTime = DateTime.now().day == state.order.checkOut.day &&
+          DateTime.now().month == state.order.checkOut.month &&
+          DateTime.now().year == state.order.checkOut.year;
+      bool? charge = await NoticeDialog.showCheckoutDialog(event.context,
+          text:
+              "Tình trạng check-out: Sau check-in $hours tiếng. ${inTime ? "Đúng" : "Khác"} ngày check-out dự kiến.");
+      if (charge == null) return;
       bool isSuccessed = false;
-      int fin =
-          await NoticeDialog.showCheckoutDialog(event.context).then((value) {
-        if (value == null) return -1;
-        if (value) return 1;
-        return 0;
-      });
-      if (fin == -1) return;
-      await InfoRelatedWorkProvider.checkout(state.order, fin)
+      await InfoRelatedWorkProvider.checkout(state.order,
+              charge: charge || inTime
+                  ? hours >= 48
+                      ? 0
+                      : hours >= 24
+                          ? 0.5
+                          : 1
+                  : 0)
           .then((res) async {
         if (jsonDecode(res.body)["errors"].length == 0) {
           await NoticeDialog.showMessageDialog(event.context,
-              text:
-                  "${fin == 1 ? "Check-out thành công. " : ""}Chuẩn bị xuất hoá đơn.");
+              text: "Check-out thành công. Chuẩn bị xuất hoá đơn.");
           await createBill(
               oidx: oidx,
               ridx: ridx,
-              billID: jsonDecode(res.body)["results"]["id"],
-              billNum: jsonDecode(res.body)["results"]["bill_num"]);
+              billTemplate: jsonDecode(res.body)["results"]);
           isSuccessed = true;
         } else {
           NoticeDialog.showErrDialog(event.context,
@@ -400,10 +472,16 @@ class InfoPageBloc extends Bloc<InformationPageEvent, InformationState>
       int newOidx = ordersList.indexOf(ordersList.firstWhere((element) =>
           element.date == state.modifiedOrder.date &&
           element.checkIn == state.modifiedOrder.checkIn &&
-          element.checkOut == state.modifiedOrder.checkOut &&
           element.subRoomNum == state.modifiedOrder.subRoomNum &&
           element.room.id == state.modifiedOrder.room.id));
-      event.context.pushReplacement("/info?ridx=$newRidx&oidx=$newOidx");
+      print("check");
+      event.context.replace("/info",
+          extra: {"ridx": newRidx.toString(), "oidx": newOidx.toString()});
+    });
+
+    on<CheckinEvent>((event, emit) async {
+      if (state.order.isCheckedout) return;
+      event.context.replace("/info/checkin", extra: state.order);
     });
   }
 

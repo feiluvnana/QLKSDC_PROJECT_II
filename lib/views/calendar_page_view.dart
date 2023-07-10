@@ -402,7 +402,7 @@ class HalfCell extends StatelessWidget {
             onTap: () {
               context
                   .read<CalendarPageBloc>()
-                  .add(GotoInfoPageEvent(rid, index, context));
+                  .add(GotoInfoPageEvent(oid, rid, context));
             },
             child: Tooltip(
               waitDuration: const Duration(milliseconds: 300),
